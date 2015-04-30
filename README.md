@@ -27,13 +27,13 @@ Disque commands currently supported:
 - [x] INFO
 - [x] SHOW
 - [x] ADDJOB
-- [ ] DELJOB
-- [ ] GETJOB
+- [x] DELJOB
+- [x] GETJOB
 - [ ] ACKJOB
 - [ ] FASTACK
 - [ ] ENQUEUE
 - [ ] DEQUEUE
-- [ ] QLEN
+- [X] QLEN
 - [ ] QPEEK
 
 ## License

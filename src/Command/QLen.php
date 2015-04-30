@@ -3,13 +3,12 @@ namespace Disque\Command;
 
 use Disque\Exception;
 
-class Show extends BaseCommand implements CommandInterface
+class QLen extends BaseCommand implements CommandInterface
 {
     /**
      * Validate the given arguments
      *
      * @param array $arguments Arguments
-     * @return array|null Modified arguments (null to leave as-is)
      * @throws Disque\Exception\InvalidCommandArgumentException
      */
     protected function validate(array $arguments)
@@ -26,35 +25,21 @@ class Show extends BaseCommand implements CommandInterface
      */
     public function build()
     {
-        return ['SHOW', $this->arguments[0]];
+        return ['QLEN', $this->arguments[0]];
     }
 
     /**
      * Parse response
      *
      * @param mixed $response Response
-     * @return mixed Parsed response
+     * @return int Number of jobs deleted
      * @throws Disque\Exception\InvalidCommandResponseException
      */
     public function parse($response)
     {
-        if ($response === false) {
-            return null;
-        } elseif (!is_array($response) || empty($response)) {
+        if (!is_numeric($response)) {
             throw new Exception\InvalidCommandResponseException($this, $response);
         }
-
-        $result = [];
-        $key = null;
-        foreach ($response as $value) {
-            if (!is_null($key)) {
-                $result[$key] = $value;
-                $key = null;
-            } else {
-                $key = $value;
-            }
-        }
-
-        return $result;
+        return (int) $response;
     }
 }

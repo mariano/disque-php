@@ -43,8 +43,11 @@ class Client
 
         foreach ([
             'addjob' => Command\AddJob::class,
+            'deljob' => Command\DelJob::class,
+            'getjob' => Command\GetJob::class,
             'hello' => Command\Hello::class,
             'info' => Command\Info::class,
+            'qlen' => Command\QLen::class,
             'show' => Command\Show::class
         ] as $command => $handlerClass) {
             $this->registerCommand($command, $handlerClass);
@@ -115,7 +118,7 @@ class Client
         $class = $this->commandHandlers[$command];
         $command = new $class();
         $command->setArguments($arguments);
-        $response = $this->client->executeRaw(explode(' ', (string) $command));
+        $response = $this->client->executeRaw($command->build());
         return $command->parse($response);
     }
 }

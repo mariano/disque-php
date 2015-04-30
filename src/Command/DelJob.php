@@ -3,7 +3,7 @@ namespace Disque\Command;
 
 use Disque\Exception;
 
-class Show extends BaseCommand implements CommandInterface
+class DelJob extends BaseCommand implements CommandInterface
 {
     /**
      * Validate the given arguments
@@ -14,7 +14,7 @@ class Show extends BaseCommand implements CommandInterface
      */
     protected function validate(array $arguments)
     {
-        if (count($arguments) !== 1 || !isset($arguments[0])) {
+        if (empty($arguments)) {
             throw new Exception\InvalidCommandArgumentException($this, $arguments);
         }
     }
@@ -26,35 +26,21 @@ class Show extends BaseCommand implements CommandInterface
      */
     public function build()
     {
-        return ['SHOW', $this->arguments[0]];
+        return array_merge(['DELJOB'], $this->arguments);
     }
 
     /**
      * Parse response
      *
      * @param mixed $response Response
-     * @return mixed Parsed response
+     * @return int Number of jobs deleted
      * @throws Disque\Exception\InvalidCommandResponseException
      */
     public function parse($response)
     {
-        if ($response === false) {
-            return null;
-        } elseif (!is_array($response) || empty($response)) {
+        if (!is_numeric($response)) {
             throw new Exception\InvalidCommandResponseException($this, $response);
         }
-
-        $result = [];
-        $key = null;
-        foreach ($response as $value) {
-            if (!is_null($key)) {
-                $result[$key] = $value;
-                $key = null;
-            } else {
-                $key = $value;
-            }
-        }
-
-        return $result;
+        return (int) $response;
     }
 }

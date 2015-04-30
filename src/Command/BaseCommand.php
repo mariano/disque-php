@@ -6,6 +6,20 @@ use Disque\Exception;
 abstract class BaseCommand implements CommandInterface
 {
     /**
+     * Available command options
+     *
+     * @var array
+     */
+    protected $options = [];
+
+    /**
+     * Available command arguments, and their mapping to options
+     *
+     * @var array
+     */
+    protected $commandArguments = [];
+
+    /**
      * Command arguments
      *
      * @var array
@@ -20,7 +34,10 @@ abstract class BaseCommand implements CommandInterface
      */
     public function setArguments(array $arguments)
     {
-        $this->validate($arguments);
+        $result = $this->validate($arguments);
+        if (is_array($result)) {
+            $arguments = $result;
+        }
         $this->arguments = $arguments;
     }
 
@@ -28,6 +45,7 @@ abstract class BaseCommand implements CommandInterface
      * Validate the given arguments
      *
      * @param array $arguments Arguments
+     * @return array|null Modified arguments (null to leave as-is)
      * @throws Disque\Exception\InvalidCommandArgumentException
      */
     protected function validate(array $arguments)
@@ -47,5 +65,39 @@ abstract class BaseCommand implements CommandInterface
             throw new Exception\InvalidCommandResponseException($this, $response);
         }
         return (string) $response;
+    }
+
+    /**
+     * Return command as string
+     *
+     * @return string Command
+     */
+    public function __toString()
+    {
+        return implode(' ', $this->build());
+    }
+
+    /**
+     * Build command arguments out of options
+     *
+     * @param array $options Command options
+     * @return array Command arguments
+     */
+    protected function optionsToArguments(array $options)
+    {
+        $arguments = [];
+
+        foreach ($this->commandArguments as $argument => $option) {
+            if (!isset($options[$option]) || $options[$option] === false) {
+                continue;
+            }
+
+            $arguments[] = $argument;
+            if (!is_bool($options[$option])) {
+                $arguments[] = $options[$option];
+            }
+        }
+
+        return $arguments;
     }
 }

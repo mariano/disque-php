@@ -1,0 +1,113 @@
+<?php
+namespace Disque\Command;
+
+use Disque\Exception;
+
+class GetJob extends BaseCommand implements CommandInterface
+{
+    /**
+     * Available command options
+     *
+     * @var array
+     */
+    protected $options = [
+        'count' => null,
+        'timeout' => 0
+    ];
+
+    /**
+     * Available command arguments, and their mapping to options
+     *
+     * @var array
+     */
+    protected $commandArguments = [
+        'TIMEOUT' => 'timeout',
+        'COUNT' => 'count',
+    ];
+
+    /**
+     * Validate the given arguments
+     *
+     * @param array $arguments Arguments
+     * @return array|null Modified arguments (null to leave as-is)
+     * @throws Disque\Exception\InvalidCommandArgumentException
+     */
+    protected function validate(array $arguments)
+    {
+        $queues = [];
+        $options = [];
+        foreach ($arguments as $argument) {
+            if (!is_string($argument) && !is_array($argument)) {
+                throw new Exception\InvalidCommandArgumentException($this, $arguments);
+            } elseif (is_array($argument) && !empty($options)) {
+                throw new Exception\InvalidCommandArgumentException($this, $arguments);
+            } elseif (is_array($argument)) {
+                $options = $argument + $this->options;
+                if (
+                    (isset($options['count']) && !is_numeric($options['count'])) ||
+                    (isset($options['timeout']) && !is_numeric($options['timeout']))
+                ) {
+                    throw new Exception\InvalidCommandArgumentException($this, $arguments);
+                }
+                continue;
+            }
+            $queues[] = $argument;
+        }
+
+        if (empty($queues)) {
+            throw new Exception\InvalidCommandArgumentException($this, $arguments);
+        }
+
+        return compact('queues', 'options');
+    }
+
+    /**
+     * This command, with all its arguments, ready to be sent to Disque
+     *
+     * @return array Command (separated in parts)
+     */
+    public function build()
+    {
+        return array_merge(
+            ['GETJOB'],
+            $this->optionsToArguments($this->arguments['options']),
+            ['FROM'],
+            $this->arguments['queues']
+        );
+    }
+
+    /**
+     * Parse response
+     *
+     * @param mixed $response Response
+     * @return array Jobs (each with 'queue', 'id', 'body')
+     * @throws Disque\Exception\InvalidCommandResponseException
+     */
+    public function parse($response)
+    {
+        if (!is_array($response) || empty($response)) {
+            throw new Exception\InvalidCommandResponseException($this, $response);
+        }
+
+        $jobs = [];
+        foreach ($response as $job) {
+            if (
+                !is_array($job) ||
+                count($job) !== 3 ||
+                !isset($job[0]) ||
+                empty($job[1]) ||
+                empty($job[2])
+            ) {
+                throw new Exception\InvalidCommandResponseException($this, $response);
+            }
+
+            $jobs[] = [
+                'queue' => $job[0],
+                'id' => $job[1],
+                'body' => $job[2]
+            ];
+        }
+
+        return $jobs;
+    }
+}

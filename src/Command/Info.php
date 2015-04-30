@@ -6,10 +6,10 @@ class Info extends BaseCommand implements CommandInterface
     /**
      * This command, with all its arguments, ready to be sent to Disque
      *
-     * @return string Command for Disque
+     * @return array Command (separated in parts)
      */
-    public function __toString()
+    public function build()
     {
-        return 'INFO';
+        return ['INFO'];
     }
 }

@@ -5,7 +5,12 @@ use Disque\Exception;
 
 class AddJob extends BaseCommand implements CommandInterface
 {
-    private $options = [
+    /**
+     * Available command options
+     *
+     * @var array
+     */
+    protected $options = [
         'queue' => null,
         'job' => null,
         'timeout' => 0,
@@ -17,7 +22,12 @@ class AddJob extends BaseCommand implements CommandInterface
         'async' => false
     ];
 
-    private $commandArguments = [
+    /**
+     * Available command arguments, and their mapping to options
+     *
+     * @var array
+     */
+    protected $commandArguments = [
         'REPLICATE' => 'replicate',
         'DELAY' => 'delay',
         'RETRY' => 'retry',
@@ -30,6 +40,7 @@ class AddJob extends BaseCommand implements CommandInterface
      * Validate the given arguments
      *
      * @param array $arguments Arguments
+     * @return array|null Modified arguments (null to leave as-is)
      * @throws Disque\Exception\InvalidCommandArgumentException
      */
     protected function validate(array $arguments)
@@ -46,25 +57,15 @@ class AddJob extends BaseCommand implements CommandInterface
     /**
      * This command, with all its arguments, ready to be sent to Disque
      *
-     * @return string Command for Disque
+     * @return array Command (separated in parts)
      */
-    public function __toString()
+    public function build()
     {
         $options = $this->arguments[0] + $this->options;
-        $command = 'ADDJOB ' . $options['queue'] . ' ' . $options['job'] . ' ' . $options['timeout'];
-
-        foreach($this->commandArguments as $argument => $option) {
-            if (!isset($options[$option]) || $options[$option] === false) {
-                continue;
-            }
-
-            $command .= $argument;
-            if (!is_bool($options[$option])) {
-                $command .= ' ' . $options[$option];
-            }
-        }
-
-        return $command;
+        return array_merge(
+            ['ADDJOB', $options['queue'], $options['job'], $options['timeout']],
+            $this->optionsToArguments($options)
+        );
     }
 
     /**
