@@ -8,11 +8,11 @@ also known as [phpredis](https://github.com/phpredis/phpredis).
 
 ## Installation
 
-``bash
+```bash
 $ composer require mariano/disque-php --no-dev
-``
+```
 
-If you want to run its tests remove the ``--no-dev`` argument.
+If you want to run its tests remove the `--no-dev` argument.
 
 ## What's included
 
