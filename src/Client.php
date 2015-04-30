@@ -42,12 +42,17 @@ class Client
         $this->setPort($port);
 
         foreach ([
+            'ackjob' => Command\AckJob::class,
             'addjob' => Command\AddJob::class,
             'deljob' => Command\DelJob::class,
+            'dequeue' => Command\Dequeue::class,
+            'enqueue' => Command\Enqueue::class,
+            'fastack' => Command\FastAck::class,
             'getjob' => Command\GetJob::class,
             'hello' => Command\Hello::class,
             'info' => Command\Info::class,
             'qlen' => Command\QLen::class,
+            'qpeek' => Command\QPeek::class,
             'show' => Command\Show::class
         ] as $command => $handlerClass) {
             $this->registerCommand($command, $handlerClass);
