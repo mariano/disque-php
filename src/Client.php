@@ -2,9 +2,9 @@
 namespace Disque;
 
 use InvalidArgumentException;
-use Redis;
 use Disque\Command;
 use Disque\Exception;
+use Predis;
 
 class Client
 {
@@ -42,16 +42,13 @@ class Client
         $this->setPort($port);
 
         foreach ([
+            'addjob' => Command\AddJob::class,
             'hello' => Command\Hello::class,
-            'info' => Command\Info::class
+            'info' => Command\Info::class,
+            'show' => Command\Show::class
         ] as $command => $handlerClass) {
             $this->registerCommand($command, $handlerClass);
         }
-    }
-
-    public function __destruct()
-    {
-        $this->disconnect();
     }
 
     public function getHost()
@@ -87,18 +84,13 @@ class Client
         $host = $this->getHost();
         $port = $this->getPort();
 
-        $this->client = $this->getClient();
-        if (!$this->client->connect($host, $port)) {
-            throw new Exception\ConnectionException("Could not connect to Disque server at {$host}:{$port}");
-        }
+        $this->client = new Predis\Client([
+            'scheme' => 'tcp',
+            'host' => $host,
+            'port' => $port
+        ]);
 
         return $this->hello();
-    }
-
-    public function disconnect()
-    {
-        $this->client->close();
-        unset($this->client);
     }
 
     public function registerCommand($command, $handlerClass)
@@ -123,12 +115,7 @@ class Client
         $class = $this->commandHandlers[$command];
         $command = new $class();
         $command->setArguments($arguments);
-        $response = $this->client->rawCommand((string) $command);
+        $response = $this->client->executeRaw(explode(' ', (string) $command));
         return $command->parse($response);
-    }
-
-    protected function getClient()
-    {
-        return new Redis();
     }
 }

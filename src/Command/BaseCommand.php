@@ -1,6 +1,8 @@
 <?php
 namespace Disque\Command;
 
+use Disque\Exception;
+
 abstract class BaseCommand implements CommandInterface
 {
     /**
@@ -11,23 +13,25 @@ abstract class BaseCommand implements CommandInterface
     protected $arguments = [];
 
     /**
-     * Create new command with given arguments
-     *
-     * @param array $arguments Arguments
-     */
-    public function __construct(array $arguments = [])
-    {
-        $this->setArguments($arguments);
-    }
-
-    /**
      * Set arguments for command
      *
      * @param array $arguments Arguments
+     * @throws Disque\Exception\InvalidCommandArgumentException
      */
     public function setArguments(array $arguments)
     {
+        $this->validate($arguments);
         $this->arguments = $arguments;
+    }
+
+    /**
+     * Validate the given arguments
+     *
+     * @param array $arguments Arguments
+     * @throws Disque\Exception\InvalidCommandArgumentException
+     */
+    protected function validate(array $arguments)
+    {
     }
 
     /**

@@ -1,8 +1,6 @@
 <?php
 namespace Disque\Command;
 
-use Disque\Exception;
-
 class Info extends BaseCommand implements CommandInterface
 {
     /**

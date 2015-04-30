@@ -3,8 +3,8 @@
 A PHP library for the very promising [disque](https://github.com/antirez/disque)
 distributed job queue.
 
-disque-php uses the [redis](https://pecl.php.net/package/redis) PECL extension,
-also known as [phpredis](https://github.com/phpredis/phpredis).
+disque-php uses the [predis](https://github.com/nrk/predis) package. The [phpredis](https://github.com/phpredis/phpredis)
+PECL extension is not yet ready to run the raw commands needed by Disque.
 
 ## Installation
 
@@ -25,8 +25,8 @@ Disque commands currently supported:
 
 - [x] HELLO
 - [x] INFO
-- [ ] SHOW
-- [ ] ADDJOB
+- [x] SHOW
+- [x] ADDJOB
 - [ ] DELJOB
 - [ ] GETJOB
 - [ ] ACKJOB

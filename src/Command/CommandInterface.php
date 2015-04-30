@@ -14,6 +14,7 @@ interface CommandInterface
      * Set arguments for command
      *
      * @param array $arguments Arguments
+     * @throws Disque\Exception\InvalidCommandArgumentException
      */
     public function setArguments(array $arguments);
 
