@@ -35,6 +35,47 @@ Disque commands currently supported:
 - [x] DEQUEUE
 - [x] QLEN
 - [x] QPEEK
+- [ ] Pool connections based on nodes returned by `connect()`
+- [ ] `QSTAT`, `SCAN` when they are implemented upstream
+
+## Usage
+
+Start by creating an instance of `Disque\Client`, and connecting to a given
+server. If no `$host` or `$port` when creating the instance, it is assumed
+`127.0.0.1` and `7711` respectively:
+
+```php
+$client = \Disque\Client('127.0.0.1', 7711);
+try {
+    $result = $client->connect();
+    var_dump($result);
+} catch (\Disque\Exception\ConnectionException $e) {
+    die($e->getMessage());
+}
+```
+
+The above `connect()` call will return an output similar to the following:
+
+```
+[
+    'version' => 1,
+    'id' => "7eff078744b72d24d9ab71db1fb600c48cf7ec2f",
+    'nodes' => [
+        [
+            'id' => "7eff078744b72d24d9ab71db1fb600c48cf7ec2f",
+            'host' => "127.0.0.1",
+            'port' => "7711",
+            'version' => "1"
+        ],
+        [
+            'id' => "d8f6333f5386bae67a216e0365ea09323eadc127",
+            'host' => "127.0.0.1",
+            'port' => "7712",
+            'version' => "1"
+        ],
+    ]
+]
+```
 
 ## License
 
