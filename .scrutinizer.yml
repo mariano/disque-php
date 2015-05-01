@@ -1,7 +1,5 @@
 filter:
     excluded_paths: [vendor/*, tests/*]
-before_commands:
-    - 'composer install --no-interaction --prefer-source'
 checks:
     php:
         remove_extra_empty_lines: true
