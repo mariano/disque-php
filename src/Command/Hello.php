@@ -28,20 +28,13 @@ class Hello extends BaseCommand implements CommandInterface
      */
     public function parse($response)
     {
-        if (
-            !is_array($response) ||
-            empty($response) || count($response) < 3 ||
-            empty($response[0]) || empty($response[1]) || empty($response[2])
-        ) {
+        if (!$this->checkFixedArray($response, 3, true)) {
             throw new Exception\InvalidCommandResponseException($this, $response);
         }
 
         $nodes = [];
         foreach (array_slice($response, 2) as $node) {
-            if (
-                !is_array($node) || count($node) !== 4 || empty($node[0]) ||
-                !isset($node[1]) || !isset($node[2]) || empty($node[3])
-            ) {
+            if (!$this->checkFixedArray($node, 4)) {
                 throw new Exception\InvalidCommandResponseException($this, $response);
             }
 

@@ -44,11 +44,9 @@ class AddJob extends BaseCommand implements CommandInterface
      */
     public function build(array $arguments)
     {
-        if (count($arguments) !== 1 || !isset($arguments[0])) {
+        if (!$this->checkFixedArray($arguments, 1)) {
             throw new Exception\InvalidCommandArgumentException($this, $arguments);
-        }
-
-        if (!isset($arguments[0]['queue']) || !isset($arguments[0]['job'])) {
+        } elseif (!isset($arguments[0]['queue']) || !isset($arguments[0]['job'])) {
             throw new Exception\InvalidCommandArgumentException($this, $arguments[0]);
         }
 
@@ -71,7 +69,6 @@ class AddJob extends BaseCommand implements CommandInterface
         if ($response === false) {
             return null;
         }
-
         return (string) $response;
     }
 }

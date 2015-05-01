@@ -13,16 +13,9 @@ class QPeek extends BaseCommand implements CommandInterface
      */
     public function build(array $arguments)
     {
-        if (
-            empty($arguments) ||
-            count($arguments) !== 2 ||
-            !isset($arguments[0]) ||
-            !isset($arguments[1]) ||
-            !is_int($arguments[1])
-        ) {
+        if (!$this->checkFixedArray($arguments, 2) || !is_int($arguments[1])) {
             throw new Exception\InvalidCommandArgumentException($this, $arguments);
         }
-
         return ['QPEEK', $arguments[0], (int) $arguments[1]];
     }
 
@@ -41,12 +34,7 @@ class QPeek extends BaseCommand implements CommandInterface
 
         $jobs = [];
         foreach ($response as $job) {
-            if (
-                !is_array($job) ||
-                count($job) !== 2 ||
-                !isset($job[0]) ||
-                empty($job[1])
-            ) {
+            if (!$this->checkFixedArray($job, 2)) {
                 throw new Exception\InvalidCommandResponseException($this, $response);
             }
 

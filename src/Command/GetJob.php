@@ -80,13 +80,7 @@ class GetJob extends BaseCommand implements CommandInterface
 
         $jobs = [];
         foreach ($response as $job) {
-            if (
-                !is_array($job) ||
-                count($job) !== 3 ||
-                !isset($job[0]) ||
-                empty($job[1]) ||
-                empty($job[2])
-            ) {
+            if (!$this->checkFixedArray($job, 3)) {
                 throw new Exception\InvalidCommandResponseException($this, $response);
             }
 
