@@ -1,5 +1,5 @@
 <?php
-namespace Test\Command;
+namespace Disque\Test\Command;
 
 use PHPUnit_Framework_TestCase;
 use Disque\Command\CommandInterface;

@@ -2,7 +2,7 @@
 
 All Notable changes to `disque-php` will be documented in this file
 
-## 0.1.0 - TO BE RELEASED
+## 1.0 - TO BE RELEASED
 
 ### Added
 - Added support for commands `HELLO`, `INFO`, `SHOW`, `ADDJOB`, `DELJOB`, 

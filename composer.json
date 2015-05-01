@@ -1,20 +1,19 @@
 {
     "name": "mariano/disque-php",
-    "version": "0.1.0",
-    "minimum-stability": "stable",
     "description": "PHP library for Disque, an in-memory, distributed job queue",
-    "homepage": "https://github.com/mariano/disque-php",
     "type": "library",
     "keywords": [
         "disque",
         "job",
         "queue"
     ],
+    "homepage": "https://github.com/mariano/disque-php",
     "license": "MIT",
     "authors": [
         {
             "name": "Mariano Iglesias",
-            "email": "mgiglesias@gmail.com"
+            "email": "mgiglesias@gmail.com",
+            "homepage": "http://marianoiglesias.com.ar"
         }
     ],
     "support": {
@@ -27,11 +26,22 @@
         "predis/predis": "~1.0"
     },
     "require-dev": {
-        "phpunit/phpunit": "~4.6"
+        "phpunit/phpunit": "~4.6",
+        "scrutinizer/ocular": "~1.1"
     },
     "autoload": {
         "psr-4": {
             "Disque\\": "src/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "Disque\\Test\\": "tests/"
+        }
+    },
+    "extra": {
+        "branch-alias": {
+            "dev-master": "1.0-dev"
         }
     }
 }
