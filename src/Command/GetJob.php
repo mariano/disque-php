@@ -3,7 +3,7 @@ namespace Disque\Command;
 
 use Disque\Exception;
 
-class GetJob extends BaseCommand implements CommandInterface
+class GetJob extends BaseJobFetcherCommand implements CommandInterface
 {
     /**
      * Available command options
@@ -66,31 +66,12 @@ class GetJob extends BaseCommand implements CommandInterface
     }
 
     /**
-     * Parse response
+     * Get the job details provided in the response
      *
-     * @param mixed $response Response
-     * @return array Jobs (each with 'queue', 'id', 'body')
-     * @throws Disque\Exception\InvalidCommandResponseException
+     * @return array Job detail fields
      */
-    public function parse($response)
+    protected function getJobDetails()
     {
-        if (!is_array($response) || empty($response)) {
-            throw new Exception\InvalidCommandResponseException($this, $response);
-        }
-
-        $jobs = [];
-        foreach ($response as $job) {
-            if (!$this->checkFixedArray($job, 3)) {
-                throw new Exception\InvalidCommandResponseException($this, $response);
-            }
-
-            $jobs[] = [
-                'queue' => $job[0],
-                'id' => $job[1],
-                'body' => $job[2]
-            ];
-        }
-
-        return $jobs;
+        return ['queue', 'id', 'body'];
     }
 }

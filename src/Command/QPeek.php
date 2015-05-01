@@ -3,7 +3,7 @@ namespace Disque\Command;
 
 use Disque\Exception;
 
-class QPeek extends BaseCommand implements CommandInterface
+class QPeek extends BaseJobFetcherCommand implements CommandInterface
 {
     /**
      * This command, with all its arguments, ready to be sent to Disque
@@ -20,30 +20,12 @@ class QPeek extends BaseCommand implements CommandInterface
     }
 
     /**
-     * Parse response
+     * Get the job details provided in the response
      *
-     * @param mixed $response Response
-     * @return array Jobs (each with 'id', 'body')
-     * @throws Disque\Exception\InvalidCommandResponseException
+     * @return array Job detail fields
      */
-    public function parse($response)
+    protected function getJobDetails()
     {
-        if (!is_array($response) || empty($response)) {
-            throw new Exception\InvalidCommandResponseException($this, $response);
-        }
-
-        $jobs = [];
-        foreach ($response as $job) {
-            if (!$this->checkFixedArray($job, 2)) {
-                throw new Exception\InvalidCommandResponseException($this, $response);
-            }
-
-            $jobs[] = [
-                'id' => $job[0],
-                'body' => $job[1]
-            ];
-        }
-
-        return $jobs;
+        return ['id', 'body'];
     }
 }
