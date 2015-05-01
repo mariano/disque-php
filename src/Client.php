@@ -34,7 +34,7 @@ class Client
      *
      * @var array
      */
-    private $commandHandlers = [];
+    private $commands = [];
 
     public function __construct($host = '127.0.0.1', $port = 7711)
     {
@@ -55,7 +55,7 @@ class Client
             'qpeek' => Command\QPeek::class,
             'show' => Command\Show::class
         ] as $command => $handlerClass) {
-            $this->registerCommand($command, $handlerClass);
+            $this->registerCommand($command, new $handlerClass());
         }
     }
 
@@ -101,13 +101,9 @@ class Client
         return $this->hello();
     }
 
-    public function registerCommand($command, $handlerClass)
+    public function registerCommand($command, Command\CommandInterface $handler)
     {
-        if (!class_exists($handlerClass) || !in_array(Command\CommandInterface::class, class_implements($handlerClass))) {
-            throw new InvalidArgumentException("Command handler class {$handlerClass} does not exist, or does not implement CommandInterface");
-        }
-
-        $this->commandHandlers[mb_strtolower($command)] = $handlerClass;
+        $this->commands[mb_strtolower($command)] = $handler;
     }
 
     /**
@@ -116,14 +112,12 @@ class Client
     public function __call($command, array $arguments)
     {
         $command = mb_strtolower($command);
-        if (!isset($this->commandHandlers[$command])) {
+        if (!isset($this->commands[$command])) {
             throw new Exception\InvalidCommandException($command);
         }
 
-        $class = $this->commandHandlers[$command];
-        $command = new $class();
-        $command->setArguments($arguments);
-        $response = $this->client->executeRaw($command->build());
+        $command = $this->commands[$command];
+        $response = $this->client->executeRaw($command->build($arguments));
         return $command->parse($response);
     }
 }

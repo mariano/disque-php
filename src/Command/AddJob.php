@@ -37,13 +37,12 @@ class AddJob extends BaseCommand implements CommandInterface
     ];
 
     /**
-     * Validate the given arguments
+     * This command, with all its arguments, ready to be sent to Disque
      *
      * @param array $arguments Arguments
-     * @return array|null Modified arguments (null to leave as-is)
-     * @throws Disque\Exception\InvalidCommandArgumentException
+     * @return array Command (separated in parts)
      */
-    protected function validate(array $arguments)
+    public function build(array $arguments)
     {
         if (count($arguments) !== 1 || !isset($arguments[0])) {
             throw new Exception\InvalidCommandArgumentException($this, $arguments);
@@ -52,19 +51,11 @@ class AddJob extends BaseCommand implements CommandInterface
         if (!isset($arguments[0]['queue']) || !isset($arguments[0]['job'])) {
             throw new Exception\InvalidCommandArgumentException($this, $arguments[0]);
         }
-    }
 
-    /**
-     * This command, with all its arguments, ready to be sent to Disque
-     *
-     * @return array Command (separated in parts)
-     */
-    public function build()
-    {
-        $options = $this->arguments[0] + $this->options;
+        $options = $arguments[0] + $this->options;
         return array_merge(
             ['ADDJOB', $options['queue'], $options['job'], $options['timeout']],
-            $this->optionsToArguments($options)
+            $this->toArguments($options)
         );
     }
 

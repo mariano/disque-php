@@ -17,40 +17,7 @@ abstract class BaseCommand implements CommandInterface
      *
      * @var array
      */
-    protected $commandArguments = [];
-
-    /**
-     * Command arguments
-     *
-     * @var array
-     */
     protected $arguments = [];
-
-    /**
-     * Set arguments for command
-     *
-     * @param array $arguments Arguments
-     * @throws Disque\Exception\InvalidCommandArgumentException
-     */
-    public function setArguments(array $arguments)
-    {
-        $result = $this->validate($arguments);
-        if (is_array($result)) {
-            $arguments = $result;
-        }
-        $this->arguments = $arguments;
-    }
-
-    /**
-     * Validate the given arguments
-     *
-     * @param array $arguments Arguments
-     * @return array|null Modified arguments (null to leave as-is)
-     * @throws Disque\Exception\InvalidCommandArgumentException
-     */
-    protected function validate(array $arguments)
-    {
-    }
 
     /**
      * Parse response
@@ -68,26 +35,16 @@ abstract class BaseCommand implements CommandInterface
     }
 
     /**
-     * Return command as string
-     *
-     * @return string Command
-     */
-    public function __toString()
-    {
-        return implode(' ', $this->build());
-    }
-
-    /**
      * Build command arguments out of options
      *
      * @param array $options Command options
      * @return array Command arguments
      */
-    protected function optionsToArguments(array $options)
+    protected function toArguments(array $options)
     {
         $arguments = [];
 
-        foreach ($this->commandArguments as $argument => $option) {
+        foreach ($this->arguments as $argument => $option) {
             if (!isset($options[$option]) || $options[$option] === false) {
                 continue;
             }

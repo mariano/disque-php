@@ -8,10 +8,14 @@ class Hello extends BaseCommand implements CommandInterface
     /**
      * This command, with all its arguments, ready to be sent to Disque
      *
+     * @param array $arguments Arguments
      * @return array Command (separated in parts)
      */
-    public function build()
+    public function build(array $arguments)
     {
+        if (!empty($arguments)) {
+            throw new Exception\InvalidCommandArgumentException($this, $arguments);
+        }
         return ['HELLO'];
     }
 
@@ -35,8 +39,8 @@ class Hello extends BaseCommand implements CommandInterface
         $nodes = [];
         foreach (array_slice($response, 2) as $node) {
             if (
-                count($node) !== 4 || empty($node[0]) || !isset($node[1]) ||
-                !isset($node[2]) || empty($node[3])
+                !is_array($node) || count($node) !== 4 || empty($node[0]) ||
+                !isset($node[1]) || !isset($node[2]) || empty($node[3])
             ) {
                 throw new Exception\InvalidCommandResponseException($this, $response);
             }

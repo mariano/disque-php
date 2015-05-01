@@ -6,26 +6,18 @@ use Disque\Exception;
 class QLen extends BaseCommand implements CommandInterface
 {
     /**
-     * Validate the given arguments
-     *
-     * @param array $arguments Arguments
-     * @throws Disque\Exception\InvalidCommandArgumentException
-     */
-    protected function validate(array $arguments)
-    {
-        if (count($arguments) !== 1 || !isset($arguments[0])) {
-            throw new Exception\InvalidCommandArgumentException($this, $arguments);
-        }
-    }
-
-    /**
      * This command, with all its arguments, ready to be sent to Disque
      *
+     * @param array $arguments Arguments
      * @return array Command (separated in parts)
      */
-    public function build()
+    public function build(array $arguments)
     {
-        return ['QLEN', $this->arguments[0]];
+        if (count($arguments) !== 1 || !isset($arguments[0]) || !is_string($arguments[0])) {
+            throw new Exception\InvalidCommandArgumentException($this, $arguments);
+        }
+
+        return ['QLEN', $arguments[0]];
     }
 
     /**

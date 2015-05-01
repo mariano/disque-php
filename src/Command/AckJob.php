@@ -6,27 +6,18 @@ use Disque\Exception;
 class AckJob extends BaseCommand implements CommandInterface
 {
     /**
-     * Validate the given arguments
+     * This command, with all its arguments, ready to be sent to Disque
      *
      * @param array $arguments Arguments
-     * @return array|null Modified arguments (null to leave as-is)
-     * @throws Disque\Exception\InvalidCommandArgumentException
+     * @return array Command (separated in parts)
      */
-    protected function validate(array $arguments)
+    public function build(array $arguments)
     {
         if (empty($arguments)) {
             throw new Exception\InvalidCommandArgumentException($this, $arguments);
         }
-    }
 
-    /**
-     * This command, with all its arguments, ready to be sent to Disque
-     *
-     * @return array Command (separated in parts)
-     */
-    public function build()
-    {
-        return array_merge(['ACKJOB'], $this->arguments);
+        return array_merge(['ACKJOB'], $arguments);
     }
 
     /**
