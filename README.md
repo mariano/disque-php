@@ -5,7 +5,7 @@
 [![Build Status](https://img.shields.io/travis/mariano/disque-php/master.svg?style=flat-square)](https://travis-ci.org/mariano/disque-php)
 [![Coverage Status](https://img.shields.io/scrutinizer/coverage/g/mariano/disque-php.svg?style=flat-square)](https://scrutinizer-ci.com/g/mariano/disque-php/code-structure)
 [![Quality Score](https://img.shields.io/scrutinizer/g/mariano/disque-php.svg?style=flat-square)](https://scrutinizer-ci.com/g/mariano/disque-php)
-[![Total Downloads](https://img.shields.io/packagist/dt/league/disque-php.svg?style=flat-square)](https://packagist.org/packages/league/disque-php)
+[![Total Downloads](https://img.shields.io/packagist/dt/mariano/disque-php.svg?style=flat-square)](https://packagist.org/packages/mariano/disque-php)
 
 A PHP library for the very promising [disque](https://github.com/antirez/disque)
 distributed job queue.
