@@ -1,3 +1,4 @@
 *.sw[op]
 /build/
+/composer.lock
 /vendor/
