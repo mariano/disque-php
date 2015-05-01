@@ -6,6 +6,20 @@ use Disque\Command;
 use Disque\Exception;
 use Predis;
 
+/**
+ * @method int ackjob(string... $ids)
+ * @method string addjob(array $job)
+ * @method int deljob(string... $ids)
+ * @method int dequeue(string... $ids)
+ * @method int enqueue(string... $ids)
+ * @method int fastack(string... $ids)
+ * @method array getjob(string... $queues, array $options)
+ * @method array hello()
+ * @method string info()
+ * @method int qlen(string $queue)
+ * @method array qpeek(string $queue, int $count)
+ * @method array show(string $id)
+ */
 class Client
 {
     /**
@@ -25,7 +39,7 @@ class Client
     /**
      * Client (phpredis)
      *
-     * @var Redis
+     * @var Predis\Client
      */
     private $client;
 
@@ -76,7 +90,7 @@ class Client
 
     public function setPort($port)
     {
-        if (!is_numeric($port)) {
+        if (!is_int($port)) {
             throw new InvalidArgumentException("Invalid port: {$port}");
         }
         $this->port = $port;

@@ -18,7 +18,7 @@ class QPeek extends BaseCommand implements CommandInterface
             count($arguments) !== 2 ||
             !isset($arguments[0]) ||
             !isset($arguments[1]) ||
-            !is_numeric($arguments[1])
+            !is_int($arguments[1])
         ) {
             throw new Exception\InvalidCommandArgumentException($this, $arguments);
         }

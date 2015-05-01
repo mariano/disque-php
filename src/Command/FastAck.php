@@ -16,7 +16,6 @@ class FastAck extends BaseCommand implements CommandInterface
         if (empty($arguments)) {
             throw new Exception\InvalidCommandArgumentException($this, $arguments);
         }
-
         return array_merge(['FASTACK'], $arguments);
     }
 

@@ -24,7 +24,7 @@ class Show extends BaseCommand implements CommandInterface
      * Parse response
      *
      * @param mixed $response Response
-     * @return mixed Parsed response
+     * @return array Parsed response
      * @throws Disque\Exception\InvalidCommandResponseException
      */
     public function parse($response)
