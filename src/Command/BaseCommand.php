@@ -40,19 +40,31 @@ abstract class BaseCommand implements CommandInterface
      *
      * @param array $options Command options
      * @return array Command arguments
+     * @throws Disque\Exception\InvalidCommandOptionException
      */
     protected function toArguments(array $options)
     {
-        $arguments = [];
+        if (empty($options)) {
+            return [];
+        } elseif (!empty(array_diff_key($options, $this->arguments))) {
+            throw new Exception\InvalidCommandOptionException($this, $options);
+        }
 
-        foreach ($this->arguments as $argument => $option) {
-            if (!isset($options[$option]) || $options[$option] === false) {
+        $options += $this->options;
+        $arguments = [];
+        foreach ($this->arguments as $option => $argument) {
+            if (!isset($options[$option])) {
+                continue;
+            }
+
+            $value = $options[$option];
+            if (is_null($value) || $value === false) {
                 continue;
             }
 
             $arguments[] = $argument;
-            if (!is_bool($options[$option])) {
-                $arguments[] = $options[$option];
+            if (!is_bool($value)) {
+                $arguments[] = $value;
             }
         }
 

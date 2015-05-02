@@ -12,7 +12,7 @@ class GetJob extends BaseJobFetcherCommand implements CommandInterface
      */
     protected $options = [
         'count' => null,
-        'timeout' => 0
+        'timeout' => null
     ];
 
     /**
@@ -20,9 +20,9 @@ class GetJob extends BaseJobFetcherCommand implements CommandInterface
      *
      * @var array
      */
-    protected $commandArguments = [
-        'TIMEOUT' => 'timeout',
-        'COUNT' => 'count',
+    protected $arguments = [
+        'timeout' => 'TIMEOUT',
+        'count' => 'COUNT',
     ];
 
     /**
@@ -33,22 +33,27 @@ class GetJob extends BaseJobFetcherCommand implements CommandInterface
      */
     public function build(array $arguments)
     {
-        $queues = [];
         $options = [];
+        $last = end($arguments);
+        if (is_array($last)) {
+            $options = $last;
+            $arguments = array_slice($arguments, 0, -1);
+
+            if (
+                (isset($options['count']) && !is_int($options['count'])) ||
+                (isset($options['timeout']) && !is_int($options['timeout']))
+            ) {
+                throw new Exception\InvalidCommandOptionException($this, $last);
+            }
+
+            $options = $this->toArguments($options);
+        }
+
+        $queues = [];
+        reset($arguments);
         foreach ($arguments as $argument) {
-            if (!is_string($argument) && !is_array($argument)) {
+            if (!is_string($argument)) {
                 throw new Exception\InvalidCommandArgumentException($this, $arguments);
-            } elseif (is_array($argument) && !empty($options)) {
-                throw new Exception\InvalidCommandArgumentException($this, $arguments);
-            } elseif (is_array($argument)) {
-                $options = $argument + $this->options;
-                if (
-                    (isset($options['count']) && !is_numeric($options['count'])) ||
-                    (isset($options['timeout']) && !is_numeric($options['timeout']))
-                ) {
-                    throw new Exception\InvalidCommandArgumentException($this, $arguments);
-                }
-                continue;
             }
             $queues[] = $argument;
         }
@@ -57,12 +62,7 @@ class GetJob extends BaseJobFetcherCommand implements CommandInterface
             throw new Exception\InvalidCommandArgumentException($this, $arguments);
         }
 
-        return array_merge(
-            ['GETJOB'],
-            $this->toArguments($options),
-            ['FROM'],
-            $queues
-        );
+        return array_merge(['GETJOB'], $options, ['FROM'], $queues);
     }
 
     /**

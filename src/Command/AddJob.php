@@ -11,8 +11,6 @@ class AddJob extends BaseCommand implements CommandInterface
      * @var array
      */
     protected $options = [
-        'queue' => null,
-        'job' => null,
         'timeout' => 0,
         'replicate' => null,
         'delay' => null,
@@ -27,13 +25,13 @@ class AddJob extends BaseCommand implements CommandInterface
      *
      * @var array
      */
-    protected $commandArguments = [
-        'REPLICATE' => 'replicate',
-        'DELAY' => 'delay',
-        'RETRY' => 'retry',
-        'TTL' => 'ttl',
-        'MAXLEN' => 'maxlen',
-        'ASYNC' => 'async'
+    protected $arguments = [
+        'replicate' => 'REPLICATE',
+        'delay' => 'DELAY',
+        'retry' => 'RETRY',
+        'ttl' => 'TTL',
+        'maxlen' => 'MAXLEN',
+        'async' => 'ASYNC'
     ];
 
     /**
@@ -44,16 +42,25 @@ class AddJob extends BaseCommand implements CommandInterface
      */
     public function build(array $arguments)
     {
-        if (!$this->checkFixedArray($arguments, 1)) {
+        $count = count($arguments);
+        if (!$this->checkFixedArray($arguments, 2, true) || $count > 3) {
             throw new Exception\InvalidCommandArgumentException($this, $arguments);
-        } elseif (!isset($arguments[0]['queue']) || !isset($arguments[0]['job'])) {
-            throw new Exception\InvalidCommandArgumentException($this, $arguments[0]);
+        } elseif (!is_string($arguments[0]) || !is_string($arguments[1])) {
+            throw new Exception\InvalidCommandArgumentException($this, $arguments);
+        } elseif ($count === 3 && (!isset($arguments[2]) || !is_array($arguments[2]) || empty($arguments[2]))) {
+            throw new Exception\InvalidCommandArgumentException($this, $arguments);
         }
 
-        $options = $arguments[0] + $this->options;
+        $options = (!empty($arguments[2]) ? $arguments[2] : []) + ['timeout' => $this->options['timeout']];
+        foreach (['timeout', 'replicate', 'delay', 'retry', 'ttl', 'maxlen'] as $intOption) {
+            if (isset($options[$intOption]) && !is_int($options[$intOption])) {
+                throw new Exception\InvalidCommandOptionException($this, $arguments[2]);
+            }
+        }
+
         return array_merge(
-            ['ADDJOB', $options['queue'], $options['job'], $options['timeout']],
-            $this->toArguments($options)
+            ['ADDJOB', $arguments[0], $arguments[1], $options['timeout']],
+            $this->toArguments(array_diff_key($options, ['timeout'=>null]))
         );
     }
 
@@ -68,6 +75,8 @@ class AddJob extends BaseCommand implements CommandInterface
     {
         if ($response === false) {
             return null;
+        } elseif (!is_string($response)) {
+            throw new Exception\InvalidCommandResponseException($this, $response);
         }
         return (string) $response;
     }
