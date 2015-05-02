@@ -54,7 +54,7 @@ class AddJob extends BaseCommand implements CommandInterface
         $options = (!empty($arguments[2]) ? $arguments[2] : []) + ['timeout' => $this->options['timeout']];
         foreach (['timeout', 'replicate', 'delay', 'retry', 'ttl', 'maxlen'] as $intOption) {
             if (isset($options[$intOption]) && !is_int($options[$intOption])) {
-                throw new Exception\InvalidCommandOptionException($this, $arguments[2]);
+                throw new Exception\InvalidCommandOptionException($this, (array) $arguments[2]);
             }
         }
 

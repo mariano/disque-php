@@ -24,6 +24,12 @@ abstract class BaseJobModifierCommand extends BaseCommand implements CommandInte
             throw new Exception\InvalidCommandArgumentException($this, $arguments);
         }
 
+        foreach ($arguments as $argument) {
+            if (!is_string($argument) || $argument === '') {
+                throw new Exception\InvalidCommandArgumentException($this, $arguments);
+            }
+        }
+
         return array_merge([$this->getCommand()], $arguments);
     }
 
