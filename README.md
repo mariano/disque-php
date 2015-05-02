@@ -10,6 +10,11 @@
 A PHP library for the very promising [disque](https://github.com/antirez/disque)
 distributed job queue.
 
+disque-php is in an ultra-development status. It can't get no more Alpha than
+where it's currently at, so do not use in production. There's still a lot to
+be done, and a lot of its API may suddenly change, without any prior notice
+other than a commit message.
+
 disque-php uses the [predis](https://github.com/nrk/predis) package. The [phpredis](https://github.com/phpredis/phpredis)
 PECL extension is not yet ready to run the raw commands needed by Disque.
 
@@ -83,13 +88,6 @@ If you discover any security related issues, please contact [@mgiglesias](https:
 instead of using the issue tracker.
 
 ## TODO
-
-disque-php is in an ultra-development status. It can't get no more Alpha than
-where it's currently at, so do not use in production. There's still a lot to
-be done, and a lot of its API may suddenly change, without any prior notice
-other than a commit message.
-
-Disque commands currently supported:
 
 - [x] HELLO
 - [x] INFO
