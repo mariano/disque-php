@@ -9,7 +9,7 @@ class Predis extends BaseConnection implements ConnectionInterface
     /**
      * Client
      *
-     * @var Predis\Client
+     * @var \Predis\Client
      */
     private $client;
 

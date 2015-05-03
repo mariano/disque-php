@@ -10,16 +10,16 @@ class QPeek extends BaseJobFetcherCommand implements CommandInterface
      *
      * @param array $arguments Arguments
      * @return array Command (separated in parts)
+     * @throws Disque\Exception\InvalidCommandArgumentException
      */
     public function build(array $arguments)
     {
-        if (
-            !$this->checkFixedArray($arguments, 2) ||
-            !is_string($arguments[0]) || !is_int($arguments[1])
-        ) {
+        $command = $this->buildStringArgument('QPEEK', $arguments, 2);
+        if (!is_int($arguments[1])) {
             throw new Exception\InvalidCommandArgumentException($this, $arguments);
         }
-        return ['QPEEK', $arguments[0], (int) $arguments[1]];
+        $command[] = (int) $arguments[1];
+        return $command;
     }
 
     /**

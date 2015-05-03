@@ -23,12 +23,15 @@ abstract class BaseCommand implements CommandInterface
     /**
      * This command, with all its arguments, ready to be sent to Disque
      *
+     * @param string $command Command
      * @param array $arguments Arguments
+     * @param int $numberOfElements Number of elements that must be present in $arguments
      * @return array Command (separated in parts)
+     * @throws Disque\Exception\InvalidCommandArgumentException
      */
-    protected function buildStringArgument($command, array $arguments)
+    protected function buildStringArgument($command, array $arguments, $numberOfElements = 1)
     {
-        if (!$this->checkFixedArray($arguments, 1) || !is_string($arguments[0])) {
+        if (!$this->checkFixedArray($arguments, $numberOfElements) || !is_string($arguments[0])) {
             throw new Exception\InvalidCommandArgumentException($this, $arguments);
         }
         return [$command, $arguments[0]];
