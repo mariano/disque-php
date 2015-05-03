@@ -10,13 +10,13 @@
 A PHP library for the very promising [disque](https://github.com/antirez/disque)
 distributed job queue. Features:
 
-[x] Support for multi-node connection
-[x] Zero external dependencies: Fast connection to Disque out-of-the-box
-[x] Allow for existing Redis clients to be used for connection
-[x] Allow extending the list of Disque commands supported
-[x] Support for both PHP (5.5+) and HHVM
-[ ] Fully unit tested (getting there!)
-[ ] Smart node connection algorithm when fetching jobs
+* Support for multi-node connection
+* Zero external dependencies: Fast connection to Disque out-of-the-box
+* Allow for existing Redis clients to be used for connection
+* Allow extending the list of Disque commands supported
+* Support for both PHP (5.5+) and HHVM
+* Fully unit tested (getting there!)
+* Smart node connection algorithm when fetching jobs
 
 This package supports PHP 5.5+, and HHVM. Out of the box it has no library
 requirements. However existing Redis libraries (such as [predis](https://github.com/nrk/predis))
