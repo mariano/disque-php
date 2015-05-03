@@ -2,7 +2,6 @@
 namespace Disque\Connection;
 
 use Disque\Command\CommandInterface;
-use Disque\Connection\Exception\ConnectionException;
 use Disque\Connection\Exception\ResponseException;
 use Predis\Client as PredisClient;
 
@@ -19,7 +18,6 @@ class Predis extends BaseConnection implements ConnectionInterface
      * Connect
      *
      * @param array $options Connection options
-     * @throws Disque\Connection\Exception\ConnectionException
      */
     public function connect(array $options = [])
     {
@@ -58,9 +56,8 @@ class Predis extends BaseConnection implements ConnectionInterface
     /**
      * Execute command, and get response
      *
-     * @param Disque\Command\CommandInterface $command
+     * @param CommandInterface $command
      * @return mixed Response
-     * @throws Disque\Connection\Exception\ConnectionException
      */
     public function execute(CommandInterface $command, array $arguments = [])
     {

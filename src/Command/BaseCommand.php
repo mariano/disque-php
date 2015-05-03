@@ -21,6 +21,20 @@ abstract class BaseCommand implements CommandInterface
     protected $arguments = [];
 
     /**
+     * This command, with all its arguments, ready to be sent to Disque
+     *
+     * @param array $arguments Arguments
+     * @return array Command (separated in parts)
+     */
+    protected function buildStringArgument($command, array $arguments)
+    {
+        if (!$this->checkFixedArray($arguments, 1) || !is_string($arguments[0])) {
+            throw new Exception\InvalidCommandArgumentException($this, $arguments);
+        }
+        return [$command, $arguments[0]];
+    }
+
+    /**
      * Parse response
      *
      * @param mixed $response Response

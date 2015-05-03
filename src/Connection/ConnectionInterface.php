@@ -10,6 +10,7 @@ interface ConnectionInterface
      * Set host
      *
      * @param string $host Host
+     * @return void
      */
     public function setHost($host);
 
@@ -17,6 +18,7 @@ interface ConnectionInterface
      * Set port
      *
      * @param int $port Port
+     * @return void
      */
     public function setPort($port);
 
@@ -24,12 +26,15 @@ interface ConnectionInterface
      * Connect
      *
      * @param array $options Connection options
+     * @return void
      * @throws Disque\Connection\Exception\ConnectionException
      */
     public function connect();
 
     /**
      * Disconnect
+     *
+     * @return void
      */
     public function disconnect();
 

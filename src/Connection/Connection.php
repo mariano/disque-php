@@ -72,7 +72,7 @@ class Connection extends BaseConnection implements ConnectionInterface
     /**
      * Execute command, and get response
      *
-     * @param Disque\Command\CommandInterface $command
+     * @param CommandInterface $command
      * @return mixed Response
      * @throws Disque\Connection\Exception\ConnectionException
      */
@@ -158,14 +158,11 @@ class Connection extends BaseConnection implements ConnectionInterface
         switch ($type) {
             case '+':
                 return (string) $data;
-                break;
             case '-':
                 $data = (string) $data;
                 throw new ResponseException("Error received from client: {$data}");
-                break;
             case ':':
                 return (int) $data;
-                break;
             case '$':
                 $bytes = (int) $data;
                 if ($bytes < 0) {
@@ -185,7 +182,6 @@ class Connection extends BaseConnection implements ConnectionInterface
                 } while ($bytes > 0);
 
                 return substr($string, 0, -2); // Remove last CRLF
-                break;
             case '*':
                 $count = (int) $data;
                 if ($count < 0) {
@@ -197,9 +193,6 @@ class Connection extends BaseConnection implements ConnectionInterface
                     $elements[$i] = $this->receive();
                 }
                 return $elements;
-                break;
-            case '+':
-                break;
         }
 
         throw new ResponseException("Don't know how to handle a response of type {$type}");

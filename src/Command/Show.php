@@ -13,10 +13,7 @@ class Show extends BaseCommand implements CommandInterface
      */
     public function build(array $arguments)
     {
-        if (!$this->checkFixedArray($arguments, 1) || !is_string($arguments[0])) {
-            throw new Exception\InvalidCommandArgumentException($this, $arguments);
-        }
-        return ['SHOW', $arguments[0]];
+        return $this->buildStringArgument('SHOW', $arguments);
     }
 
     /**
