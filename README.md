@@ -8,7 +8,15 @@
 [![Total Downloads](https://img.shields.io/packagist/dt/mariano/disque-php.svg?style=flat-square)](https://packagist.org/packages/mariano/disque-php)
 
 A PHP library for the very promising [disque](https://github.com/antirez/disque)
-distributed job queue.
+distributed job queue. Features:
+
+[x] Support for multi-node connection
+[x] Zero external dependencies: Fast connection to Disque out-of-the-box
+[x] Allow for existing Redis clients to be used for connection
+[x] Allow extending the list of Disque commands supported
+[x] Support for both PHP (5.5+) and HHVM
+[ ] Fully unit tested (getting there!)
+[ ] Smart node connection algorithm when fetching jobs
 
 This package supports PHP 5.5+, and HHVM. Out of the box it has no library
 requirements. However existing Redis libraries (such as [predis](https://github.com/nrk/predis))
@@ -29,7 +37,7 @@ server. If no `$host` or `$port` when creating the instance, it is assumed
 `127.0.0.1` and `7711` respectively:
 
 ```php
-$client = \Disque\Client('127.0.0.1', 7711);
+$client = \Disque\Client();
 try {
     $result = $client->connect();
     var_dump($result);
@@ -97,8 +105,9 @@ instead of using the issue tracker.
 - [x] DEQUEUE
 - [x] QLEN
 - [x] QPEEK
-- [ ] Pool connections based on nodes returned by `connect()`
 - [ ] `QSTAT`, `SCAN` when they are implemented upstream
+- [x] Add support for several connections
+- [ ] Allow GETJOB to influence what node the Client should be connected to
 - [x] Implement direct protocol to Disque to avoid depending on Predis
 - [x] Turn Predis integration into a ConnectionInterface
 - [x] Allow user to specify their own ConnectionInterface implementation

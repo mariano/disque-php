@@ -24,45 +24,44 @@ use Disque\Exception;
 class Client
 {
     /**
-     * Host to connect to
+     * List of servers
      *
-     * @var string
+     * @var array
      */
-    private $host;
-
-    /**
-     * Port to connect to
-     *
-     * @var int
-     */
-    private $port;
+    protected $servers;
 
     /**
      * Connection
      *
      * @var Disque\Connection\ConnectionInterface
      */
-    private $connection;
+    protected $connection;
 
     /**
      * Command handlers
      *
      * @var array
      */
-    private $commands = [];
+    protected $commands = [];
 
     /**
      * Connection implementation class
      *
      * @var string
      */
-    private $connectionImplementation;
+    protected $connectionImplementation;
 
-    public function __construct($host = '127.0.0.1', $port = 7711)
+    /**
+     * Create a new Client
+     *
+     * @param array $servers Servers
+     */
+    public function __construct(array $servers = [['host' => '127.0.0.1', 'port' => 7711]])
     {
         $this->setConnectionImplementation(Connection::class);
-        $this->setHost($host);
-        $this->setPort($port);
+        foreach ($servers as $server) {
+            $this->addServer($server);
+        }
 
         foreach ([
             'ackjob' => Command\AckJob::class,
@@ -97,40 +96,62 @@ class Client
         $this->connectionImplementation = $class;
     }
 
-    public function getHost()
+    /**
+     * Add a new server
+     *
+     * @param array $server Server (should have 'host', and 'port')
+     * @throws InvalidArgumentException
+     */
+    public function addServer(array $server)
     {
-        return $this->host;
-    }
-
-    public function setHost($host)
-    {
-        $this->host = $host;
-    }
-
-    public function getPort()
-    {
-        return $this->port;
-    }
-
-    public function setPort($port)
-    {
-        if (!is_int($port)) {
-            throw new InvalidArgumentException("Invalid port: {$port}");
+        $server += [
+            'host' => '127.0.0.1',
+            'port' => 7711
+        ];
+        if (!is_string($server['host']) || !is_int($server['port'])) {
+            throw new InvalidArgumentException('Invalid server specified');
         }
-        $this->port = $port;
+
+        $this->servers[] = $server;
     }
 
     /**
      * Connect to Disque
      *
      * @param array $options Connection options
+     * @return array Connected node information
      * @throws Disque\Connection\Exception\ConnectionException
      */
     public function connect(array $options = [])
     {
-        $this->connection = $this->getConnection();
-        $this->connection->connect($options);
-        return $this->hello();
+        $connectionClass = $this->connectionImplementation;
+        $servers = $this->servers;
+        $connection = null;
+        $hello = [];
+        while (!empty($servers)) {
+            $key = array_rand($servers, 1);
+            $server = $servers[$key];
+            $connection = new $connectionClass();
+            $connection->setHost($server['host']);
+            $connection->setPort($server['port']);
+            try {
+                $connection->connect();
+                $hello = $this->execute($connection, $this->commands['hello']);
+                break;
+            } catch (Exception\ConnectionException $e) {
+                unset($servers[$key]);
+                if (empty($servers))
+                $connection = null;
+                continue;
+            }
+        }
+
+        if (!isset($connection)) {
+            throw new Exception\ConnectionException('No servers available');
+        }
+
+        $this->connection = $connection;
+        return $hello;
     }
 
     /**
@@ -153,25 +174,20 @@ class Client
         if (!isset($this->commands[$command])) {
             throw new Exception\InvalidCommandException($command);
         }
-
-        $command = $this->commands[$command];
-        $response = $this->connection->execute($command, $arguments);
-        return $command->parse($response);
+        return $this->execute($this->connection, $this->commands[$command], $arguments);
     }
 
     /**
-     * Get connection
+     * Execute the given command on the given connection
      *
-     * @return Disque\Connection\ConnectionInterface
+     * @param ConnectionInterface $connection Connection
+     * @param Disque\Command\CommandInterface $handler Command handler
+     * @param array $arguments Arguments for command
+     * @return mixed Command response
      */
-    protected function getConnection()
+    protected function execute(ConnectionInterface $connection, Command\CommandInterface $command, array $arguments = [])
     {
-        if (!isset($this->connection)) {
-            $class = $this->connectionImplementation;
-            $this->connection = new $class();
-            $this->connection->setHost($this->getHost());
-            $this->connection->setPort($this->getPort());
-        }
-        return $this->connection;
+        $response = $connection->execute($command, $arguments);
+        return $command->parse($response);
     }
 }
