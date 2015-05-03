@@ -2,7 +2,6 @@
 namespace Disque\Connection;
 
 use Disque\Command\CommandInterface;
-use Disque\Connection\Exception\ResponseException;
 use Predis\Client as PredisClient;
 
 class Predis extends BaseConnection implements ConnectionInterface

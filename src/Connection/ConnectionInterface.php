@@ -29,7 +29,7 @@ interface ConnectionInterface
      * @return void
      * @throws Disque\Connection\Exception\ConnectionException
      */
-    public function connect();
+    public function connect(array $options = []);
 
     /**
      * Disconnect
@@ -48,7 +48,7 @@ interface ConnectionInterface
     /**
      * Execute command, and get response
      *
-     * @param Disque\Command\CommandInterface $command
+     * @param CommandInterface $command
      * @return mixed Response
      * @throws Disque\Connection\Exception\ConnectionException
      */
