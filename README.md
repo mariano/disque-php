@@ -10,13 +10,9 @@
 A PHP library for the very promising [disque](https://github.com/antirez/disque)
 distributed job queue.
 
-disque-php is in an ultra-development status. It can't get no more Alpha than
-where it's currently at, so do not use in production. There's still a lot to
-be done, and a lot of its API may suddenly change, without any prior notice
-other than a commit message.
-
-disque-php uses the [predis](https://github.com/nrk/predis) package. The [phpredis](https://github.com/phpredis/phpredis)
-PECL extension is not yet ready to run the raw commands needed by Disque.
+This package supports PHP 5.5+, and HHVM. Out of the box it has no library
+requirements. However existing Redis libraries (such as [predis](https://github.com/nrk/predis))
+can be used as an alternative method of connection.
 
 ## Installation
 
@@ -103,6 +99,10 @@ instead of using the issue tracker.
 - [x] QPEEK
 - [ ] Pool connections based on nodes returned by `connect()`
 - [ ] `QSTAT`, `SCAN` when they are implemented upstream
+- [x] Implement direct protocol to Disque to avoid depending on Predis
+- [x] Turn Predis integration into a ConnectionInterface
+- [x] Allow user to specify their own ConnectionInterface implementation
+- [ ] Add support for PSR Logging
 
 ## Acknowledgments
 

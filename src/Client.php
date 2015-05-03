@@ -3,8 +3,9 @@ namespace Disque;
 
 use InvalidArgumentException;
 use Disque\Command;
+use Disque\Connection\Connection;
+use Disque\Connection\ConnectionInterface;
 use Disque\Exception;
-use Predis;
 
 /**
  * @method int ackjob(string... $ids)
@@ -37,11 +38,11 @@ class Client
     private $port;
 
     /**
-     * Client (phpredis)
+     * Connection
      *
-     * @var Predis\Client
+     * @var Disque\Connection\ConnectionInterface
      */
-    private $client;
+    private $connection;
 
     /**
      * Command handlers
@@ -50,8 +51,16 @@ class Client
      */
     private $commands = [];
 
+    /**
+     * Connection implementation class
+     *
+     * @var string
+     */
+    private $connectionImplementation;
+
     public function __construct($host = '127.0.0.1', $port = 7711)
     {
+        $this->setConnectionImplementation(Connection::class);
         $this->setHost($host);
         $this->setPort($port);
 
@@ -71,6 +80,21 @@ class Client
         ] as $command => $handlerClass) {
             $this->registerCommand($command, new $handlerClass());
         }
+    }
+
+    /**
+     * Set the connection implementation class
+     *
+     * @param string $class A fully classified class name that must implement
+     * Disque\Connection\ConnectionInterface
+     * @throws InvalidArgumentException
+     */
+    public function setConnectionImplementation($class)
+    {
+        if (!in_array(ConnectionInterface::class, class_implements($class))) {
+            throw new InvalidArgumentException("Class {$class} does not implement ConnectionInterface");
+        }
+        $this->connectionImplementation = $class;
     }
 
     public function getHost()
@@ -99,22 +123,22 @@ class Client
     /**
      * Connect to Disque
      *
-     * @throws Disque\Exception\ConnectionException
+     * @param array $options Connection options
+     * @throws Disque\Connection\Exception\ConnectionException
      */
-    public function connect()
+    public function connect(array $options = [])
     {
-        $host = $this->getHost();
-        $port = $this->getPort();
-
-        $this->client = new Predis\Client([
-            'scheme' => 'tcp',
-            'host' => $host,
-            'port' => $port
-        ]);
-
+        $this->connection = $this->getConnection();
+        $this->connection->connect($options);
         return $this->hello();
     }
 
+    /**
+     * Register a command handler
+     *
+     * @param string $command Command
+     * @param Disque\Command\CommandInterface $handler Command handler
+     */
     public function registerCommand($command, Command\CommandInterface $handler)
     {
         $this->commands[mb_strtolower($command)] = $handler;
@@ -131,7 +155,23 @@ class Client
         }
 
         $command = $this->commands[$command];
-        $response = $this->client->executeRaw($command->build($arguments));
+        $response = $this->connection->execute($command, $arguments);
         return $command->parse($response);
+    }
+
+    /**
+     * Get connection
+     *
+     * @return Disque\Connection\ConnectionInterface
+     */
+    protected function getConnection()
+    {
+        if (!isset($this->connection)) {
+            $class = $this->connectionImplementation;
+            $this->connection = new $class();
+            $this->connection->setHost($this->getHost());
+            $this->connection->setPort($this->getPort());
+        }
+        return $this->connection;
     }
 }

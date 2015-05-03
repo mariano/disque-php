@@ -10,8 +10,14 @@
          processIsolation="false"
          stopOnFailure="false">
     <testsuites>
+        <testsuite name="Disque">
+            <directory suffix="Test.php">tests</directory>
+        </testsuite>
         <testsuite name="Command">
             <directory suffix="Test.php">tests/Command</directory>
+        </testsuite>
+        <testsuite name="Connection">
+            <directory suffix="Test.php">tests/Connection</directory>
         </testsuite>
     </testsuites>
 

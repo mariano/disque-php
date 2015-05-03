@@ -22,8 +22,10 @@
         "source": "https://github.com/mariano/disque-php"
     },
     "require": {
-        "php": ">=5.5",
-        "predis/predis": "~1.0"
+        "php": ">=5.5"
+    },
+    "suggest": {
+        "predis/predis": "Use Predis to handle the connection with Disque instead of the built in client"
     },
     "require-dev": {
         "phpunit/phpunit": "~4.6",
