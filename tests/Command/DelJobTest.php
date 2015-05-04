@@ -15,46 +15,55 @@ class DelJobTest extends PHPUnit_Framework_TestCase
         $this->assertInstanceOf(CommandInterface::class, $c);
     }
 
+    public function testGetCommand()
+    {
+        $c = new DelJob();
+        $result = $c->getCommand();
+        $this->assertSame('DELJOB', $result);
+    }
+
     public function testBuildInvalidArgumentsEmpty()
     {
         $this->setExpectedException(InvalidCommandArgumentException::class, 'Invalid command arguments. Arguments for command Disque\\Command\\DelJob: []');
         $c = new DelJob();
-        $c->build([]);
+        $c->setArguments([]);
     }
 
     public function testBuildInvalidArgumentsNonStringArray()
     {
         $this->setExpectedException(InvalidCommandArgumentException::class, 'Invalid command arguments. Arguments for command Disque\\Command\\DelJob: [["test","stuff"]]');
         $c = new DelJob();
-        $c->build([['test','stuff']]);
+        $c->setArguments([['test','stuff']]);
     }
 
     public function testBuildInvalidArgumentsNonStringNumeric()
     {
         $this->setExpectedException(InvalidCommandArgumentException::class, 'Invalid command arguments. Arguments for command Disque\\Command\\DelJob: [128]');
         $c = new DelJob();
-        $c->build([128]);
+        $c->setArguments([128]);
     }
 
     public function testBuildInvalidArgumentsEmptyValue()
     {
         $this->setExpectedException(InvalidCommandArgumentException::class, 'Invalid command arguments. Arguments for command Disque\\Command\\DelJob: [""]');
         $c = new DelJob();
-        $c->build([""]);
+        $c->setArguments([""]);
     }
 
     public function testBuild()
     {
         $c = new DelJob();
-        $result = $c->build(['id']);
-        $this->assertSame(['DELJOB', 'id'], $result);
+        $c->setArguments(['id']);
+        $result = $c->getArguments();
+        $this->assertSame(['id'], $result);
     }
 
     public function testBuildSeveral()
     {
         $c = new DelJob();
-        $result = $c->build(['id', 'id2']);
-        $this->assertSame(['DELJOB', 'id', 'id2'], $result);
+        $c->setArguments(['id', 'id2']);
+        $result = $c->getArguments();
+        $this->assertSame(['id', 'id2'], $result);
     }
 
     public function testParseInvalidNonNumericArray()

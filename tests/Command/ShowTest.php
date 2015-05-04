@@ -15,46 +15,54 @@ class ShowTest extends PHPUnit_Framework_TestCase
         $this->assertInstanceOf(CommandInterface::class, $c);
     }
 
+    public function testGetCommand()
+    {
+        $c = new Show();
+        $result = $c->getCommand();
+        $this->assertSame('SHOW', $result);
+    }
+
     public function testBuildInvalidArgumentsEmpty()
     {
         $this->setExpectedException(InvalidCommandArgumentException::class, 'Invalid command arguments. Arguments for command Disque\\Command\\Show: []');
         $c = new Show();
-        $c->build([]);
+        $c->setArguments([]);
     }
 
     public function testBuildInvalidArgumentsEmptyTooMany()
     {
         $this->setExpectedException(InvalidCommandArgumentException::class, 'Invalid command arguments. Arguments for command Disque\\Command\\Show: ["test","stuff"]');
         $c = new Show();
-        $c->build(['test', 'stuff']);
+        $c->setArguments(['test', 'stuff']);
     }
 
     public function testBuildInvalidArgumentsEmptyNonNumeric()
     {
         $this->setExpectedException(InvalidCommandArgumentException::class, 'Invalid command arguments. Arguments for command Disque\\Command\\Show: {"test":"stuff"}');
         $c = new Show();
-        $c->build(['test' => 'stuff']);
+        $c->setArguments(['test' => 'stuff']);
     }
 
     public function testBuildInvalidArgumentsNumericNon0()
     {
         $this->setExpectedException(InvalidCommandArgumentException::class, 'Invalid command arguments. Arguments for command Disque\\Command\\Show: {"1":"stuff"}');
         $c = new Show();
-        $c->build([1 => 'stuff']);
+        $c->setArguments([1 => 'stuff']);
     }
 
     public function testBuildInvalidArgumentsNonString()
     {
         $this->setExpectedException(InvalidCommandArgumentException::class, 'Invalid command arguments. Arguments for command Disque\\Command\\Show: [false]');
         $c = new Show();
-        $c->build([false]);
+        $c->setArguments([false]);
     }
 
     public function testBuild()
     {
         $c = new Show();
-        $result = $c->build(['test']);
-        $this->assertSame(['SHOW', 'test'], $result);
+        $c->setArguments(['test']);
+        $result = $c->getArguments();
+        $this->assertSame(['test'], $result);
     }
 
     public function testParseInvalidNonArrayString()

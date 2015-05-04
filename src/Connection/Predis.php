@@ -56,12 +56,15 @@ class Predis extends BaseConnection implements ConnectionInterface
      * @return mixed Response
      * @throws Disque\Connection\Exception\ConnectionException
      */
-    public function execute(CommandInterface $command, array $arguments = [])
+    public function execute(CommandInterface $command)
     {
         if (!$this->isConnected()) {
             throw new ConnectionException('No connection established');
         }
-        return $this->client->executeRaw($command->build($arguments));
+        return $this->client->executeRaw(array_merge(
+            [$command->getCommand()],
+            $command->getArguments()
+        ));
     }
 
     /**

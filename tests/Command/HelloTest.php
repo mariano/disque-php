@@ -15,18 +15,26 @@ class HelloTest extends PHPUnit_Framework_TestCase
         $this->assertInstanceOf(CommandInterface::class, $c);
     }
 
+    public function testGetCommand()
+    {
+        $c = new Hello();
+        $result = $c->getCommand();
+        $this->assertSame('HELLO', $result);
+    }
+
     public function testBuildInvalidArguments()
     {
         $this->setExpectedException(InvalidCommandArgumentException::class, 'Invalid command arguments. Arguments for command Disque\\Command\\Hello: ["test"]');
         $c = new Hello();
-        $c->build(['test']);
+        $c->setArguments(['test']);
     }
 
     public function testBuild()
     {
         $c = new Hello();
-        $result = $c->build([]);
-        $this->assertSame(['HELLO'], $result);
+        $c->setArguments([]);
+        $result = $c->getArguments();
+        $this->assertSame([], $result);
     }
 
     public function testParseInvalidNonArray()

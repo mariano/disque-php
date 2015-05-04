@@ -15,46 +15,55 @@ class FastAckTest extends PHPUnit_Framework_TestCase
         $this->assertInstanceOf(CommandInterface::class, $c);
     }
 
+    public function testGetCommand()
+    {
+        $c = new FastAck();
+        $result = $c->getCommand();
+        $this->assertSame('FASTACK', $result);
+    }
+
     public function testBuildInvalidArgumentsEmpty()
     {
         $this->setExpectedException(InvalidCommandArgumentException::class, 'Invalid command arguments. Arguments for command Disque\\Command\\FastAck: []');
         $c = new FastAck();
-        $c->build([]);
+        $c->setArguments([]);
     }
 
     public function testBuildInvalidArgumentsNonStringArray()
     {
         $this->setExpectedException(InvalidCommandArgumentException::class, 'Invalid command arguments. Arguments for command Disque\\Command\\FastAck: [["test","stuff"]]');
         $c = new FastAck();
-        $c->build([['test','stuff']]);
+        $c->setArguments([['test','stuff']]);
     }
 
     public function testBuildInvalidArgumentsNonStringNumeric()
     {
         $this->setExpectedException(InvalidCommandArgumentException::class, 'Invalid command arguments. Arguments for command Disque\\Command\\FastAck: [128]');
         $c = new FastAck();
-        $c->build([128]);
+        $c->setArguments([128]);
     }
 
     public function testBuildInvalidArgumentsEmptyValue()
     {
         $this->setExpectedException(InvalidCommandArgumentException::class, 'Invalid command arguments. Arguments for command Disque\\Command\\FastAck: [""]');
         $c = new FastAck();
-        $c->build([""]);
+        $c->setArguments([""]);
     }
 
     public function testBuild()
     {
         $c = new FastAck();
-        $result = $c->build(['id']);
-        $this->assertSame(['FASTACK', 'id'], $result);
+        $c->setArguments(['id']);
+        $result = $c->getArguments();
+        $this->assertSame(['id'], $result);
     }
 
     public function testBuildSeveral()
     {
         $c = new FastAck();
-        $result = $c->build(['id', 'id2']);
-        $this->assertSame(['FASTACK', 'id', 'id2'], $result);
+        $c->setArguments(['id', 'id2']);
+        $result = $c->getArguments();
+        $this->assertSame(['id', 'id2'], $result);
     }
 
     public function testParseInvalidNonNumericArray()

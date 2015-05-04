@@ -6,17 +6,20 @@ use Disque\Exception;
 class Hello extends BaseCommand implements CommandInterface
 {
     /**
-     * This command, with all its arguments, ready to be sent to Disque
+     * Tells the argument types for this command
      *
-     * @param array $arguments Arguments
-     * @return array Command (separated in parts)
+     * @var int
      */
-    public function build(array $arguments)
+    protected $argumentsType = self::ARGUMENTS_TYPE_EMPTY;
+
+    /**
+     * Get command
+     *
+     * @return string Command
+     */
+    public function getCommand()
     {
-        if (!empty($arguments)) {
-            throw new Exception\InvalidCommandArgumentException($this, $arguments);
-        }
-        return ['HELLO'];
+        return 'HELLO';
     }
 
     /**

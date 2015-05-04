@@ -15,46 +15,55 @@ class AckJobTest extends PHPUnit_Framework_TestCase
         $this->assertInstanceOf(CommandInterface::class, $c);
     }
 
+    public function testGetCommand()
+    {
+        $c = new AckJob();
+        $result = $c->getCommand();
+        $this->assertSame('ACKJOB', $result);
+    }
+
     public function testBuildInvalidArgumentsEmpty()
     {
         $this->setExpectedException(InvalidCommandArgumentException::class, 'Invalid command arguments. Arguments for command Disque\\Command\\AckJob: []');
         $c = new AckJob();
-        $c->build([]);
+        $c->setArguments([]);
     }
 
     public function testBuildInvalidArgumentsNonStringArray()
     {
         $this->setExpectedException(InvalidCommandArgumentException::class, 'Invalid command arguments. Arguments for command Disque\\Command\\AckJob: [["test","stuff"]]');
         $c = new AckJob();
-        $c->build([['test','stuff']]);
+        $c->setArguments([['test','stuff']]);
     }
 
     public function testBuildInvalidArgumentsNonStringNumeric()
     {
         $this->setExpectedException(InvalidCommandArgumentException::class, 'Invalid command arguments. Arguments for command Disque\\Command\\AckJob: [128]');
         $c = new AckJob();
-        $c->build([128]);
+        $c->setArguments([128]);
     }
 
     public function testBuildInvalidArgumentsEmptyValue()
     {
         $this->setExpectedException(InvalidCommandArgumentException::class, 'Invalid command arguments. Arguments for command Disque\\Command\\AckJob: [""]');
         $c = new AckJob();
-        $c->build([""]);
+        $c->setArguments([""]);
     }
 
     public function testBuild()
     {
         $c = new AckJob();
-        $result = $c->build(['id']);
-        $this->assertSame(['ACKJOB', 'id'], $result);
+        $c->setArguments(['id']);
+        $result = $c->getArguments();
+        $this->assertSame(['id'], $result);
     }
 
     public function testBuildSeveral()
     {
         $c = new AckJob();
-        $result = $c->build(['id', 'id2']);
-        $this->assertSame(['ACKJOB', 'id', 'id2'], $result);
+        $c->setArguments(['id', 'id2']);
+        $result = $c->getArguments();
+        $this->assertSame(['id', 'id2'], $result);
     }
 
     public function testParseInvalidNonNumericArray()

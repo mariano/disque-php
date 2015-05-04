@@ -4,13 +4,27 @@ namespace Disque\Command;
 interface CommandInterface
 {
     /**
-     * This command, with all its arguments, ready to be sent to Disque
+     * Get command
+     *
+     * @return string Command
+     */
+    public function getCommand();
+
+    /**
+     * Get processed arguments for command
+     *
+     * @return array Arguments
+     */
+    public function getArguments();
+
+    /**
+     * Set arguments for the command
      *
      * @param array $arguments Arguments
-     * @return array Command (separated in parts)
+     * @return void
      * @throws Disque\Exception\InvalidCommandArgumentException
      */
-    public function build(array $arguments);
+    public function setArguments(array $arguments);
 
     /**
      * Parse response

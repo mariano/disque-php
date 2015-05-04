@@ -4,6 +4,13 @@ namespace Disque\Command;
 class Enqueue extends BaseCommand implements CommandInterface
 {
     /**
+     * Tells the argument types for this command
+     *
+     * @var int
+     */
+    protected $argumentsType = self::ARGUMENTS_TYPE_STRINGS;
+
+    /**
      * Tells the response type for this command
      *
      * @var int
@@ -11,13 +18,12 @@ class Enqueue extends BaseCommand implements CommandInterface
     protected $responseType = self::RESPONSE_TYPE_INT;
 
     /**
-     * This command, with all its arguments, ready to be sent to Disque
+     * Get command
      *
-     * @param array $arguments Arguments
-     * @return array Command (separated in parts)
+     * @return string Command
      */
-    public function build(array $arguments)
+    public function getCommand()
     {
-        return $this->buildStringArguments('ENQUEUE', $arguments);
+        return 'ENQUEUE';
     }
 }

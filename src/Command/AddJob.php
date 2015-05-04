@@ -6,6 +6,13 @@ use Disque\Exception;
 class AddJob extends BaseCommand implements CommandInterface
 {
     /**
+     * Tells the response type for this command
+     *
+     * @var int
+     */
+    protected $responseType = self::RESPONSE_TYPE_STRING;
+
+    /**
      * Available command options
      *
      * @var array
@@ -25,7 +32,7 @@ class AddJob extends BaseCommand implements CommandInterface
      *
      * @var array
      */
-    protected $arguments = [
+    protected $availableArguments = [
         'replicate' => 'REPLICATE',
         'delay' => 'DELAY',
         'retry' => 'RETRY',
@@ -35,12 +42,22 @@ class AddJob extends BaseCommand implements CommandInterface
     ];
 
     /**
-     * This command, with all its arguments, ready to be sent to Disque
+     * Get command
+     *
+     * @return string Command
+     */
+    public function getCommand()
+    {
+        return 'ADDJOB';
+    }
+
+    /**
+     * Set arguments for the command
      *
      * @param array $arguments Arguments
-     * @return array Command (separated in parts)
+     * @throws Disque\Exception\InvalidCommandArgumentException
      */
-    public function build(array $arguments)
+    public function setArguments(array $arguments)
     {
         $count = count($arguments);
         if (!$this->checkFixedArray($arguments, 2, true) || $count > 3) {
@@ -58,26 +75,9 @@ class AddJob extends BaseCommand implements CommandInterface
             }
         }
 
-        return array_merge(
-            ['ADDJOB', $arguments[0], $arguments[1], $options['timeout']],
+        $this->arguments = array_merge(
+            [$arguments[0], $arguments[1], $options['timeout']],
             $this->toArguments(array_diff_key($options, ['timeout'=>null]))
         );
-    }
-
-    /**
-     * Parse response
-     *
-     * @param mixed $response Response
-     * @return string|null Job ID
-     * @throws Disque\Exception\InvalidCommandResponseException
-     */
-    public function parse($response)
-    {
-        if ($response === false) {
-            return null;
-        } elseif (!is_string($response)) {
-            throw new Exception\InvalidCommandResponseException($this, $response);
-        }
-        return (string) $response;
     }
 }

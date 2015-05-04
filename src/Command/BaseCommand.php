@@ -6,6 +6,10 @@ use Disque\Exception;
 
 abstract class BaseCommand implements CommandInterface
 {
+    const ARGUMENTS_TYPE_EMPTY = 0;
+    const ARGUMENTS_TYPE_STRING = 1;
+    const ARGUMENTS_TYPE_STRING_INT = 2;
+    const ARGUMENTS_TYPE_STRINGS = 3;
     const RESPONSE_TYPE_STRING = 0;
     const RESPONSE_TYPE_INT = 1;
     const RESPONSE_TYPE_JOBS = 2;
@@ -23,7 +27,21 @@ abstract class BaseCommand implements CommandInterface
      *
      * @var array
      */
+    protected $availableArguments = [];
+
+    /**
+     * Arguments
+     *
+     * @var array
+     */
     protected $arguments = [];
+
+    /**
+     * Tells the argument types for this command
+     *
+     * @var int
+     */
+    protected $argumentsType = self::ARGUMENTS_TYPE_STRING;
 
     /**
      * Tells the response type for this command
@@ -33,31 +51,77 @@ abstract class BaseCommand implements CommandInterface
     protected $responseType = self::RESPONSE_TYPE_STRING;
 
     /**
-     * This command, with all its arguments, ready to be sent to Disque
+     * Get command
      *
-     * @param string $command Command
+     * @return string Command
+     */
+    abstract public function getCommand();
+
+    /**
+     * Get processed arguments for command
+     *
+     * @return array Arguments
+     */
+    public function getArguments()
+    {
+        return $this->arguments;
+    }
+
+    /**
+     * Set arguments for the command
+     *
      * @param array $arguments Arguments
-     * @param int $numberOfElements Number of elements that must be present in $arguments
-     * @return array Command (separated in parts)
+     * @return void
      * @throws Disque\Exception\InvalidCommandArgumentException
      */
-    protected function buildStringArgument($command, array $arguments, $numberOfElements = 1)
+    public function setArguments(array $arguments)
     {
-        if (!$this->checkFixedArray($arguments, $numberOfElements) || !is_string($arguments[0])) {
-            throw new Exception\InvalidCommandArgumentException($this, $arguments);
+        switch ($this->argumentsType) {
+            case self::ARGUMENTS_TYPE_EMPTY:
+                if (!empty($arguments)) {
+                    throw new Exception\InvalidCommandArgumentException($this, $arguments);
+                }
+                $arguments = [];
+                break;
+            case self::ARGUMENTS_TYPE_STRING:
+                $this->checkStringArgument($arguments);
+                $arguments = [$arguments[0]];
+                break;
+            case self::ARGUMENTS_TYPE_STRING_INT:
+                $this->checkStringArgument($arguments, 2);
+                if (!is_int($arguments[1])) {
+                    throw new Exception\InvalidCommandArgumentException($this, $arguments);
+                }
+                $arguments = [$arguments[0], (int) $arguments[1]];
+                break;
+            case self::ARGUMENTS_TYPE_STRINGS:
+                $this->checkStringArguments($arguments);
+                break;
         }
-        return [$command, $arguments[0]];
+        $this->arguments = $arguments;
     }
 
     /**
      * This command, with all its arguments, ready to be sent to Disque
      *
-     * @param string $command Command
      * @param array $arguments Arguments
-     * @return array Command (separated in parts)
+     * @param int $numberOfElements Number of elements that must be present in $arguments
      * @throws Disque\Exception\InvalidCommandArgumentException
      */
-    protected function buildStringArguments($command, array $arguments)
+    protected function checkStringArgument(array $arguments, $numberOfElements = 1)
+    {
+        if (!$this->checkFixedArray($arguments, $numberOfElements) || !is_string($arguments[0])) {
+            throw new Exception\InvalidCommandArgumentException($this, $arguments);
+        }
+    }
+
+    /**
+     * This command, with all its arguments, ready to be sent to Disque
+     *
+     * @param array $arguments Arguments
+     * @throws Disque\Exception\InvalidCommandArgumentException
+     */
+    protected function checkStringArguments(array $arguments)
     {
         if (empty($arguments)) {
             throw new Exception\InvalidCommandArgumentException($this, $arguments);
@@ -68,8 +132,6 @@ abstract class BaseCommand implements CommandInterface
                 throw new Exception\InvalidCommandArgumentException($this, $arguments);
             }
         }
-
-        return array_merge([$command], $arguments);
     }
 
     /**
@@ -142,13 +204,13 @@ abstract class BaseCommand implements CommandInterface
     {
         if (empty($options)) {
             return [];
-        } elseif (!empty(array_diff_key($options, $this->arguments))) {
+        } elseif (!empty(array_diff_key($options, $this->availableArguments))) {
             throw new Exception\InvalidCommandOptionException($this, $options);
         }
 
         $options += $this->options;
         $arguments = [];
-        foreach ($this->arguments as $option => $argument) {
+        foreach ($this->availableArguments as $option => $argument) {
             if (!isset($options[$option])) {
                 continue;
             }

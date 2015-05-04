@@ -54,6 +54,13 @@ class Client
      *
      * @var array
      */
+    protected $commandHandlers = [];
+
+    /**
+     * Command handlers (instantiated for reutilization)
+     *
+     * @var array
+     */
     protected $commands = [];
 
     /**
@@ -66,13 +73,27 @@ class Client
     /**
      * Create a new Client
      *
-     * @param array $servers Servers
+     * @param array $servers Servers (`host`:`port`)
      */
-    public function __construct(array $servers = [['host' => '127.0.0.1', 'port' => 7711]])
+    public function __construct(array $servers = ['127.0.0.1:7711'])
     {
         $this->setConnectionImplementation(Connection::class);
-        foreach ($servers as $server) {
-            $this->addServer($server['host'], $server['port']);
+        foreach ($servers as $uri) {
+            $host = null;
+            $port = 7711;
+            if (strpos($uri, ':') !== false) {
+                $server = parse_url($uri);
+                if ($server === false || empty($server['host'])) {
+                    continue;
+                }
+                $host = $server['host'];
+                if (!empty($server['port'])) {
+                    $port = $server['port'];
+                }
+            } else {
+                $host = $uri;
+            }
+            $this->addServer($host, $port);
         }
 
         foreach ([
@@ -89,15 +110,14 @@ class Client
             'QPEEK' => Command\QPeek::class,
             'SHOW' => Command\Show::class
         ] as $command => $handlerClass) {
-            $this->registerCommand($command, new $handlerClass());
+            $this->registerCommand($command, $handlerClass);
         }
     }
 
     /**
      * Set the connection implementation class
      *
-     * @param string $class A fully classified class name that must implement
-     * Disque\Connection\ConnectionInterface
+     * @param string $class A fully classified class name that must implement ConnectionInterface
      * @throws InvalidArgumentException
      */
     public function setConnectionImplementation($class)
@@ -121,6 +141,7 @@ class Client
             throw new InvalidArgumentException('Invalid server specified');
         }
 
+        $port = (int) $port;
         $this->servers[] = compact('host', 'port');
     }
 
@@ -129,7 +150,7 @@ class Client
      *
      * @param array $options Connection options
      * @return array Connected node information
-     * @throws Disque\Connection\Exception\ConnectionException
+     * @throws ConnectionException
      */
     public function connect(array $options = [])
     {
@@ -165,8 +186,8 @@ class Client
     /**
      * Get current connection
      *
-     * @return Disque\Connection\ConnectionInterface
-     * @throws Disque\Connection\Exception\ConnectionException
+     * @return ConnectionInterface
+     * @throws ConnectionException
      */
     protected function getConnection()
     {
@@ -194,7 +215,7 @@ class Client
             $connection = $this->buildConnection($server['host'], $server['port']);
             try {
                 $connection->connect($options);
-                $hello = $this->execute($connection, $this->commands['HELLO']);
+                $hello = $this->execute($connection, 'HELLO');
                 break;
             } catch (ConnectionException $e) {
                 unset($servers[$key]);
@@ -225,11 +246,14 @@ class Client
      * Register a command handler
      *
      * @param string $command Command
-     * @param Command\CommandInterface $handler Command handler
+     * @param string $class Class that should implement Command\CommandInterface
      */
-    public function registerCommand($command, Command\CommandInterface $handler)
+    public function registerCommand($command, $class)
     {
-        $this->commands[mb_strtoupper($command)] = $handler;
+        if (!in_array(Command\CommandInterface::class, class_implements($class))) {
+            throw new InvalidArgumentException("Class {$class} does not implement CommandInterface");
+        }
+        $this->commandHandlers[mb_strtoupper($command)] = $class;
     }
 
     /**
@@ -238,10 +262,10 @@ class Client
     public function __call($command, array $arguments)
     {
         $command = mb_strtoupper($command);
-        if (!isset($this->commands[$command])) {
+        if (!isset($this->commandHandlers[$command])) {
             throw new InvalidCommandException($command);
         }
-        return $this->execute($this->getConnection(), $this->commands[$command], $arguments);
+        return $this->execute($this->getConnection(), $command, $arguments);
     }
 
     /**
@@ -249,12 +273,21 @@ class Client
      *
      * @param ConnectionInterface $connection Connection
      * @param Command\CommandInterface $handler Command handler
+     * @param string $command Command
      * @param array $arguments Arguments for command
      * @return mixed Command response
+     * @throws InvalidCommandException
      */
-    protected function execute(ConnectionInterface $connection, Command\CommandInterface $command, array $arguments = [])
+    protected function execute(ConnectionInterface $connection, $command, array $arguments = [])
     {
-        $response = $connection->execute($command, $arguments);
+        if (!isset($this->commands[$command])) {
+            $class = $this->commandHandlers[$command];
+            $this->commands[$command] = new $class();
+        }
+
+        $command = $this->commands[$command];
+        $command->setArguments($arguments);
+        $response = $connection->execute($command);
         return $command->parse($response);
     }
 }

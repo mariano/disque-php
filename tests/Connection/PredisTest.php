@@ -98,6 +98,9 @@ class PredisTest extends PHPUnit_Framework_TestCase
 
     public function testExecuteAckJob()
     {
+        $command = new Command\AckJob();
+        $command->setArguments(['id']);
+
         $client = m::mock()
             ->shouldReceive('isConnected')
             ->andReturn(true)
@@ -111,6 +114,6 @@ class PredisTest extends PHPUnit_Framework_TestCase
             ->mock();
         $connection = new MockPredis();
         $connection->setClient($client);
-        $connection->execute(new Command\AckJob(), ['id']);
+        $connection->execute($command);
     }
 }

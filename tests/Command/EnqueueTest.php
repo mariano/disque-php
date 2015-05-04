@@ -15,46 +15,55 @@ class EnqueueTest extends PHPUnit_Framework_TestCase
         $this->assertInstanceOf(CommandInterface::class, $c);
     }
 
+    public function testGetCommand()
+    {
+        $c = new Enqueue();
+        $result = $c->getCommand();
+        $this->assertSame('ENQUEUE', $result);
+    }
+
     public function testBuildInvalidArgumentsEmpty()
     {
         $this->setExpectedException(InvalidCommandArgumentException::class, 'Invalid command arguments. Arguments for command Disque\\Command\\Enqueue: []');
         $c = new Enqueue();
-        $c->build([]);
+        $c->setArguments([]);
     }
 
     public function testBuildInvalidArgumentsNonStringArray()
     {
         $this->setExpectedException(InvalidCommandArgumentException::class, 'Invalid command arguments. Arguments for command Disque\\Command\\Enqueue: [["test","stuff"]]');
         $c = new Enqueue();
-        $c->build([['test','stuff']]);
+        $c->setArguments([['test','stuff']]);
     }
 
     public function testBuildInvalidArgumentsNonStringNumeric()
     {
         $this->setExpectedException(InvalidCommandArgumentException::class, 'Invalid command arguments. Arguments for command Disque\\Command\\Enqueue: [128]');
         $c = new Enqueue();
-        $c->build([128]);
+        $c->setArguments([128]);
     }
 
     public function testBuildInvalidArgumentsEmptyValue()
     {
         $this->setExpectedException(InvalidCommandArgumentException::class, 'Invalid command arguments. Arguments for command Disque\\Command\\Enqueue: [""]');
         $c = new Enqueue();
-        $c->build([""]);
+        $c->setArguments([""]);
     }
 
     public function testBuild()
     {
         $c = new Enqueue();
-        $result = $c->build(['id']);
-        $this->assertSame(['ENQUEUE', 'id'], $result);
+        $c->setArguments(['id']);
+        $result = $c->getArguments();
+        $this->assertSame(['id'], $result);
     }
 
     public function testBuildSeveral()
     {
         $c = new Enqueue();
-        $result = $c->build(['id', 'id2']);
-        $this->assertSame(['ENQUEUE', 'id', 'id2'], $result);
+        $c->setArguments(['id', 'id2']);
+        $result = $c->getArguments();
+        $this->assertSame(['id', 'id2'], $result);
     }
 
     public function testParseInvalidNonNumericArray()

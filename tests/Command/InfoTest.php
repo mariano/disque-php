@@ -15,18 +15,26 @@ class InfoTest extends PHPUnit_Framework_TestCase
         $this->assertInstanceOf(CommandInterface::class, $c);
     }
 
+    public function testGetCommand()
+    {
+        $c = new Info();
+        $result = $c->getCommand();
+        $this->assertSame('INFO', $result);
+    }
+
     public function testBuildInvalidArguments()
     {
         $this->setExpectedException(InvalidCommandArgumentException::class, 'Invalid command arguments. Arguments for command Disque\\Command\\Info: ["test"]');
         $c = new Info();
-        $c->build(['test']);
+        $c->setArguments(['test']);
     }
 
     public function testBuild()
     {
         $c = new Info();
-        $result = $c->build([]);
-        $this->assertSame(['INFO'], $result);
+        $c->setArguments([]);
+        $result = $c->getArguments();
+        $this->assertSame([], $result);
     }
 
     public function testParseInvalidNonString()

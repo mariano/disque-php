@@ -15,67 +15,75 @@ class QPeekTest extends PHPUnit_Framework_TestCase
         $this->assertInstanceOf(CommandInterface::class, $c);
     }
 
+    public function testGetCommand()
+    {
+        $c = new QPeek();
+        $result = $c->getCommand();
+        $this->assertSame('QPEEK', $result);
+    }
+
     public function testBuildInvalidArgumentsEmpty()
     {
         $this->setExpectedException(InvalidCommandArgumentException::class, 'Invalid command arguments. Arguments for command Disque\\Command\\QPeek: []');
         $c = new QPeek();
-        $c->build([]);
+        $c->setArguments([]);
     }
 
     public function testBuildInvalidArgumentsEmptyTooMany()
     {
         $this->setExpectedException(InvalidCommandArgumentException::class, 'Invalid command arguments. Arguments for command Disque\\Command\\QPeek: ["test","stuff","arg"]');
         $c = new QPeek();
-        $c->build(['test', 'stuff', 'arg']);
+        $c->setArguments(['test', 'stuff', 'arg']);
     }
 
     public function testBuildInvalidArgumentsEmptyNonNumeric()
     {
         $this->setExpectedException(InvalidCommandArgumentException::class, 'Invalid command arguments. Arguments for command Disque\\Command\\QPeek: {"test":"stuff","arg":"val"}');
         $c = new QPeek();
-        $c->build(['test' => 'stuff', 'arg' => 'val']);
+        $c->setArguments(['test' => 'stuff', 'arg' => 'val']);
     }
 
     public function testBuildInvalidArgumentsNumericNon0()
     {
         $this->setExpectedException(InvalidCommandArgumentException::class, 'Invalid command arguments. Arguments for command Disque\\Command\\QPeek: {"1":"stuff","2":"test"}');
         $c = new QPeek();
-        $c->build([1 => 'stuff', 2 => 'test']);
+        $c->setArguments([1 => 'stuff', 2 => 'test']);
     }
 
     public function testBuildInvalidArgumentsNumericNon1()
     {
         $this->setExpectedException(InvalidCommandArgumentException::class, 'Invalid command arguments. Arguments for command Disque\\Command\\QPeek: {"0":"stuff","2":"test"}');
         $c = new QPeek();
-        $c->build([0 => 'stuff', 2 => 'test']);
+        $c->setArguments([0 => 'stuff', 2 => 'test']);
     }
 
     public function testBuildInvalidArgumentsNonString()
     {
         $this->setExpectedException(InvalidCommandArgumentException::class, 'Invalid command arguments. Arguments for command Disque\\Command\\QPeek: [false,"test"]');
         $c = new QPeek();
-        $c->build([false, 'test']);
+        $c->setArguments([false, 'test']);
     }
 
     public function testBuildInvalidArgumentsNonNumeric()
     {
         $this->setExpectedException(InvalidCommandArgumentException::class, 'Invalid command arguments. Arguments for command Disque\\Command\\QPeek: ["test","stuff"]');
         $c = new QPeek();
-        $c->build(['test', 'stuff']);
+        $c->setArguments(['test', 'stuff']);
     }
 
     public function testBuildInvalidArgumentsNonInt()
     {
         $this->setExpectedException(InvalidCommandArgumentException::class, 'Invalid command arguments. Arguments for command Disque\\Command\\QPeek: ["test",3.14]');
         $c = new QPeek();
-        $c->build(['test', 3.14]);
+        $c->setArguments(['test', 3.14]);
     }
 
     public function testBuild()
     {
         $c = new QPeek();
-        $result = $c->build(['test', 78]);
-        $this->assertSame(['QPEEK', 'test', 78], $result);
+        $c->setArguments(['test', 78]);
+        $result = $c->getArguments();
+        $this->assertSame(['test', 78], $result);
     }
 
     public function testParseInvalidString()

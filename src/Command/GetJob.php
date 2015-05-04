@@ -27,18 +27,28 @@ class GetJob extends BaseCommand implements CommandInterface
      *
      * @var array
      */
-    protected $arguments = [
+    protected $availableArguments = [
         'timeout' => 'TIMEOUT',
         'count' => 'COUNT',
     ];
 
     /**
-     * This command, with all its arguments, ready to be sent to Disque
+     * Get command
+     *
+     * @return string Command
+     */
+    public function getCommand()
+    {
+        return 'GETJOB';
+    }
+
+    /**
+     * Set arguments for the command
      *
      * @param array $arguments Arguments
-     * @return array Command (separated in parts)
+     * @throws Disque\Exception\InvalidCommandArgumentException
      */
-    public function build(array $arguments)
+    public function setArguments(array $arguments)
     {
         $options = [];
         $last = end($arguments);
@@ -69,6 +79,6 @@ class GetJob extends BaseCommand implements CommandInterface
             throw new Exception\InvalidCommandArgumentException($this, $arguments);
         }
 
-        return array_merge(['GETJOB'], $options, ['FROM'], $queues);
+        $this->arguments = array_merge($options, ['FROM'], $queues);
     }
 }

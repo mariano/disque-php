@@ -387,6 +387,9 @@ class ConnectionTest extends PHPUnit_Framework_TestCase
     {
         $socket = fopen('php://memory','rw');
 
+        $command = new Command\AckJob();
+        $command->setArguments(['id']);
+
         $connection = m::mock(MockConnection::class)
             ->makePartial()
             ->shouldReceive('send')
@@ -398,7 +401,7 @@ class ConnectionTest extends PHPUnit_Framework_TestCase
             ->mock();
 
         $connection->setSocket($socket);
-        $result = $connection->execute(new Command\AckJob(), ['id']);
+        $result = $connection->execute($command);
         $this->assertSame(['result' => true], $result);
     }
 }

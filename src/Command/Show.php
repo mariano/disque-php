@@ -6,14 +6,20 @@ use Disque\Exception;
 class Show extends BaseCommand implements CommandInterface
 {
     /**
-     * This command, with all its arguments, ready to be sent to Disque
+     * Tells the argument types for this command
      *
-     * @param array $arguments Arguments
-     * @return array Command (separated in parts)
+     * @var int
      */
-    public function build(array $arguments)
+    protected $argumentsType = self::ARGUMENTS_TYPE_STRING;
+
+    /**
+     * Get command
+     *
+     * @return string Command
+     */
+    public function getCommand()
     {
-        return $this->buildStringArgument('SHOW', $arguments);
+        return 'SHOW';
     }
 
     /**

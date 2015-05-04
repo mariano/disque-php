@@ -26,9 +26,15 @@ class MockClient extends Client
         return $this->servers;
     }
 
-    public function getCommands()
+    public function getCommandHandlers()
     {
-        return $this->commands;
+        return $this->commandHandlers;
+    }
+
+    public function setCommand($commandName, Command\CommandInterface $command)
+    {
+        $this->commandHandlers[$commandName] = get_class($command);
+        $this->commands[$commandName] = $command;
     }
 
     public function getConnectionImplementation()
@@ -108,8 +114,20 @@ class ClientTest extends PHPUnit_Framework_TestCase
     public function testConstructMultipleServers()
     {
         $c = new MockClient([
+            '127.0.0.1:7711',
+            '127.0.0.1:7712',
+        ]);
+        $this->assertSame([
             ['host' => '127.0.0.1', 'port' => 7711],
             ['host' => '127.0.0.1', 'port' => 7712],
+        ], $c->getServers());
+    }
+
+    public function testConstructMultipleServersDefaultPort()
+    {
+        $c = new MockClient([
+            '127.0.0.1',
+            '127.0.0.1:7712',
         ]);
         $this->assertSame([
             ['host' => '127.0.0.1', 'port' => 7711],
@@ -190,10 +208,10 @@ class ClientTest extends PHPUnit_Framework_TestCase
         ];
 
         $c = new MockClient();
-        $commands = $c->getCommands();
+        $commands = $c->getCommandHandlers();
         foreach ($commands as $command => $class) {
             $this->assertTrue(array_key_exists($command, $expectedCommands));
-            $this->assertInstanceOf($expectedCommands[$command], $class);
+            $this->assertSame($expectedCommands[$command], $class);
         }
     }
 
@@ -322,14 +340,14 @@ class ClientTest extends PHPUnit_Framework_TestCase
     {
         $c = new MockClient();
         $c->setAvailableConnection(false); // Passthru
-        $commands = $c->getCommands();
+        $commandHandlers = $c->getCommandHandlers();
 
         $connection = m::mock(ConnectionInterface::class)
             ->shouldReceive('connect')
             ->with([])
             ->once()
             ->shouldReceive('execute')
-            ->with($commands['HELLO'], [])
+            ->with(m::type($commandHandlers['HELLO']))
             ->andReturn(['version', 'id', ['id', 'host', 'port', 'version']])
             ->once()
             ->mock();
@@ -356,7 +374,7 @@ class ClientTest extends PHPUnit_Framework_TestCase
         $c = new MockClient();
         $c->addServer('127.0.0.1', 7712);
         $c->setAvailableConnection(false); // Passthru
-        $commands = $c->getCommands();
+        $commandHandlers = $c->getCommandHandlers();
 
         $connection = m::mock(ConnectionInterface::class)
             ->shouldReceive('connect')
@@ -367,7 +385,7 @@ class ClientTest extends PHPUnit_Framework_TestCase
             ->with([])
             ->once()
             ->shouldReceive('execute')
-            ->with($commands['HELLO'], [])
+            ->with(m::type($commandHandlers['HELLO']))
             ->andReturn(['version', 'id', ['id', 'host', 'port', 'version']])
             ->once()
             ->mock();
@@ -406,6 +424,9 @@ class ClientTest extends PHPUnit_Framework_TestCase
     public function testCallCommandCustom()
     {
         $command = m::mock(CommandInterface::class)
+            ->shouldReceive('setArguments')
+            ->with(['id'])
+            ->once()
             ->shouldReceive('parse')
             ->with('RESPONSE')
             ->andReturn('PARSED_RESPONSE')
@@ -414,14 +435,14 @@ class ClientTest extends PHPUnit_Framework_TestCase
 
         $connection = m::mock(ConnectionInterface::class)
             ->shouldReceive('execute')
-            ->with($command, ['id'])
+            ->with($command)
             ->andReturn('RESPONSE')
             ->once()
             ->mock();
 
         $c = new MockClient();
         $c->setConnection($connection);
-        $c->registerCommand('MYCOMMAND', $command);
+        $c->setCommand('MYCOMMAND', $command);
 
         $result = $c->MyCommand('id');
         $this->assertSame('PARSED_RESPONSE', $result);

@@ -15,46 +15,54 @@ class QLenTest extends PHPUnit_Framework_TestCase
         $this->assertInstanceOf(CommandInterface::class, $c);
     }
 
+    public function testGetCommand()
+    {
+        $c = new QLen();
+        $result = $c->getCommand();
+        $this->assertSame('QLEN', $result);
+    }
+
     public function testBuildInvalidArgumentsEmpty()
     {
         $this->setExpectedException(InvalidCommandArgumentException::class, 'Invalid command arguments. Arguments for command Disque\\Command\\QLen: []');
         $c = new QLen();
-        $c->build([]);
+        $c->setArguments([]);
     }
 
     public function testBuildInvalidArgumentsEmptyTooMany()
     {
         $this->setExpectedException(InvalidCommandArgumentException::class, 'Invalid command arguments. Arguments for command Disque\\Command\\QLen: ["test","stuff"]');
         $c = new QLen();
-        $c->build(['test', 'stuff']);
+        $c->setArguments(['test', 'stuff']);
     }
 
     public function testBuildInvalidArgumentsEmptyNonNumeric()
     {
         $this->setExpectedException(InvalidCommandArgumentException::class, 'Invalid command arguments. Arguments for command Disque\\Command\\QLen: {"test":"stuff"}');
         $c = new QLen();
-        $c->build(['test' => 'stuff']);
+        $c->setArguments(['test' => 'stuff']);
     }
 
     public function testBuildInvalidArgumentsNumericNon0()
     {
         $this->setExpectedException(InvalidCommandArgumentException::class, 'Invalid command arguments. Arguments for command Disque\\Command\\QLen: {"1":"stuff"}');
         $c = new QLen();
-        $c->build([1 => 'stuff']);
+        $c->setArguments([1 => 'stuff']);
     }
 
     public function testBuildInvalidArgumentsNonString()
     {
         $this->setExpectedException(InvalidCommandArgumentException::class, 'Invalid command arguments. Arguments for command Disque\\Command\\QLen: [false]');
         $c = new QLen();
-        $c->build([false]);
+        $c->setArguments([false]);
     }
 
     public function testBuild()
     {
         $c = new QLen();
-        $result = $c->build(['test']);
-        $this->assertSame(['QLEN', 'test'], $result);
+        $c->setArguments(['test']);
+        $result = $c->getArguments();
+        $this->assertSame(['test'], $result);
     }
 
     public function testParseInvalidNonNumericArray()

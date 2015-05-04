@@ -1,33 +1,29 @@
 <?php
 namespace Disque\Command;
 
-use Disque\Exception;
-
 class QLen extends BaseCommand implements CommandInterface
 {
     /**
-     * This command, with all its arguments, ready to be sent to Disque
+     * Tells the argument types for this command
      *
-     * @param array $arguments Arguments
-     * @return array Command (separated in parts)
+     * @var int
      */
-    public function build(array $arguments)
-    {
-        return $this->buildStringArgument('QLEN', $arguments);
-    }
+    protected $argumentsType = self::ARGUMENTS_TYPE_STRING;
 
     /**
-     * Parse response
+     * Tells the response type for this command
      *
-     * @param mixed $response Response
-     * @return int Number of jobs deleted
-     * @throws Disque\Exception\InvalidCommandResponseException
+     * @var int
      */
-    public function parse($response)
+    protected $responseType = self::RESPONSE_TYPE_INT;
+
+    /**
+     * Get command
+     *
+     * @return string Command
+     */
+    public function getCommand()
     {
-        if (!is_numeric($response)) {
-            throw new Exception\InvalidCommandResponseException($this, $response);
-        }
-        return (int) $response;
+        return 'QLEN';
     }
 }

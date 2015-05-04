@@ -10,17 +10,12 @@
 A PHP library for the very promising [disque](https://github.com/antirez/disque)
 distributed job queue. Features:
 
-* Support for multi-node connection
-* Zero external dependencies: Fast connection to Disque out-of-the-box
-* Allow for existing Redis clients to be used for connection
-* Allow extending the list of Disque commands supported
 * Support for both PHP (5.5+) and HHVM
-* Fully unit tested (getting there!)
-* Smart node connection algorithm when fetching jobs
-
-This package supports PHP 5.5+, and HHVM. Out of the box it has no library
-requirements. However existing Redis libraries (such as [predis](https://github.com/nrk/predis))
-can be used as an alternative method of connection.
+* No dependencies: Fast connection to Disque out-of-the-box
+* Support for multi-node connection
+* Connect to Disque with the built-in connection, or reutilize your existing Redis client (such as [predis](https://github.com/nrk/predis))
+* Supporting all current Disque commands, and allows you to easily implement support for custom commands
+* Fully unit tested
 
 ## Installation
 
@@ -32,42 +27,36 @@ If you want to run its tests remove the `--no-dev` argument.
 
 ## Usage
 
-Start by creating an instance of `Disque\Client`, and connecting to a given
-server. If no `$host` or `$port` when creating the instance, it is assumed
-`127.0.0.1` and `7711` respectively:
+Connect:
 
 ```php
-$client = \Disque\Client();
+$client = \Disque\Client([
+    '127.0.0.1:7111',
+    '127.0.0.2:7112'
+]);
 try {
-    $result = $client->connect();
-    var_dump($result);
+    $client->connect();
 } catch (\Disque\Exception\ConnectionException $e) {
     die($e->getMessage());
 }
 ```
 
-The above `connect()` call will return an output similar to the following:
+Queue jobs:
 
+```php
+$payload = ['name' => 'Mariano'];
+$client->addjob('queue', json_encode($payload));
 ```
-[
-    'version' => 1,
-    'id' => "7eff078744b72d24d9ab71db1fb600c48cf7ec2f",
-    'nodes' => [
-        [
-            'id' => "7eff078744b72d24d9ab71db1fb600c48cf7ec2f",
-            'host' => "127.0.0.1",
-            'port' => "7711",
-            'version' => "1"
-        ],
-        [
-            'id' => "d8f6333f5386bae67a216e0365ea09323eadc127",
-            'host' => "127.0.0.1",
-            'port' => "7712",
-            'version' => "1"
-        ],
-    ]
-]
+
+Get jobs from queue:
+
+```php
+$job = $client->getjob('queue');
+$payload = json_decode($job, true);
+var_dump($payload);
 ```
+
+For a full coverage of the API, read the [full documentation](docs/README.md)
 
 ## Testing
 

@@ -76,11 +76,10 @@ class Connection extends BaseConnection implements ConnectionInterface
      * @return mixed Response
      * @throws Disque\Connection\Exception\ConnectionException
      */
-    public function execute(CommandInterface $command, array $arguments = [])
+    public function execute(CommandInterface $command)
     {
-        $elements = $command->build($arguments);
-        $commandName = $elements[0];
-        $arguments = array_slice($elements, 1);
+        $commandName = $command->getCommand();
+        $arguments = $command->getArguments();
         $totalArguments = count($arguments);
 
         $parts = [
