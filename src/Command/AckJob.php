@@ -1,15 +1,23 @@
 <?php
 namespace Disque\Command;
 
-class AckJob extends BaseJobModifierCommand implements CommandInterface
+class AckJob extends BaseCommand implements CommandInterface
 {
     /**
-     * Get the command name
+     * Tells the response type for this command
      *
-     * @return string
+     * @var int
      */
-    protected function getCommand()
+    protected $responseType = self::RESPONSE_TYPE_INT;
+
+    /**
+     * This command, with all its arguments, ready to be sent to Disque
+     *
+     * @param array $arguments Arguments
+     * @return array Command (separated in parts)
+     */
+    public function build(array $arguments)
     {
-        return 'ACKJOB';
+        return $this->buildStringArguments('ACKJOB', $arguments);
     }
 }

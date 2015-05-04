@@ -1,7 +1,9 @@
 <?php
 namespace Disque\Test\Connection;
 
+use Mockery as m;
 use PHPUnit_Framework_TestCase;
+use Disque\Command;
 use Disque\Connection\ConnectionInterface;
 use Disque\Connection\Connection;
 use Disque\Connection\Exception\ConnectionException;
@@ -17,6 +19,12 @@ class MockConnection extends Connection
 
 class ConnectionTest extends PHPUnit_Framework_TestCase
 {
+    public function tearDown()
+    {
+        parent::tearDown();
+        m::close();
+    }
+
     public function testInstance()
     {
         $c = new Connection();
@@ -93,6 +101,16 @@ class ConnectionTest extends PHPUnit_Framework_TestCase
 
         $connection = new MockConnection();
         $connection->send("stuff");
+    }
+
+    public function testSendErrorInvalidData()
+    {
+        $this->setExpectedException(ConnectionException::class, 'Invalid data to be sent to client');
+
+        $socket = fopen('php://memory','rw');
+        $connection = new MockConnection();
+        $connection->setSocket($socket);
+        $connection->send(['test' => 'stuff']);
     }
 
     public function testSend()
@@ -344,5 +362,43 @@ class ConnectionTest extends PHPUnit_Framework_TestCase
                 ]
             ],
         ];
+    }
+
+    public function testExecuteHello()
+    {
+        $socket = fopen('php://memory','rw');
+
+        $connection = m::mock(MockConnection::class)
+            ->makePartial()
+            ->shouldReceive('send')
+            ->with("*1\r\n$5\r\nHELLO\r\n")
+            ->once()
+            ->shouldReceive('receive')
+            ->andReturn(['result' => true])
+            ->once()
+            ->mock();
+
+        $connection->setSocket($socket);
+        $result = $connection->execute(new Command\Hello());
+        $this->assertSame(['result' => true], $result);
+    }
+
+    public function testExecuteAck()
+    {
+        $socket = fopen('php://memory','rw');
+
+        $connection = m::mock(MockConnection::class)
+            ->makePartial()
+            ->shouldReceive('send')
+            ->with("*2\r\n$6\r\nACKJOB\r\n$2\r\nid\r\n")
+            ->once()
+            ->shouldReceive('receive')
+            ->andReturn(['result' => true])
+            ->once()
+            ->mock();
+
+        $connection->setSocket($socket);
+        $result = $connection->execute(new Command\AckJob(), ['id']);
+        $this->assertSame(['result' => true], $result);
     }
 }

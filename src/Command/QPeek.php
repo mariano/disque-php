@@ -3,8 +3,15 @@ namespace Disque\Command;
 
 use Disque\Exception;
 
-class QPeek extends BaseJobFetcherCommand implements CommandInterface
+class QPeek extends BaseCommand implements CommandInterface
 {
+    /**
+     * Tells the response type for this command
+     *
+     * @var int
+     */
+    protected $responseType = self::RESPONSE_TYPE_JOBS;
+
     /**
      * This command, with all its arguments, ready to be sent to Disque
      *
@@ -20,15 +27,5 @@ class QPeek extends BaseJobFetcherCommand implements CommandInterface
         }
         $command[] = (int) $arguments[1];
         return $command;
-    }
-
-    /**
-     * Get the job details provided in the response
-     *
-     * @return array Job detail fields
-     */
-    protected function getJobDetails()
-    {
-        return ['id', 'body'];
     }
 }

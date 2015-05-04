@@ -2,6 +2,7 @@
 namespace Disque\Connection;
 
 use Disque\Command\CommandInterface;
+use Disque\Connection\Exception\ConnectionException;
 use Predis\Client as PredisClient;
 
 class Predis extends BaseConnection implements ConnectionInterface
@@ -11,7 +12,7 @@ class Predis extends BaseConnection implements ConnectionInterface
      *
      * @var \Predis\Client
      */
-    private $client;
+    protected $client;
 
     /**
      * Connect
@@ -22,11 +23,7 @@ class Predis extends BaseConnection implements ConnectionInterface
     {
         parent::connect($options);
 
-        $this->client = new PredisClient([
-            'scheme' => 'tcp',
-            'host' => $this->host,
-            'port' => $this->port
-        ]);
+        $this->client = $this->buildClient($this->host, $this->port);
         $this->client->connect();
     }
 
@@ -49,7 +46,7 @@ class Predis extends BaseConnection implements ConnectionInterface
      */
     public function isConnected()
     {
-        return $this->client->isConnected();
+        return (isset($this->client) && $this->client->isConnected());
     }
 
     /**
@@ -57,9 +54,29 @@ class Predis extends BaseConnection implements ConnectionInterface
      *
      * @param CommandInterface $command
      * @return mixed Response
+     * @throws Disque\Connection\Exception\ConnectionException
      */
     public function execute(CommandInterface $command, array $arguments = [])
     {
+        if (!$this->isConnected()) {
+            throw new ConnectionException('No connection established');
+        }
         return $this->client->executeRaw($command->build($arguments));
+    }
+
+    /**
+     * Build Predis client
+     *
+     * @param string $host Host
+     * @param int $port Port
+     * @return Predis\Client Client
+     */
+    protected function buildClient($host, $port)
+    {
+        return new PredisClient([
+            'scheme' => 'tcp',
+            'host' => $host,
+            'port' => $port
+        ]);
     }
 }

@@ -3,9 +3,10 @@ namespace Disque;
 
 use InvalidArgumentException;
 use Disque\Command;
+use Disque\Connection\Exception\ConnectionException;
 use Disque\Connection\Connection;
 use Disque\Connection\ConnectionInterface;
-use Disque\Exception;
+use Disque\Exception\InvalidCommandException;
 
 /**
  * @method int ackjob(string... $ids)
@@ -28,14 +29,25 @@ class Client
      *
      * @var array
      */
-    protected $servers;
+    protected $servers = [];
 
     /**
-     * Connection
+     * List of nodes. Indexed by node ID, and as value an array with:
+     * - Disque\Connection\ConnectionInterface|null `connection`
+     * - string `host`
+     * - int `port`
+     * - string `version`
      *
-     * @var Disque\Connection\ConnectionInterface
+     * @var array
      */
-    protected $connection;
+    protected $nodes = [];
+
+    /**
+     * Current node ID we are connected to
+     *
+     * @var string
+     */
+    protected $nodeId;
 
     /**
      * Command handlers
@@ -60,22 +72,22 @@ class Client
     {
         $this->setConnectionImplementation(Connection::class);
         foreach ($servers as $server) {
-            $this->addServer($server);
+            $this->addServer($server['host'], $server['port']);
         }
 
         foreach ([
-            'ackjob' => Command\AckJob::class,
-            'addjob' => Command\AddJob::class,
-            'deljob' => Command\DelJob::class,
-            'dequeue' => Command\Dequeue::class,
-            'enqueue' => Command\Enqueue::class,
-            'fastack' => Command\FastAck::class,
-            'getjob' => Command\GetJob::class,
-            'hello' => Command\Hello::class,
-            'info' => Command\Info::class,
-            'qlen' => Command\QLen::class,
-            'qpeek' => Command\QPeek::class,
-            'show' => Command\Show::class
+            'ACKJOB' => Command\AckJob::class,
+            'ADDJOB' => Command\AddJob::class,
+            'DELJOB' => Command\DelJob::class,
+            'DEQUEUE' => Command\Dequeue::class,
+            'ENQUEUE' => Command\Enqueue::class,
+            'FASTACK' => Command\FastAck::class,
+            'GETJOB' => Command\GetJob::class,
+            'HELLO' => Command\Hello::class,
+            'INFO' => Command\Info::class,
+            'QLEN' => Command\QLen::class,
+            'QPEEK' => Command\QPeek::class,
+            'SHOW' => Command\Show::class
         ] as $command => $handlerClass) {
             $this->registerCommand($command, new $handlerClass());
         }
@@ -99,20 +111,17 @@ class Client
     /**
      * Add a new server
      *
-     * @param array $server Server (should have 'host', and 'port')
+     * @param string $host Host
+     * @param int $port Port
      * @throws InvalidArgumentException
      */
-    public function addServer(array $server)
+    public function addServer($host, $port = 7711)
     {
-        $server += [
-            'host' => '127.0.0.1',
-            'port' => 7711
-        ];
-        if (!is_string($server['host']) || !is_int($server['port'])) {
+        if (!is_string($host) || !is_int($port)) {
             throw new InvalidArgumentException('Invalid server specified');
         }
 
-        $this->servers[] = $server;
+        $this->servers[] = compact('host', 'port');
     }
 
     /**
@@ -124,34 +133,92 @@ class Client
      */
     public function connect(array $options = [])
     {
-        $connectionClass = $this->connectionImplementation;
+        $result = $this->findAvailableConnection($options);
+        if (!isset($result['connection'])) {
+            throw new ConnectionException('No servers available');
+        } elseif (empty($result['hello']) || empty($result['hello']['nodes']) || empty($result['hello']['id'])) {
+            throw new ConnectionException('Invalid HELLO response when connecting');
+        }
+
+        $hello = $result['hello'];
+        $connection = $result['connection'];
+
+        $nodes = [];
+        foreach ($hello['nodes'] as $node) {
+            $nodes[$node['id']] = [
+                'connection' => null,
+                'port' => (int) $node['port'],
+            ] + array_intersect_key($node, ['id'=>null, 'host'=>null, 'version'=>null]);
+        }
+
+        if (!array_key_exists($hello['id'], $nodes)) {
+            throw new ConnectionException("Connected node #{$hello['id']} could not be found in list of nodes");
+        }
+
+        $nodes[$hello['id']]['connection'] = $connection;
+
+        $this->nodeId = $hello['id'];
+        $this->nodes = $nodes;
+        return $hello;
+    }
+
+    /**
+     * Get current connection
+     *
+     * @return Disque\Connection\ConnectionInterface
+     * @throws Disque\Connection\Exception\ConnectionException
+     */
+    protected function getConnection()
+    {
+        if (empty($this->nodes) || !isset($this->nodeId) || !isset($this->nodes[$this->nodeId]['connection'])) {
+            throw new ConnectionException('Not connected');
+        }
+        return $this->nodes[$this->nodeId]['connection'];
+    }
+
+    /**
+     * Get connection
+     *
+     * @param array $options Connection options
+     * @return array Indexed array with `connection` and `hello`. `connection`
+     * could end up being null
+     */
+    protected function findAvailableConnection(array $options)
+    {
         $servers = $this->servers;
         $connection = null;
         $hello = [];
         while (!empty($servers)) {
             $key = array_rand($servers, 1);
             $server = $servers[$key];
-            $connection = new $connectionClass();
-            $connection->setHost($server['host']);
-            $connection->setPort($server['port']);
+            $connection = $this->buildConnection($server['host'], $server['port']);
             try {
-                $connection->connect();
-                $hello = $this->execute($connection, $this->commands['hello']);
+                $connection->connect($options);
+                $hello = $this->execute($connection, $this->commands['HELLO']);
                 break;
-            } catch (Exception\ConnectionException $e) {
+            } catch (ConnectionException $e) {
                 unset($servers[$key]);
-                if (empty($servers))
                 $connection = null;
                 continue;
             }
         }
+        return compact('connection', 'hello');
+    }
 
-        if (!isset($connection)) {
-            throw new Exception\ConnectionException('No servers available');
-        }
-
-        $this->connection = $connection;
-        return $hello;
+    /**
+     * Build a new connection
+     *
+     * @param string $host Host
+     * @param int $port Port
+     * @return Disque\Connection\ConnectionInterface
+     */
+    protected function buildConnection($host, $port)
+    {
+        $connectionClass = $this->connectionImplementation;
+        $connection = new $connectionClass();
+        $connection->setHost($server['host']);
+        $connection->setPort($server['port']);
+        return $connection;
     }
 
     /**
@@ -162,7 +229,7 @@ class Client
      */
     public function registerCommand($command, Command\CommandInterface $handler)
     {
-        $this->commands[mb_strtolower($command)] = $handler;
+        $this->commands[mb_strtoupper($command)] = $handler;
     }
 
     /**
@@ -170,11 +237,11 @@ class Client
      */
     public function __call($command, array $arguments)
     {
-        $command = mb_strtolower($command);
+        $command = mb_strtoupper($command);
         if (!isset($this->commands[$command])) {
-            throw new Exception\InvalidCommandException($command);
+            throw new InvalidCommandException($command);
         }
-        return $this->execute($this->connection, $this->commands[$command], $arguments);
+        return $this->execute($this->getConnection(), $this->commands[$command], $arguments);
     }
 
     /**

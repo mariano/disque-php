@@ -6,6 +6,11 @@ use Disque\Exception;
 
 abstract class BaseCommand implements CommandInterface
 {
+    const RESPONSE_TYPE_STRING = 0;
+    const RESPONSE_TYPE_INT = 1;
+    const RESPONSE_TYPE_JOBS = 2;
+    const RESPONSE_TYPE_JOBS_WITH_QUEUE = 3;
+
     /**
      * Available command options
      *
@@ -19,6 +24,13 @@ abstract class BaseCommand implements CommandInterface
      * @var array
      */
     protected $arguments = [];
+
+    /**
+     * Tells the response type for this command
+     *
+     * @var int
+     */
+    protected $responseType = self::RESPONSE_TYPE_STRING;
 
     /**
      * This command, with all its arguments, ready to be sent to Disque
@@ -38,6 +50,29 @@ abstract class BaseCommand implements CommandInterface
     }
 
     /**
+     * This command, with all its arguments, ready to be sent to Disque
+     *
+     * @param string $command Command
+     * @param array $arguments Arguments
+     * @return array Command (separated in parts)
+     * @throws Disque\Exception\InvalidCommandArgumentException
+     */
+    protected function buildStringArguments($command, array $arguments)
+    {
+        if (empty($arguments)) {
+            throw new Exception\InvalidCommandArgumentException($this, $arguments);
+        }
+
+        foreach ($arguments as $argument) {
+            if (!is_string($argument) || $argument === '') {
+                throw new Exception\InvalidCommandArgumentException($this, $arguments);
+            }
+        }
+
+        return array_merge([$command], $arguments);
+    }
+
+    /**
      * Parse response
      *
      * @param mixed $response Response
@@ -46,10 +81,54 @@ abstract class BaseCommand implements CommandInterface
      */
     public function parse($response)
     {
-        if (!is_string($response)) {
-            throw new Exception\InvalidCommandResponseException($this, $response);
+        switch ($this->responseType) {
+            case self::RESPONSE_TYPE_INT:
+                if (!is_numeric($response)) {
+                    throw new Exception\InvalidCommandResponseException($this, $response);
+                }
+                return (int) $response;
+            case self::RESPONSE_TYPE_JOBS:
+            case self::RESPONSE_TYPE_JOBS_WITH_QUEUE:
+                if (!is_array($response) || empty($response)) {
+                    throw new Exception\InvalidCommandResponseException($this, $response);
+                }
+                return $this->parseJobs($this->responseType, (array) $response);
+            case self::RESPONSE_TYPE_STRING:
+            default:
+                if (!is_string($response)) {
+                    throw new Exception\InvalidCommandResponseException($this, $response);
+                }
+                return (string) $response;
         }
-        return (string) $response;
+    }
+
+    /**
+     * Parse response
+     *
+     * @param int $responseType Response type
+     * @param array $response Response
+     * @return array Jobs
+     * @throws Disque\Exception\InvalidCommandResponseException
+     */
+    private function parseJobs($responseType, array $response)
+    {
+        $jobDetails = (
+            $responseType === self::RESPONSE_TYPE_JOBS_WITH_QUEUE ?
+            ['queue', 'id', 'body'] :
+            ['id', 'body']
+        );
+        $totalJobDetails = count($jobDetails);
+
+        $jobs = [];
+        foreach ($response as $job) {
+            if (!$this->checkFixedArray($job, $totalJobDetails)) {
+                throw new Exception\InvalidCommandResponseException($this, $response);
+            }
+
+            $jobs[] = array_combine($jobDetails, $job);
+        }
+
+        return $jobs;
     }
 
     /**

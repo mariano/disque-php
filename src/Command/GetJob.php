@@ -3,8 +3,15 @@ namespace Disque\Command;
 
 use Disque\Exception;
 
-class GetJob extends BaseJobFetcherCommand implements CommandInterface
+class GetJob extends BaseCommand implements CommandInterface
 {
+    /**
+     * Tells the response type for this command
+     *
+     * @var int
+     */
+    protected $responseType = self::RESPONSE_TYPE_JOBS_WITH_QUEUE;
+
     /**
      * Available command options
      *
@@ -63,15 +70,5 @@ class GetJob extends BaseJobFetcherCommand implements CommandInterface
         }
 
         return array_merge(['GETJOB'], $options, ['FROM'], $queues);
-    }
-
-    /**
-     * Get the job details provided in the response
-     *
-     * @return array Job detail fields
-     */
-    protected function getJobDetails()
-    {
-        return ['queue', 'id', 'body'];
     }
 }
