@@ -1,6 +1,6 @@
 # disque-php
 
-[![Latest Version](https://poser.pugx.org/mariano/disque-php/v/stable)](https://packagist.org/packages/s12v/phpque)
+[![Latest Version](https://poser.pugx.org/mariano/disque-php/v/stable)](https://packagist.org/packages/mariano/disque-php)
 [![Software License](https://img.shields.io/badge/license-MIT-brightgreen.svg?style=flat-square)](LICENSE.md)
 [![Build Status](https://img.shields.io/travis/mariano/disque-php/master.svg?style=flat-square)](https://travis-ci.org/mariano/disque-php)
 [![Coverage Status](https://img.shields.io/scrutinizer/coverage/g/mariano/disque-php.svg?style=flat-square)](https://scrutinizer-ci.com/g/mariano/disque-php/code-structure)
