@@ -216,8 +216,8 @@ class Client
     {
         $connectionClass = $this->connectionImplementation;
         $connection = new $connectionClass();
-        $connection->setHost($server['host']);
-        $connection->setPort($server['port']);
+        $connection->setHost($host);
+        $connection->setPort($port);
         return $connection;
     }
 
