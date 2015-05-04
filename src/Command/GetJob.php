@@ -66,19 +66,7 @@ class GetJob extends BaseCommand implements CommandInterface
             $options = $this->toArguments($options);
         }
 
-        $queues = [];
-        reset($arguments);
-        foreach ($arguments as $argument) {
-            if (!is_string($argument)) {
-                throw new Exception\InvalidCommandArgumentException($this, $arguments);
-            }
-            $queues[] = $argument;
-        }
-
-        if (empty($queues)) {
-            throw new Exception\InvalidCommandArgumentException($this, $arguments);
-        }
-
-        $this->arguments = array_merge($options, ['FROM'], $queues);
+        $this->checkStringArguments($arguments);
+        $this->arguments = array_merge($options, ['FROM'], array_values($arguments));
     }
 }

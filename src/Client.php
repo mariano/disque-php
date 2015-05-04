@@ -79,7 +79,6 @@ class Client
     {
         $this->setConnectionImplementation(Connection::class);
         foreach ($servers as $uri) {
-            $host = null;
             $port = 7711;
             if (strpos($uri, ':') !== false) {
                 $server = parse_url($uri);
@@ -272,7 +271,6 @@ class Client
      * Execute the given command on the given connection
      *
      * @param ConnectionInterface $connection Connection
-     * @param Command\CommandInterface $handler Command handler
      * @param string $command Command
      * @param array $arguments Arguments for command
      * @return mixed Command response
