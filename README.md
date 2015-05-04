@@ -70,10 +70,8 @@ Please see [CONTRIBUTING](CONTRIBUTING.md) for details.
 
 ## Support
 
-I must reiterate this is a definite work in progress, so expect your coffee
-machine to blow up when using disque-php. If you need some help or even better
-want to collaborate, feel free to hit me on twitter: 
-[@mgiglesias](https://twitter.com/mgiglesias)
+If you need some help or even better want to collaborate, feel free to hit me 
+on twitter: [@mgiglesias](https://twitter.com/mgiglesias)
 
 ## Security
 
