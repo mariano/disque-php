@@ -1,12 +1,12 @@
 <?php
 namespace Disque;
 
-use InvalidArgumentException;
 use Disque\Command;
-use Disque\Connection\Exception\ConnectionException;
 use Disque\Connection\Connection;
 use Disque\Connection\ConnectionInterface;
+use Disque\Connection\Exception\ConnectionException;
 use Disque\Exception\InvalidCommandException;
+use InvalidArgumentException;
 
 /**
  * @method int ackjob(string... $ids)
@@ -33,7 +33,7 @@ class Client
 
     /**
      * List of nodes. Indexed by node ID, and as value an array with:
-     * - Disque\Connection\ConnectionInterface|null `connection`
+     * - ConnectionInterface|null `connection`
      * - string `host`
      * - int `port`
      * - string `version`
@@ -210,7 +210,7 @@ class Client
      *
      * @param string $host Host
      * @param int $port Port
-     * @return Disque\Connection\ConnectionInterface
+     * @return ConnectionInterface
      */
     protected function buildConnection($host, $port)
     {
@@ -225,7 +225,7 @@ class Client
      * Register a command handler
      *
      * @param string $command Command
-     * @param Disque\Command\CommandInterface $handler Command handler
+     * @param Command\CommandInterface $handler Command handler
      */
     public function registerCommand($command, Command\CommandInterface $handler)
     {
@@ -248,7 +248,7 @@ class Client
      * Execute the given command on the given connection
      *
      * @param ConnectionInterface $connection Connection
-     * @param Disque\Command\CommandInterface $handler Command handler
+     * @param Command\CommandInterface $handler Command handler
      * @param array $arguments Arguments for command
      * @return mixed Command response
      */
