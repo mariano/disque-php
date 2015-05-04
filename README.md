@@ -45,18 +45,18 @@ Queue jobs:
 
 ```php
 $payload = ['name' => 'Mariano'];
-$client->addjob('queue', json_encode($payload));
+$client->addJob('queue', json_encode($payload));
 ```
 
 Get jobs from queue:
 
 ```php
-$job = $client->getjob('queue');
+$job = $client->getJob('queue');
 $payload = json_decode($job, true);
 var_dump($payload);
 ```
 
-For a full coverage of the API, read the [full documentation](docs/README.md)
+For a full coverage of the API, read the [full documentation](docs/README.md).
 
 ## Testing
 

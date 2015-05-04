@@ -8,9 +8,10 @@ use PHPUnit_Framework_TestCase;
 use Disque\Client;
 use Disque\Command;
 use Disque\Command\CommandInterface;
-use Disque\Connection\Exception\ConnectionException;
+use Disque\Connection\BaseConnection;
 use Disque\Connection\Connection;
 use Disque\Connection\ConnectionInterface;
+use Disque\Connection\Exception\ConnectionException;
 use Disque\Exception\InvalidCommandException;
 
 class MockClient extends Client
@@ -31,7 +32,7 @@ class MockClient extends Client
         return $this->commandHandlers;
     }
 
-    public function setCommand($commandName, Command\CommandInterface $command)
+    public function setCommand($commandName, CommandInterface $command)
     {
         $this->commandHandlers[$commandName] = get_class($command);
         $this->commands[$commandName] = $command;
@@ -89,6 +90,35 @@ class MockClient extends Client
     }
 }
 
+class MockConnection extends BaseConnection
+{
+    public static $mockHost;
+    public static $mockPort;
+
+    public function disconnect()
+    {
+    }
+
+    public function isConnected()
+    {
+        return false;
+    }
+
+    public function execute(CommandInterface $command)
+    {
+    }
+
+    public function setHost($host)
+    {
+        static::$mockHost = $host;
+    }
+
+    public function setPort($port)
+    {
+        static::$mockPort = $port;
+    }
+}
+
 class ClientTest extends PHPUnit_Framework_TestCase
 {
     public function tearDown()
@@ -109,6 +139,18 @@ class ClientTest extends PHPUnit_Framework_TestCase
         $this->assertSame([
             ['host' => '127.0.0.1', 'port' => 7711]
         ], $c->getServers());
+    }
+
+    public function testConstructNoServers()
+    {
+        $c = new MockClient([]);
+        $this->assertSame([], $c->getServers());
+    }
+
+    public function testConstructInvalidServers()
+    {
+        $c = new MockClient([':7711']);
+        $this->assertSame([], $c->getServers());
     }
 
     public function testConstructMultipleServers()
@@ -407,6 +449,28 @@ class ClientTest extends PHPUnit_Framework_TestCase
         ], $result);
     }
 
+    public function testCustomConnection()
+    {
+        $client = new Client(['host:7799']);
+        $client->setConnectionImplementation(MockConnection::class);
+
+        try {
+            $client->connect();
+            $this->fail('An expected ' . ConnectionException::class . ' was not raised');
+        } catch (ConnectionException $e) {
+            $this->assertSame('No servers available', $e->getMessage());
+        }
+        $this->assertSame('host', MockConnection::$mockHost);
+        $this->assertSame(7799, MockConnection::$mockPort);
+    }
+
+    public function testRegisterCommandInvalidClass()
+    {
+        $this->setExpectedException(InvalidArgumentException::class, 'Class DateTime does not implement CommandInterface');
+        $c = new Client();
+        $c->registerCommand('MYCOMMAND', DateTime::class);
+    }
+
     public function testCallCommandInvalid()
     {
         $this->setExpectedException(InvalidCommandException::class, 'Invalid command WRONGCOMMAND');
@@ -419,6 +483,13 @@ class ClientTest extends PHPUnit_Framework_TestCase
         $this->setExpectedException(InvalidCommandException::class, 'Invalid command WRONGCOMMAND');
         $c = new Client();
         $c->wrongcommand();
+    }
+
+    public function testCallCommandInvalidNoServers()
+    {
+        $this->setExpectedException(ConnectionException::class, 'Not connected');
+        $c = new Client([]);
+        $c->hello();
     }
 
     public function testCallCommandCustom()
