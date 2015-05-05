@@ -9,6 +9,7 @@ class IntResponse extends BaseResponse implements ResponseInterface
      * Set response body
      *
      * @param mixed $body Response body
+     * @return void
      * @throws InvalidCommandResponseException
      */
     public function setBody($body)
@@ -22,8 +23,7 @@ class IntResponse extends BaseResponse implements ResponseInterface
     /**
      * Parse response
      *
-     * @param mixed $body Response body
-     * @return mixed Parsed response
+     * @return int Parsed response
      * @throws InvalidCommandResponseException
      */
     public function parse()

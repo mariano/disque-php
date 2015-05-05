@@ -179,23 +179,4 @@ class GetJobTest extends PHPUnit_Framework_TestCase
             ]
         ], $result);
     }
-
-    public function testParseMoreElements()
-    {
-        $c = new GetJob();
-        $result = $c->parse([['q', 'test', 'stuff'], ['q2', 'test2', 'stuff2']]);
-        $this->assertSame([
-            [
-                'queue' => 'q',
-                'id' => 'test',
-                'body' => 'stuff'
-            ],
-            [
-                'queue' => 'q2',
-                'id' => 'test2',
-                'body' => 'stuff2'
-            ]
-        ], $result);
-    }
-
 }

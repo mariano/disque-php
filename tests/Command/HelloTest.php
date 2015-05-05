@@ -135,7 +135,7 @@ class HelloTest extends PHPUnit_Framework_TestCase
         $c->parse(['version', 'id', [0=>'one', 1=>'two', 2=>'three', 4=>'four']]);
     }
 
-    public function testParseOneNode()
+    public function testParse()
     {
         $c = new Hello();
         $result = $c->parse(['version', 'id', ['id', 'host', 'port', 'version']]);
@@ -148,35 +148,6 @@ class HelloTest extends PHPUnit_Framework_TestCase
                     'host' => 'host',
                     'port' => 'port',
                     'version' => 'version'
-                ]
-            ]
-        ], $result);
-    }
-
-    public function testParseTwoNodes()
-    {
-        $c = new Hello();
-        $result = $c->parse([
-            'version',
-            'id',
-            ['id', 'host', 'port', 'version'],
-            ['id2', 'host2', 'port2', 'version2'],
-        ]);
-        $this->assertSame([
-            'version' => 'version',
-            'id' => 'id',
-            'nodes' => [
-                [
-                    'id' => 'id',
-                    'host' => 'host',
-                    'port' => 'port',
-                    'version' => 'version'
-                ],
-                [
-                    'id' => 'id2',
-                    'host' => 'host2',
-                    'port' => 'port2',
-                    'version' => 'version2'
                 ]
             ]
         ], $result);

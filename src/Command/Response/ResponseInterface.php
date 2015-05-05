@@ -9,6 +9,7 @@ interface ResponseInterface
      * Set command
      *
      * @param CommandInterface $command Command
+     * @return void
      */
     public function setCommand(CommandInterface $command);
 
@@ -16,6 +17,7 @@ interface ResponseInterface
      * Set response body
      *
      * @param mixed $body Response body
+     * @return void
      * @throws Disque\Exception\InvalidCommandResponseException
      */
     public function setBody($body);

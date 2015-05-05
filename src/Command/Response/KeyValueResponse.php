@@ -9,7 +9,8 @@ class KeyValueResponse extends BaseResponse implements ResponseInterface
      * Set response body
      *
      * @param mixed $body Response body
-     * @throws Disque\Exception\InvalidCommandResponseException
+     * @return void
+     * @throws InvalidCommandResponseException
      */
     public function setBody($body)
     {
@@ -22,9 +23,8 @@ class KeyValueResponse extends BaseResponse implements ResponseInterface
     /**
      * Parse response
      *
-     * @param mixed $body Response body
-     * @return mixed Parsed response
-     * @throws Disque\Exception\InvalidCommandResponseException
+     * @return array Parsed response
+     * @throws InvalidCommandResponseException
      */
     public function parse()
     {

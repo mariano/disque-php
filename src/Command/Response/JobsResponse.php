@@ -9,11 +9,11 @@ class JobsResponse extends BaseResponse implements ResponseInterface
     use ArrayChecker;
 
     /**
-     * Tells wether response has queue specified for each job
+     * Job details for each job
      *
-     * @var bool
+     * @var array
      */
-    private $withQueue;
+    private $jobDetails = [];
 
     /**
      * Create
@@ -22,13 +22,14 @@ class JobsResponse extends BaseResponse implements ResponseInterface
      */
     public function __construct($withQueue = false)
     {
-        $this->withQueue = $withQueue;
+        $this->jobDetails = ($withQueue ? ['queue', 'id', 'body'] : ['id', 'body']);
     }
 
     /**
      * Set response body
      *
      * @param mixed $body Response body
+     * @return void
      * @throws InvalidCommandResponseException
      */
     public function setBody($body)
@@ -36,34 +37,28 @@ class JobsResponse extends BaseResponse implements ResponseInterface
         if (empty($body) || !is_array($body)) {
             throw new InvalidCommandResponseException($this->command, $body);
         }
+        $totalJobDetails = count($this->jobDetails);
+        foreach ($body as $job) {
+            if (!$this->checkFixedArray($job, $totalJobDetails)) {
+                throw new InvalidCommandResponseException($this->command, $body);
+            }
+        }
+
         parent::setBody($body);
     }
 
     /**
      * Parse response
      *
-     * @param mixed $body Response body
-     * @return mixed Parsed response
+     * @return array Parsed response
      * @throws InvalidCommandResponseException
      */
     public function parse()
     {
-        $jobDetails = (
-            $this->withQueue ?
-            ['queue', 'id', 'body'] :
-            ['id', 'body']
-        );
-        $totalJobDetails = count($jobDetails);
-
         $jobs = [];
         foreach ($this->body as $job) {
-            if (!$this->checkFixedArray($job, $totalJobDetails)) {
-                throw new InvalidCommandResponseException($this->command, $this->body);
-            }
-
-            $jobs[] = array_combine($jobDetails, $job);
+            $jobs[] = array_combine($this->jobDetails, $job);
         }
-
         return $jobs;
     }
 }

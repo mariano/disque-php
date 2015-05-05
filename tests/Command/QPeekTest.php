@@ -139,21 +139,4 @@ class QPeekTest extends PHPUnit_Framework_TestCase
             ]
         ], $result);
     }
-
-    public function testParseMoreElements()
-    {
-        $c = new QPeek();
-        $result = $c->parse([['test', 'stuff'], ['test2', 'stuff2']]);
-        $this->assertSame([
-            [
-                'id' => 'test',
-                'body' => 'stuff'
-            ],
-            [
-                'id' => 'test2',
-                'body' => 'stuff2'
-            ]
-        ], $result);
-    }
-
 }
