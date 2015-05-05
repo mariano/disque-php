@@ -25,7 +25,6 @@ interface ResponseInterface
     /**
      * Parse response
      *
-     * @param mixed $body Response body
      * @return mixed Parsed response
      * @throws Disque\Exception\InvalidCommandResponseException
      */

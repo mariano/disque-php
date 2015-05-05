@@ -1,24 +1,14 @@
 <?php
 namespace Disque\Command\Response;
 
-use Disque\Exception\InvalidCommandResponseException;
-
-class IntResponse extends BaseResponse implements ResponseInterface
+class IntResponse extends BasicTypeResponse implements ResponseInterface
 {
     /**
-     * Set response body
+     * Basic data type for this response
      *
-     * @param mixed $body Response body
-     * @return void
-     * @throws InvalidCommandResponseException
+     * @var int
      */
-    public function setBody($body)
-    {
-        if (!is_numeric($body)) {
-            throw new InvalidCommandResponseException($this->command, $body);
-        }
-        parent::setBody($body);
-    }
+    protected $type = self::TYPE_INT;
 
     /**
      * Parse response
