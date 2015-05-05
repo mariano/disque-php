@@ -29,9 +29,9 @@ interface CommandInterface
     /**
      * Parse response
      *
-     * @param mixed $response Response
+     * @param mixed $body Response body
      * @return mixed Parsed response
      * @throws Disque\Exception\InvalidCommandResponseException
      */
-    public function parse($response);
+    public function parse($body);
 }

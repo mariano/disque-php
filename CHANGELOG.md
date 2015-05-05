@@ -1,6 +1,11 @@
 # Changelog
 
-All Notable changes to `disque-php` will be documented in this file
+All Notable changes will be documented in this file
+
+## 1.0.1 (IN PROGRESS)
+
+### Added
+- Refactoring of response parsing for greater flexibility
 
 ## 1.0.0
 
@@ -10,15 +15,3 @@ All Notable changes to `disque-php` will be documented in this file
 - Added built-in connection to Disque
 - Added support for Predis connections, and allowing adding new connection
 methods via `ConnectionInterface`
-
-### Deprecated
-- Nothing
-
-### Fixed
-- Nothing
-
-### Removed
-- Nothing
-
-### Security
-- Nothing

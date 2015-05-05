@@ -1,6 +1,8 @@
 <?php
 namespace Disque\Command;
 
+use Disque\Command\Response;
+
 class QLen extends BaseCommand implements CommandInterface
 {
     /**
@@ -11,11 +13,11 @@ class QLen extends BaseCommand implements CommandInterface
     protected $argumentsType = self::ARGUMENTS_TYPE_STRING;
 
     /**
-     * Tells the response type for this command
+     * Tells which class handles the response
      *
      * @var int
      */
-    protected $responseType = self::RESPONSE_TYPE_INT;
+    protected $responseHandler = Response\IntResponse::class;
 
     /**
      * Get command

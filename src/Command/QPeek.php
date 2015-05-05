@@ -13,11 +13,11 @@ class QPeek extends BaseCommand implements CommandInterface
     protected $argumentsType = self::ARGUMENTS_TYPE_STRING_INT;
 
     /**
-     * Tells the response type for this command
+     * Tells which class handles the response
      *
      * @var int
      */
-    protected $responseType = self::RESPONSE_TYPE_JOBS;
+    protected $responseHandler = Response\JobsResponse::class;
 
     /**
      * Get command

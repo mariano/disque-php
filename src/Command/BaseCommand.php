@@ -2,18 +2,17 @@
 namespace Disque\Command;
 
 use InvalidArgumentException;
+use Disque\Command\Argument\StringChecker;
 use Disque\Exception;
 
 abstract class BaseCommand implements CommandInterface
 {
+    use StringChecker;
+
     const ARGUMENTS_TYPE_EMPTY = 0;
     const ARGUMENTS_TYPE_STRING = 1;
     const ARGUMENTS_TYPE_STRING_INT = 2;
     const ARGUMENTS_TYPE_STRINGS = 3;
-    const RESPONSE_TYPE_STRING = 0;
-    const RESPONSE_TYPE_INT = 1;
-    const RESPONSE_TYPE_JOBS = 2;
-    const RESPONSE_TYPE_JOBS_WITH_QUEUE = 3;
 
     /**
      * Available command options
@@ -44,11 +43,11 @@ abstract class BaseCommand implements CommandInterface
     protected $argumentsType = self::ARGUMENTS_TYPE_STRING;
 
     /**
-     * Tells the response type for this command
+     * Tells which class handles the response
      *
-     * @var int
+     * @var string
      */
-    protected $responseType = self::RESPONSE_TYPE_STRING;
+    protected $responseHandler = Response\StringResponse::class;
 
     /**
      * Get command
@@ -102,95 +101,19 @@ abstract class BaseCommand implements CommandInterface
     }
 
     /**
-     * This command, with all its arguments, ready to be sent to Disque
-     *
-     * @param array $arguments Arguments
-     * @param int $numberOfElements Number of elements that must be present in $arguments
-     * @throws Disque\Exception\InvalidCommandArgumentException
-     */
-    protected function checkStringArgument(array $arguments, $numberOfElements = 1)
-    {
-        if (!$this->checkFixedArray($arguments, $numberOfElements) || !is_string($arguments[0])) {
-            throw new Exception\InvalidCommandArgumentException($this, $arguments);
-        }
-    }
-
-    /**
-     * This command, with all its arguments, ready to be sent to Disque
-     *
-     * @param array $arguments Arguments
-     * @throws Disque\Exception\InvalidCommandArgumentException
-     */
-    protected function checkStringArguments(array $arguments)
-    {
-        if (empty($arguments)) {
-            throw new Exception\InvalidCommandArgumentException($this, $arguments);
-        }
-
-        foreach ($arguments as $argument) {
-            if (!is_string($argument) || $argument === '') {
-                throw new Exception\InvalidCommandArgumentException($this, $arguments);
-            }
-        }
-    }
-
-    /**
      * Parse response
      *
-     * @param mixed $response Response
+     * @param mixed $body Response body
      * @return mixed Parsed response
      * @throws Disque\Exception\InvalidCommandResponseException
      */
-    public function parse($response)
+    public function parse($body)
     {
-        switch ($this->responseType) {
-            case self::RESPONSE_TYPE_INT:
-                if (!is_numeric($response)) {
-                    throw new Exception\InvalidCommandResponseException($this, $response);
-                }
-                return (int) $response;
-            case self::RESPONSE_TYPE_JOBS:
-            case self::RESPONSE_TYPE_JOBS_WITH_QUEUE:
-                if (!is_array($response) || empty($response)) {
-                    throw new Exception\InvalidCommandResponseException($this, $response);
-                }
-                return $this->parseJobs($this->responseType, (array) $response);
-            case self::RESPONSE_TYPE_STRING:
-            default:
-                if (!is_string($response)) {
-                    throw new Exception\InvalidCommandResponseException($this, $response);
-                }
-                return (string) $response;
-        }
-    }
-
-    /**
-     * Parse response
-     *
-     * @param int $responseType Response type
-     * @param array $response Response
-     * @return array Jobs
-     * @throws Disque\Exception\InvalidCommandResponseException
-     */
-    private function parseJobs($responseType, array $response)
-    {
-        $jobDetails = (
-            $responseType === self::RESPONSE_TYPE_JOBS_WITH_QUEUE ?
-            ['queue', 'id', 'body'] :
-            ['id', 'body']
-        );
-        $totalJobDetails = count($jobDetails);
-
-        $jobs = [];
-        foreach ($response as $job) {
-            if (!$this->checkFixedArray($job, $totalJobDetails)) {
-                throw new Exception\InvalidCommandResponseException($this, $response);
-            }
-
-            $jobs[] = array_combine($jobDetails, $job);
-        }
-
-        return $jobs;
+        $responseClass = $this->responseHandler;
+        $response = new $responseClass();
+        $response->setCommand($this);
+        $response->setBody($body);
+        return $response->parse();
     }
 
     /**
@@ -227,34 +150,5 @@ abstract class BaseCommand implements CommandInterface
         }
 
         return $arguments;
-    }
-
-    /**
-     * Check that the exact specified $count arguments are defined,
-     * in a numeric array
-     *
-     * @param mixed $elements Elements (should be an array)
-     * @param int $count Number of elements expected
-     * @param bool $atLeast Se to true to check array has at least $count elements
-     * @return bool Success
-     */
-    protected function checkFixedArray($elements, $count, $atLeast = false)
-    {
-        if (
-            empty($elements) ||
-            !is_array($elements) ||
-            (!$atLeast && count($elements) !== $count) ||
-            ($atLeast && count($elements) < $count)
-        ) {
-            return false;
-        }
-
-        for ($i=0; $i < $count; $i++) {
-            if (!isset($elements[$i])) {
-                return false;
-            }
-        }
-
-        return true;
     }
 }

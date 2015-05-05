@@ -11,11 +11,11 @@ class DelJob extends BaseCommand implements CommandInterface
     protected $argumentsType = self::ARGUMENTS_TYPE_STRINGS;
 
     /**
-     * Tells the response type for this command
+     * Tells which class handles the response
      *
      * @var int
      */
-    protected $responseType = self::RESPONSE_TYPE_INT;
+    protected $responseHandler = Response\IntResponse::class;
 
     /**
      * Get command

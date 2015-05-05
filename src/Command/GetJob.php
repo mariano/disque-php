@@ -1,16 +1,19 @@
 <?php
 namespace Disque\Command;
 
-use Disque\Exception;
+use Disque\Command\Argument\StringChecker;
+use Disque\Exception\InvalidCommandOptionException;
 
 class GetJob extends BaseCommand implements CommandInterface
 {
+    use StringChecker;
+
     /**
-     * Tells the response type for this command
+     * Tells which class handles the response
      *
      * @var int
      */
-    protected $responseType = self::RESPONSE_TYPE_JOBS_WITH_QUEUE;
+    protected $responseHandler = Response\JobsWithQueueResponse::class;
 
     /**
      * Available command options
@@ -46,7 +49,7 @@ class GetJob extends BaseCommand implements CommandInterface
      * Set arguments for the command
      *
      * @param array $arguments Arguments
-     * @throws Disque\Exception\InvalidCommandArgumentException
+     * @throws InvalidCommandOptionException
      */
     public function setArguments(array $arguments)
     {
@@ -60,7 +63,7 @@ class GetJob extends BaseCommand implements CommandInterface
                 (isset($options['count']) && !is_int($options['count'])) ||
                 (isset($options['timeout']) && !is_int($options['timeout']))
             ) {
-                throw new Exception\InvalidCommandOptionException($this, $last);
+                throw new InvalidCommandOptionException($this, $last);
             }
 
             $options = $this->toArguments($options);

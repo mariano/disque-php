@@ -1,7 +1,8 @@
 <?php
 namespace Disque\Command;
 
-use Disque\Exception;
+use Disque\Command\Response;
+use Disque\Exception\InvalidCommandResponseException;
 
 class Hello extends BaseCommand implements CommandInterface
 {
@@ -13,6 +14,13 @@ class Hello extends BaseCommand implements CommandInterface
     protected $argumentsType = self::ARGUMENTS_TYPE_EMPTY;
 
     /**
+     * Tells which class handles the response
+     *
+     * @var int
+     */
+    protected $responseHandler = Response\HelloResponse::class;
+
+    /**
      * Get command
      *
      * @return string Command
@@ -20,39 +28,5 @@ class Hello extends BaseCommand implements CommandInterface
     public function getCommand()
     {
         return 'HELLO';
-    }
-
-    /**
-     * Parse response
-     *
-     * @param array $response Response
-     * @return array Parsed response
-     * @throws Disque\Exception\InvalidCommandResponseException
-     */
-    public function parse($response)
-    {
-        if (!$this->checkFixedArray($response, 3, true)) {
-            throw new Exception\InvalidCommandResponseException($this, $response);
-        }
-
-        $nodes = [];
-        foreach (array_slice($response, 2) as $node) {
-            if (!$this->checkFixedArray($node, 4)) {
-                throw new Exception\InvalidCommandResponseException($this, $response);
-            }
-
-            $nodes[] = [
-                'id' => $node[0],
-                'host' => $node[1],
-                'port' => $node[2],
-                'version' => $node[3]
-            ];
-        }
-
-        return [
-            'version' => $response[0],
-            'id' => $response[1],
-            'nodes' => $nodes
-        ];
     }
 }

@@ -1,16 +1,13 @@
 <?php
 namespace Disque\Command;
 
-use Disque\Exception;
+use Disque\Command\Argument\ArrayChecker;
+use Disque\Exception\InvalidCommandArgumentException;
+use Disque\Exception\InvalidCommandOptionException;
 
 class AddJob extends BaseCommand implements CommandInterface
 {
-    /**
-     * Tells the response type for this command
-     *
-     * @var int
-     */
-    protected $responseType = self::RESPONSE_TYPE_STRING;
+    use ArrayChecker;
 
     /**
      * Available command options
@@ -55,23 +52,24 @@ class AddJob extends BaseCommand implements CommandInterface
      * Set arguments for the command
      *
      * @param array $arguments Arguments
-     * @throws Disque\Exception\InvalidCommandArgumentException
+     * @throws InvalidCommandArgumentException
+     * @throws InvalidCommandOptionException
      */
     public function setArguments(array $arguments)
     {
         $count = count($arguments);
         if (!$this->checkFixedArray($arguments, 2, true) || $count > 3) {
-            throw new Exception\InvalidCommandArgumentException($this, $arguments);
+            throw new InvalidCommandArgumentException($this, $arguments);
         } elseif (!is_string($arguments[0]) || !is_string($arguments[1])) {
-            throw new Exception\InvalidCommandArgumentException($this, $arguments);
+            throw new InvalidCommandArgumentException($this, $arguments);
         } elseif ($count === 3 && (!isset($arguments[2]) || !is_array($arguments[2]) || empty($arguments[2]))) {
-            throw new Exception\InvalidCommandArgumentException($this, $arguments);
+            throw new InvalidCommandArgumentException($this, $arguments);
         }
 
         $options = (!empty($arguments[2]) ? $arguments[2] : []) + ['timeout' => $this->options['timeout']];
         foreach (['timeout', 'replicate', 'delay', 'retry', 'ttl', 'maxlen'] as $intOption) {
             if (isset($options[$intOption]) && !is_int($options[$intOption])) {
-                throw new Exception\InvalidCommandOptionException($this, (array) $arguments[2]);
+                throw new InvalidCommandOptionException($this, (array) $arguments[2]);
             }
         }
 
