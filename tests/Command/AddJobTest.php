@@ -263,6 +263,14 @@ class AddJobTest extends PHPUnit_Framework_TestCase
         $this->assertSame(['queue', 'job', 0, 'MAXLEN', 5], $result);
     }
 
+    public function testBuildUnicode()
+    {
+        $c = new AddJob();
+        $c->setArguments(['queue', '大']);
+        $result = $c->getArguments();
+        $this->assertSame(['queue', '大', 0], $result);
+    }
+
     public function testParseInvalidNonString()
     {
         $this->setExpectedException(InvalidCommandResponseException::class, 'Invalid command response. Command Disque\\Command\\AddJob got: 10');

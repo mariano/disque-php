@@ -179,4 +179,17 @@ class GetJobTest extends PHPUnit_Framework_TestCase
             ]
         ], $result);
     }
+
+    public function testParseUnicode()
+    {
+        $c = new GetJob();
+        $result = $c->parse([['queue', 'id', '大']]);
+        $this->assertSame([
+            [
+                'queue' => 'queue',
+                'id' => 'id',
+                'body' => '大'
+            ]
+        ], $result);
+    }
 }

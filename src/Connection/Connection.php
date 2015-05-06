@@ -84,13 +84,13 @@ class Connection extends BaseConnection implements ConnectionInterface
 
         $parts = [
             '*' . ($totalArguments + 1),
-            '$' . strlen($commandName),
+            '$' . mb_strlen($commandName),
             $commandName
         ];
 
         for ($i=0; $i < $totalArguments; $i++) {
             $argument = $arguments[$i];
-            $parts[] = '$' . strlen($argument);
+            $parts[] = '$' . mb_strlen($argument);
             $parts[] = $argument;
         }
 
@@ -117,7 +117,7 @@ class Connection extends BaseConnection implements ConnectionInterface
         }
 
         do {
-            $length = strlen($data);
+            $length = mb_strlen($data);
             $bytes = fwrite($this->socket, $data);
             if (empty($bytes)) {
                 throw new ConnectionException("Could not write {$length} bytes to client");
@@ -177,7 +177,7 @@ class Connection extends BaseConnection implements ConnectionInterface
                         throw new ConnectionException('Error while reading buffered string from client');
                     }
                     $string .= $buffer;
-                    $bytes -= strlen($buffer);
+                    $bytes -= mb_strlen($buffer);
                 } while ($bytes > 0);
 
                 return substr($string, 0, -2); // Remove last CRLF

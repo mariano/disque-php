@@ -364,29 +364,8 @@ class ConnectionTest extends PHPUnit_Framework_TestCase
         ];
     }
 
-    public function testExecuteHello()
-    {
-        $socket = fopen('php://memory','rw');
-
-        $connection = m::mock(MockConnection::class)
-            ->makePartial()
-            ->shouldReceive('send')
-            ->with("*1\r\n$5\r\nHELLO\r\n")
-            ->once()
-            ->shouldReceive('receive')
-            ->andReturn(['result' => true])
-            ->once()
-            ->mock();
-
-        $connection->setSocket($socket);
-        $result = $connection->execute(new Command\Hello());
-        $this->assertSame(['result' => true], $result);
-    }
-
     public function testExecuteAck()
     {
-        $socket = fopen('php://memory','rw');
-
         $command = new Command\AckJob();
         $command->setArguments(['id']);
 
@@ -399,8 +378,56 @@ class ConnectionTest extends PHPUnit_Framework_TestCase
             ->andReturn(['result' => true])
             ->once()
             ->mock();
+        $connection->setSocket(fopen('php://memory','rw'));
+        $result = $connection->execute($command);
+        $this->assertSame(['result' => true], $result);
+    }
 
-        $connection->setSocket($socket);
+    public function testExecuteAddUnicode()
+    {
+        $command = new Command\AddJob();
+        $command->setArguments(['queue', '大']);
+
+        $connection = m::mock(MockConnection::class)
+            ->makePartial()
+            ->shouldReceive('send')
+            ->with(implode("\r\n", [
+                '*4',
+                '$6',
+                'ADDJOB',
+                '$5',
+                'queue',
+                '$1',
+                '大',
+                '$1',
+                '0'
+            ]) . "\r\n")
+            ->once()
+            ->shouldReceive('receive')
+            ->andReturn(['result' => true])
+            ->once()
+            ->mock();
+
+        $connection->setSocket(fopen('php://memory','rw'));
+        $result = $connection->execute($command);
+        $this->assertSame(['result' => true], $result);
+    }
+
+    public function testExecuteHello()
+    {
+        $command = new Command\Hello();
+
+        $connection = m::mock(MockConnection::class)
+            ->makePartial()
+            ->shouldReceive('send')
+            ->with("*1\r\n$5\r\nHELLO\r\n")
+            ->once()
+            ->shouldReceive('receive')
+            ->andReturn(['result' => true])
+            ->once()
+            ->mock();
+
+        $connection->setSocket(fopen('php://memory','rw'));
         $result = $connection->execute($command);
         $this->assertSame(['result' => true], $result);
     }

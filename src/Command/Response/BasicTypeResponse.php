@@ -24,7 +24,6 @@ abstract class BasicTypeResponse extends BaseResponse implements ResponseInterfa
      */
     public function setBody($body)
     {
-        $error = false;
         switch ($this->type) {
             case self::TYPE_INT:
                 $error = !is_numeric($body);
