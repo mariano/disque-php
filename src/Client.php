@@ -7,6 +7,8 @@ use Disque\Connection\ConnectionInterface;
 use Disque\Connection\Exception\ConnectionException;
 use Disque\Exception\InvalidCommandException;
 use InvalidArgumentException;
+use Psr\Log\LoggerInterface;
+use Psr\Log\LogLevel;
 
 /**
  * @method int ackjob(string... $ids)
@@ -24,6 +26,15 @@ use InvalidArgumentException;
  */
 class Client
 {
+    const LOG_EMERGENCY = 0;
+    const LOG_ALERT = 1;
+    const LOG_CRITICAL = 2;
+    const LOG_ERROR = 3;
+    const LOG_WARNING = 4;
+    const LOG_NOTICE = 5;
+    const LOG_INFO = 6;
+    const LOG_DEBUG = 7;
+
     /**
      * List of servers
      *
@@ -69,6 +80,20 @@ class Client
      * @var string
      */
     protected $connectionImplementation;
+
+    /**
+     * Logger
+     *
+     * @var LoggerInterface
+     */
+    private $logger;
+
+    /**
+     * Log level mapping to PSR-2
+     *
+     * @var array
+     */
+    private $logLevels;
 
     /**
      * Create a new Client
@@ -125,6 +150,29 @@ class Client
             throw new InvalidArgumentException("Class {$class} does not implement ConnectionInterface");
         }
         $this->connectionImplementation = $class;
+    }
+
+    /**
+     * Sets the logger to use
+     *
+     * @param LoggerInterface $logger Logger
+     * @throws InvalidArgumentException
+     */
+    public function setLogger(LoggerInterface $logger)
+    {
+        $this->logger = $logger;
+        if (!isset($this->logLevels)) {
+            $this->logLevels = [
+                self::LOG_EMERGENCY => LogLevel::EMERGENCY,
+                self::LOG_ALERT => LogLevel::ALERT,
+                self::LOG_CRITICAL => LogLevel::CRITICAL,
+                self::LOG_ERROR => LogLevel::ERROR,
+                self::LOG_WARNING => LogLevel::WARNING,
+                self::LOG_NOTICE => LogLevel::NOTICE,
+                self::LOG_INFO => LogLevel::INFO,
+                self::LOG_DEBUG => LogLevel::DEBUG,
+            ];
+        }
     }
 
     /**

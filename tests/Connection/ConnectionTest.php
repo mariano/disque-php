@@ -397,7 +397,7 @@ class ConnectionTest extends PHPUnit_Framework_TestCase
                 'ADDJOB',
                 '$5',
                 'queue',
-                '$1',
+                '$' . mb_strlen('大'),
                 '大',
                 '$1',
                 '0'
