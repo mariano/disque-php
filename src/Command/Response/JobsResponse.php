@@ -42,6 +42,10 @@ class JobsResponse extends BaseResponse implements ResponseInterface
             if (!$this->checkFixedArray($job, $totalJobDetails)) {
                 throw new InvalidCommandResponseException($this->command, $body);
             }
+            $id = ($totalJobDetails > 2 ? $job[1] : $job[0]);
+            if (strpos($id, 'DI') !== 0 || strlen($id) < 10) {
+                throw new InvalidCommandResponseException($this->command, $body);
+            }
         }
 
         parent::setBody($body);

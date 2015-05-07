@@ -1,11 +1,13 @@
 <?php
 namespace Disque\Test\Connection;
 
+use Closure;
 use DateTime;
 use InvalidArgumentException;
 use Mockery as m;
 use PHPUnit_Framework_TestCase;
 use Disque\Command\CommandInterface;
+use Disque\Command\GetJob;
 use Disque\Command\Hello;
 use Disque\Connection\BaseConnection;
 use Disque\Connection\ConnectionInterface;
@@ -30,15 +32,15 @@ class MockManager extends Manager
         $this->availableConnection = $availableConnection;
     }
 
-    protected function findAvailableConnection(array $options)
+    protected function findAvailableConnection()
     {
         if (!isset($this->availableConnection) || $this->availableConnection === false) {
-            return parent::findAvailableConnection($options);
+            return parent::findAvailableConnection();
         }
         return $this->availableConnection;
     }
 
-    public function setBuildConnection(ConnectionInterface $connection)
+    public function setBuildConnection($connection)
     {
         $this->buildConnection = $connection;
     }
@@ -46,6 +48,9 @@ class MockManager extends Manager
     protected function buildConnection($host, $port)
     {
         if (isset($this->buildConnection)) {
+            if ($this->buildConnection instanceof Closure) {
+                return call_user_func($this->buildConnection, $host, $port);
+            }
             return $this->buildConnection;
         }
         return parent::buildConnection($host, $port);
@@ -260,9 +265,35 @@ class ManagerTest extends PHPUnit_Framework_TestCase
         $this->assertSame('NODE_ID', $m->getNodeId());
         $this->assertEquals([
             'NODE_ID' => $available['hello']['nodes'][0] + [
-                'connection' => $available['connection']
+                'connection' => $available['connection'],
+                'jobs' => 0
             ]
         ], $m->getNodes());
+    }
+
+    public function testConnectWithOptions()
+    {
+        $m = new MockManager();
+        $m->addServer('127.0.0.1', 7711);
+        $m->setOptions(['test' => 'stuff']);
+        $m->setAvailableConnection(false); // Passthru
+
+        $connection = m::mock(ConnectionInterface::class)
+            ->shouldReceive('connect')
+            ->with(['test' => 'stuff'])
+            ->once()
+            ->shouldReceive('execute')
+            ->with(m::type(Hello::class))
+            ->andReturn([
+                'v1',
+                'id1',
+                ['id1', '127.0.0.1', 7711, 'v1'],
+                ['id2', '127.0.0.1', 7712, 'v1']
+            ])
+            ->mock();
+
+        $m->setBuildConnection($connection);
+        $m->connect([]);
     }
 
     public function testFindAvailableConnectionNoneSpecifiedConnectThrowsException()
@@ -388,9 +419,42 @@ class ManagerTest extends PHPUnit_Framework_TestCase
         $m->execute(new Hello());
     }
 
+    public function testExecuteCallsConnectionDisconnected()
+    {
+        $connection = m::mock(ConnectionInterface::class)
+            ->shouldReceive('isConnected')
+            ->andReturn(false)
+            ->once()
+            ->mock();
+
+        $available = [
+            'connection' => $connection,
+            'hello' => [
+                'id' => 'NODE_ID',
+                'nodes' => [
+                    [
+                        'id' => 'NODE_ID',
+                        'host' => '127.0.0.1',
+                        'port' => 7711
+                    ]
+                ]
+            ]
+        ];
+        $m = new MockManager();
+        $m->setAvailableConnection($available);
+        $m->connect([]);
+
+        $this->setExpectedException(ConnectionException::class, 'Not connected');
+
+        $m->execute(new Hello());
+    }
+
     public function testExecuteCallsConnectionExecute()
     {
         $connection = m::mock(ConnectionInterface::class)
+            ->shouldReceive('isConnected')
+            ->andReturn(true)
+            ->once()
             ->shouldReceive('execute')
             ->with(m::type(Hello::class))
             ->andReturn(['test' => 'stuff'])
@@ -415,5 +479,300 @@ class ManagerTest extends PHPUnit_Framework_TestCase
         $m->connect([]);
         $result = $m->execute(new Hello());
         $this->assertSame(['test' => 'stuff'], $result);
+    }
+
+    public function testGetJobNodeNotInList()
+    {
+        $node1 = 'DI0f0c644fd3ccb51c2cedbd47fcb6f312646c993c05a0SQ';
+        $node2 = 'DI0f0c645fd3ccb51c2cedbd47fcb6f312646c993c05a0SQ';
+        $this->assertNotSame($node1, $node2);
+
+        $connection1 = m::mock(ConnectionInterface::class)
+            ->shouldReceive('isConnected')
+            ->andReturn(true)
+            ->times(3)
+            ->shouldReceive('execute')
+            ->with(m::type(GetJob::class))
+            ->andReturn([
+                ['q', $node1, 'body1'],
+                ['q', $node1, 'body2'],
+            ])
+            ->once()
+            ->shouldReceive('execute')
+            ->with(m::type(GetJob::class))
+            ->andReturn([
+                ['q2', $node2, 'body3'],
+            ])
+            ->once()
+            ->shouldReceive('execute')
+            ->with(m::type(GetJob::class))
+            ->andReturn([
+                ['q', $node1, 'body4']
+            ])
+            ->mock();
+
+        $command = new GetJob();
+        $command->setArguments(['q', 'q2']);
+
+        $m = new MockManager();
+        $m->setMinimumJobsToChangeNode(3);
+        $m->setAvailableConnection([
+            'connection' => $connection1,
+            'hello' => [
+                'id' => $node1,
+                'nodes' => [
+                    [
+                        'id' => $node1,
+                        'host' => '127.0.0.1',
+                        'port' => 7711
+                    ]
+                ]
+            ]
+        ]);
+        $m->connect([]);
+        $this->assertSame($node1, $m->getNodeId());
+
+        $m->execute($command);
+        $this->assertSame($node1, $m->getNodeId());
+
+        $m->execute($command);
+        $this->assertSame($node1, $m->getNodeId());
+
+        $m->execute($command);
+        $this->assertSame($node1, $m->getNodeId());
+    }
+
+    public function testGetJobSameNode()
+    {
+        $node1 = 'DI0f0c644fd3ccb51c2cedbd47fcb6f312646c993c05a0SQ';
+        $node2 = 'DI0f0c645fd3ccb51c2cedbd47fcb6f312646c993c05a0SQ';
+        $this->assertNotSame($node1, $node2);
+
+        $connection1 = m::mock(ConnectionInterface::class)
+            ->shouldReceive('isConnected')
+            ->andReturn(true)
+            ->times(3)
+            ->shouldReceive('execute')
+            ->with(m::type(GetJob::class))
+            ->andReturn([
+                ['q', $node1, 'body1'],
+                ['q', $node1, 'body2'],
+            ])
+            ->once()
+            ->shouldReceive('execute')
+            ->with(m::type(GetJob::class))
+            ->andReturn([
+                ['q2', $node2, 'body3'],
+            ])
+            ->once()
+            ->shouldReceive('execute')
+            ->with(m::type(GetJob::class))
+            ->andReturn([
+                ['q', $node1, 'body4']
+            ])
+            ->mock();
+
+        $command = new GetJob();
+        $command->setArguments(['q', 'q2']);
+
+        $m = new MockManager();
+        $m->setMinimumJobsToChangeNode(3);
+        $m->setAvailableConnection([
+            'connection' => $connection1,
+            'hello' => [
+                'id' => $node1,
+                'nodes' => [
+                    [
+                        'id' => $node1,
+                        'host' => '127.0.0.1',
+                        'port' => 7711
+                    ],
+                    [
+                        'id' => $node2,
+                        'host' => '127.0.0.1',
+                        'port' => 7711
+                    ],
+
+                ]
+            ]
+        ]);
+        $m->connect([]);
+        $this->assertSame($node1, $m->getNodeId());
+
+        $m->execute($command);
+        $this->assertSame($node1, $m->getNodeId());
+
+        $m->execute($command);
+        $this->assertSame($node1, $m->getNodeId());
+
+        $m->execute($command);
+        $this->assertSame($node1, $m->getNodeId());
+    }
+
+    public function testGetJobChangeNodeCantConnect()
+    {
+        $node1 = 'DI0f0c644fd3ccb51c2cedbd47fcb6f312646c993c05a0SQ';
+        $node2 = 'DI0f0c645fd3ccb51c2cedbd47fcb6f312646c993c05a0SQ';
+        $this->assertNotSame($node1, $node2);
+
+        $connection1 = m::mock(ConnectionInterface::class)
+            ->shouldReceive('isConnected')
+            ->andReturn(true)
+            ->times(3)
+            ->shouldReceive('execute')
+            ->with(m::type(GetJob::class))
+            ->andReturn([
+                ['q', $node2, 'body1'],
+                ['q', $node2, 'body2'],
+            ])
+            ->once()
+            ->shouldReceive('execute')
+            ->with(m::type(GetJob::class))
+            ->andReturn([
+                ['q2', $node1, 'body3'],
+            ])
+            ->once()
+            ->shouldReceive('execute')
+            ->with(m::type(GetJob::class))
+            ->andReturn([
+                ['q', $node2, 'body4']
+            ])
+            ->mock();
+
+        $connection2 = m::mock(ConnectionInterface::class)
+            ->shouldReceive('connect')
+            ->with([])
+            ->andThrow(new ConnectionException('Mocking ConnectionException'))
+            ->once()
+            ->mock();
+
+        $command = new GetJob();
+        $command->setArguments(['q', 'q2']);
+
+        $m = new MockManager();
+        $m->setMinimumJobsToChangeNode(3);
+        $m->setAvailableConnection([
+            'connection' => $connection1,
+            'hello' => [
+                'id' => $node1,
+                'nodes' => [
+                    [
+                        'id' => $node1,
+                        'host' => '127.0.0.1',
+                        'port' => 7711
+                    ],
+                    [
+                        'id' => $node2,
+                        'host' => '127.0.0.1',
+                        'port' => 7712
+                    ],
+
+                ]
+            ]
+        ]);
+        $m->setBuildConnection(function ($host, $port) use($connection1, $connection2) {
+            if ($port === 7711) {
+                return $connection1;
+            }
+            return $connection2;
+        });
+        $m->connect([]);
+        $this->assertSame($node1, $m->getNodeId());
+
+        $m->execute($command);
+        $this->assertSame($node1, $m->getNodeId());
+
+        $m->execute($command);
+        $this->assertSame($node1, $m->getNodeId());
+
+        $m->execute($command);
+        $this->assertSame($node1, $m->getNodeId());
+    }
+
+    public function testGetJobChangesNode()
+    {
+        $node1 = 'DI0f0c644fd3ccb51c2cedbd47fcb6f312646c993c05a0SQ';
+        $node2 = 'DI0f0c645fd3ccb51c2cedbd47fcb6f312646c993c05a0SQ';
+        $this->assertNotSame($node1, $node2);
+
+        $connection1 = m::mock(ConnectionInterface::class)
+            ->shouldReceive('isConnected')
+            ->andReturn(true)
+            ->times(3)
+            ->shouldReceive('execute')
+            ->with(m::type(GetJob::class))
+            ->andReturn([
+                ['q', $node2, 'body1'],
+                ['q', $node2, 'body2'],
+            ])
+            ->once()
+            ->shouldReceive('execute')
+            ->with(m::type(GetJob::class))
+            ->andReturn([
+                ['q2', $node1, 'body3'],
+            ])
+            ->once()
+            ->shouldReceive('execute')
+            ->with(m::type(GetJob::class))
+            ->andReturn([
+                ['q', $node2, 'body4']
+            ])
+            ->mock();
+
+        $connection2 = m::mock(ConnectionInterface::class)
+            ->shouldReceive('connect')
+            ->with([])
+            ->once()
+            ->shouldReceive('execute')
+            ->with(m::type(Hello::class))
+            ->andReturn([
+                'v1',
+                'id1',
+                ['id1', '127.0.0.1', 7711, 'v1'],
+                ['id2', '127.0.0.1', 7712, 'v1']
+            ])
+            ->mock();
+
+        $command = new GetJob();
+        $command->setArguments(['q', 'q2']);
+
+        $m = new MockManager();
+        $m->setMinimumJobsToChangeNode(3);
+        $m->setAvailableConnection([
+            'connection' => $connection1,
+            'hello' => [
+                'id' => $node1,
+                'nodes' => [
+                    [
+                        'id' => $node1,
+                        'host' => '127.0.0.1',
+                        'port' => 7711
+                    ],
+                    [
+                        'id' => $node2,
+                        'host' => '127.0.0.1',
+                        'port' => 7712
+                    ],
+
+                ]
+            ]
+        ]);
+        $m->setBuildConnection(function ($host, $port) use($connection1, $connection2) {
+            if ($port === 7711) {
+                return $connection1;
+            }
+            return $connection2;
+        });
+        $m->connect([]);
+        $this->assertSame($node1, $m->getNodeId());
+
+        $m->execute($command);
+        $this->assertSame($node1, $m->getNodeId());
+
+        $m->execute($command);
+        $this->assertSame($node1, $m->getNodeId());
+
+        $m->execute($command);
+        $this->assertSame($node2, $m->getNodeId());
     }
 }

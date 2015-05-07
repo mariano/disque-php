@@ -92,6 +92,51 @@ And then configure the connection implementation class:
 $client->getConnectionManager()->setConnectionClass(\Disque\Connection\Predis::class);
 ```
 
+### Smart node connection based on GETJOB
+
+[Disque](https://github.com/antirez/disque#client-libraries) suggests that if a
+consumer sees a high message rate received from a specific node, then clients
+should connect to that node directly to reduce the number of messages between
+nodes.
+
+To achieve this, disquephp connection manager has a method that allows you to
+specify how many jobs are required to be produced by a specific node before
+we automatically switch connection to that node.
+
+For example if we do:
+
+```php
+$disque = new \Disque\Client([
+    '127.0.0.1:7711',
+    '127.0.0.2:7712'
+]);
+$disque->connect();
+```
+
+We are currently connected to one of these nodes (no guarantee as to which one
+since nodes are selected randomly.) Say that we are connected to the node at
+port `7711`. By default no automatic connection change will take place, so we
+will always be connected to the selected node. Say that we want to switch to
+a node the moment a specific node produces at least 3 jobs. We first set this
+option via the manager:
+
+```php
+$disque->getManager()->setMinimumJobsToChangeNode(3);
+```
+
+Now we process jobs as we normally do:
+
+```php
+while ($job = $disque->getJob()) {
+    echo 'DO SOMETHING!';
+    var_dump($job);
+}
+```
+
+If a specific node produces at least 3 jobs, the connection will automatically
+switch to the node producing these many jobs. This is all done behind the
+scenes, automatically.
+
 ## Commands
 
 Currently all Disque commands are implemented, and can be executed via the

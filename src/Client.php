@@ -90,7 +90,7 @@ class Client
     /**
      * Get connection manager
      *
-     * @return Disque\Connection\Manager
+     * @return Manager Connection manager
      */
     public function getConnectionManager()
     {
@@ -119,11 +119,12 @@ class Client
      */
     public function connect(array $options = [])
     {
-        return $this->connectionManager->connect($options);
+        $this->connectionManager->setOptions($options);
+        return $this->connectionManager->connect();
     }
 
     /**
-     * @throws Disque\Exception\InvalidCommandException
+     * @throws InvalidCommandException
      */
     public function __call($command, array $arguments)
     {

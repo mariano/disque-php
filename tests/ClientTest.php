@@ -145,8 +145,10 @@ class ClientTest extends PHPUnit_Framework_TestCase
     public function testConnectCallsManagerConnect()
     {
         $manager = m::mock(ManagerInterface::class)
-            ->shouldReceive('connect')
+            ->shouldReceive('setOptions')
             ->with([])
+            ->shouldReceive('connect')
+            ->with()
             ->andReturn(['test' => 'stuff'])
             ->once()
             ->mock();
@@ -156,6 +158,22 @@ class ClientTest extends PHPUnit_Framework_TestCase
 
         $result = $c->connect();
         $this->assertSame(['test' => 'stuff'], $result);
+    }
+
+    public function testConnectWithOptionsCallsManagerSetOptions()
+    {
+        $manager = m::mock(ManagerInterface::class)
+            ->shouldReceive('setOptions')
+            ->with(['test' => 'stuff'])
+            ->shouldReceive('connect')
+            ->with()
+            ->once()
+            ->mock();
+
+        $c = new MockClient();
+        $c->setConnectionManager($manager);
+
+        $c->connect(['test' => 'stuff']);
     }
 
     public function testCallCommandCustom()

@@ -14,10 +14,25 @@ class MockSocket extends Socket
     public function setSocket($socket)
     {
         $this->socket = $socket;
+        $this->host = 'localhost';
+        $this->port = 7711;
+    }
+
+    /**
+     * Build actual socket
+     *
+     * @param string $host Host
+     * @param int $port Port
+     * @param float $timeout Timeout
+     * @return resource Socket
+     */
+    protected function getSocket($host, $port, $timeout)
+    {
+        return $this->socket;
     }
 }
 
-class ConnectionTest extends PHPUnit_Framework_TestCase
+class SocketTest extends PHPUnit_Framework_TestCase
 {
     public function tearDown()
     {
@@ -93,6 +108,22 @@ class ConnectionTest extends PHPUnit_Framework_TestCase
         $this->assertTrue($connection->isConnected());
         $connection->disconnect();
         $this->assertFalse($connection->isConnected());
+    }
+
+    public function testConnectNoSocket()
+    {
+        $this->setExpectedException(ConnectionException::class, 'Could not connect to localhost:7711');
+        $connection = new MockSocket();
+        $connection->setSocket(null);
+        $connection->connect();
+    }
+
+    public function testConnectStreamTimeout()
+    {
+        $socket = fopen('php://memory','rw');
+        $connection = new MockSocket();
+        $connection->setSocket($socket);
+        $connection->connect(['streamTimeout' => 3000]);
     }
 
     public function testSendErrorNoConnection()

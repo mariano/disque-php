@@ -63,16 +63,32 @@ class JobsWithQueueResponseTest extends PHPUnit_Framework_TestCase
         $r->setBody([['queue', 'id', 'body', 'test']]);
     }
 
+    public function testInvalidBodyInvalidJobIDPrefix()
+    {
+        $this->setExpectedException(InvalidCommandResponseException::class, 'Invalid command response. Command Disque\\Command\\Hello got: [["queue","XX01234567890","body"]]');
+        $r = new JobsWithQueueResponse();
+        $r->setCommand(new Hello());
+        $r->setBody([['queue', 'XX01234567890', 'body']]);
+    }
+
+    public function testInvalidBodyInvalidJobIDLength()
+    {
+        $this->setExpectedException(InvalidCommandResponseException::class, 'Invalid command response. Command Disque\\Command\\Hello got: [["queue","DI012345","body"]]');
+        $r = new JobsWithQueueResponse();
+        $r->setCommand(new Hello());
+        $r->setBody([['queue', 'DI012345', 'body']]);
+    }
+
     public function testParseOneJob()
     {
         $r = new JobsWithQueueResponse();
         $r->setCommand(new Hello());
-        $r->setBody([['queue', 'id', 'body']]);
+        $r->setBody([['queue', 'DI0f0c644fd3ccb51c2cedbd47fcb6f312646c993c05a0SQ', 'body']]);
         $result = $r->parse();
         $this->assertSame([
             [
                 'queue' => 'queue',
-                'id' => 'id',
+                'id' => 'DI0f0c644fd3ccb51c2cedbd47fcb6f312646c993c05a0SQ',
                 'body' => 'body'
             ]
         ], $result);
@@ -82,17 +98,20 @@ class JobsWithQueueResponseTest extends PHPUnit_Framework_TestCase
     {
         $r = new JobsWithQueueResponse();
         $r->setCommand(new Hello());
-        $r->setBody([['queue', 'id', 'body'], ['queue2', 'id2', 'body2']]);
+        $r->setBody([
+            ['queue', 'DI0f0c644fd3ccb51c2cedbd47fcb6f312646c993c05a0SQ', 'body'],
+            ['queue2', 'DI0f0c644fd3ccb51c2cedbd47fcb6f312646c993c05a1SQ', 'body2']
+        ]);
         $result = $r->parse();
         $this->assertSame([
             [
                 'queue' => 'queue',
-                'id' => 'id',
+                'id' => 'DI0f0c644fd3ccb51c2cedbd47fcb6f312646c993c05a0SQ',
                 'body' => 'body'
             ],
             [
                 'queue' => 'queue2',
-                'id' => 'id2',
+                'id' => 'DI0f0c644fd3ccb51c2cedbd47fcb6f312646c993c05a1SQ',
                 'body' => 'body2'
             ],
         ], $result);

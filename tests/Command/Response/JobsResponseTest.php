@@ -63,15 +63,31 @@ class JobsResponseTest extends PHPUnit_Framework_TestCase
         $r->setBody([['id', 'body', 'test']]);
     }
 
+    public function testInvalidBodyInvalidJobIDPrefix()
+    {
+        $this->setExpectedException(InvalidCommandResponseException::class, 'Invalid command response. Command Disque\\Command\\Hello got: [["XX01234567890","body"]]');
+        $r = new JobsResponse();
+        $r->setCommand(new Hello());
+        $r->setBody([['XX01234567890', 'body']]);
+    }
+
+    public function testInvalidBodyInvalidJobIDLength()
+    {
+        $this->setExpectedException(InvalidCommandResponseException::class, 'Invalid command response. Command Disque\\Command\\Hello got: [["DI012345","body"]]');
+        $r = new JobsResponse();
+        $r->setCommand(new Hello());
+        $r->setBody([['DI012345', 'body']]);
+    }
+
     public function testParseOneJob()
     {
         $r = new JobsResponse();
         $r->setCommand(new Hello());
-        $r->setBody([['id', 'body']]);
+        $r->setBody([['DI0f0c644fd3ccb51c2cedbd47fcb6f312646c993c05a0SQ', 'body']]);
         $result = $r->parse();
         $this->assertSame([
             [
-                'id' => 'id',
+                'id' => 'DI0f0c644fd3ccb51c2cedbd47fcb6f312646c993c05a0SQ',
                 'body' => 'body'
             ]
         ], $result);
@@ -81,15 +97,18 @@ class JobsResponseTest extends PHPUnit_Framework_TestCase
     {
         $r = new JobsResponse();
         $r->setCommand(new Hello());
-        $r->setBody([['id', 'body'], ['id2', 'body2']]);
+        $r->setBody([
+            ['DI0f0c644fd3ccb51c2cedbd47fcb6f312646c993c05a0SQ', 'body'],
+            ['DI0f0c644fd3ccb51c2cedbd47fcb6f312646c993c05a1SQ', 'body2']
+        ]);
         $result = $r->parse();
         $this->assertSame([
             [
-                'id' => 'id',
+                'id' => 'DI0f0c644fd3ccb51c2cedbd47fcb6f312646c993c05a0SQ',
                 'body' => 'body'
             ],
             [
-                'id' => 'id2',
+                'id' => 'DI0f0c644fd3ccb51c2cedbd47fcb6f312646c993c05a1SQ',
                 'body' => 'body2'
             ],
         ], $result);

@@ -131,10 +131,10 @@ class QPeekTest extends PHPUnit_Framework_TestCase
     public function testParse()
     {
         $c = new QPeek();
-        $result = $c->parse([['test', 'stuff']]);
+        $result = $c->parse([['DI0f0c644fd3ccb51c2cedbd47fcb6f312646c993c05a0SQ', 'stuff']]);
         $this->assertSame([
             [
-                'id' => 'test',
+                'id' => 'DI0f0c644fd3ccb51c2cedbd47fcb6f312646c993c05a0SQ',
                 'body' => 'stuff'
             ]
         ], $result);

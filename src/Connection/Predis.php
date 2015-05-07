@@ -76,10 +76,6 @@ class Predis extends BaseConnection implements ConnectionInterface
      */
     protected function buildClient($host, $port)
     {
-        return new PredisClient([
-            'scheme' => 'tcp',
-            'host' => $host,
-            'port' => $port
-        ]);
+        return new PredisClient(['scheme' => 'tcp'] + compact('host', 'port'));
     }
 }

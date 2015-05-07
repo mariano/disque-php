@@ -37,9 +37,9 @@ class Socket extends BaseConnection implements ConnectionInterface
             'streamTimeout' => null
         ];
 
-        $this->socket = stream_socket_client("tcp://{$this->host}:{$this->port}", $error, $message, (float) $options['timeout'], STREAM_CLIENT_CONNECT | STREAM_CLIENT_PERSISTENT);
+        $this->socket = $this->getSocket($this->host, $this->port, (float) $options['timeout']);
         if (!is_resource($this->socket)) {
-            throw new ConnectionException("Could not connect to {$this->host}:{$this->port}: #{$error} ({$message})");
+            throw new ConnectionException("Could not connect to {$this->host}:{$this->port}");
         }
 
         if (!is_null($options['streamTimeout'])) {
@@ -195,5 +195,18 @@ class Socket extends BaseConnection implements ConnectionInterface
         }
 
         throw new ResponseException("Don't know how to handle a response of type {$type}");
+    }
+
+    /**
+     * Build actual socket
+     *
+     * @param string $host Host
+     * @param int $port Port
+     * @param float $timeout Timeout
+     * @return resource Socket
+     */
+    protected function getSocket($host, $port, $timeout)
+    {
+        return stream_socket_client("tcp://{$this->host}:{$this->port}", $error, $message, $timeout, STREAM_CLIENT_CONNECT | STREAM_CLIENT_PERSISTENT);
     }
 }

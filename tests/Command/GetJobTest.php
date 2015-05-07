@@ -170,11 +170,11 @@ class GetJobTest extends PHPUnit_Framework_TestCase
     public function testParse()
     {
         $c = new GetJob();
-        $result = $c->parse([['q', 'test', 'stuff']]);
+        $result = $c->parse([['q', 'DI0f0c644fd3ccb51c2cedbd47fcb6f312646c993c05a0SQ', 'stuff']]);
         $this->assertSame([
             [
                 'queue' => 'q',
-                'id' => 'test',
+                'id' => 'DI0f0c644fd3ccb51c2cedbd47fcb6f312646c993c05a0SQ',
                 'body' => 'stuff'
             ]
         ], $result);
@@ -183,11 +183,11 @@ class GetJobTest extends PHPUnit_Framework_TestCase
     public function testParseUnicode()
     {
         $c = new GetJob();
-        $result = $c->parse([['queue', 'id', '大']]);
+        $result = $c->parse([['queue', 'DI0f0c644fd3ccb51c2cedbd47fcb6f312646c993c05a0SQ', '大']]);
         $this->assertSame([
             [
                 'queue' => 'queue',
-                'id' => 'id',
+                'id' => 'DI0f0c644fd3ccb51c2cedbd47fcb6f312646c993c05a0SQ',
                 'body' => '大'
             ]
         ], $result);

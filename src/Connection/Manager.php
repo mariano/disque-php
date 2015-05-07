@@ -3,6 +3,7 @@ namespace Disque\Connection;
 
 use InvalidArgumentException;
 use Disque\Command\CommandInterface;
+use Disque\Command\GetJob;
 use Disque\Command\Hello;
 use Disque\Connection\Exception\ConnectionException;
 
@@ -16,6 +17,20 @@ class Manager implements ManagerInterface
     protected $servers = [];
 
     /**
+     * Connection options
+     *
+     * @var array
+     */
+    protected $options = [];
+
+    /**
+     * If a node has produced at least these number of jobs, switch there
+     *
+     * @var int
+     */
+    protected $minimumJobsToChangeNode = 0;
+
+    /**
      * List of nodes. Indexed by node ID, and as value an array with:
      * - ConnectionInterface|null `connection`
      * - string `host`
@@ -25,6 +40,13 @@ class Manager implements ManagerInterface
      * @var array
      */
     protected $nodes = [];
+
+    /**
+     * Node prefixes, and their corresponding node ID
+     *
+     * @var array
+     */
+    protected $nodePrefixes = [];
 
     /**
      * Current node ID we are connected to
@@ -43,7 +65,7 @@ class Manager implements ManagerInterface
     /**
      * Get the connection implementation class
      *
-     * @return string A fully classified class name that implements `Disque\Connection\ConnectionInterface`
+     * @return string A fully classified class name that implements `ConnectionInterface`
      */
     public function getConnectionClass()
     {
@@ -53,7 +75,7 @@ class Manager implements ManagerInterface
     /**
      * Set the connection implementation class
      *
-     * @param string $class A fully classified class name that must implement ConnectionInterface
+     * @param string $class A fully classified class name that must implement `ConnectionInterface`
      * @return void
      * @throws InvalidArgumentException
      */
@@ -94,15 +116,36 @@ class Manager implements ManagerInterface
     }
 
     /**
-     * Connect to Disque
+     * Set connection options sent to the connector's `connect` method
      *
      * @param array $options Connection options
+     * @return void
+     */
+    public function setOptions(array $options)
+    {
+        $this->options = $options;
+    }
+
+    /**
+     * If a node has produced at least these number of jobs, switch there
+     *
+     * @param int $minimumJobsToChangeNode Set to 0 to never change
+     * @return void
+     */
+    public function setMinimumJobsToChangeNode($minimumJobsToChangeNode)
+    {
+        $this->minimumJobsToChangeNode = $minimumJobsToChangeNode;
+    }
+
+    /**
+     * Connect to Disque
+     *
      * @return array Connected node information
      * @throws ConnectionException
      */
-    public function connect(array $options)
+    public function connect()
     {
-        $result = $this->findAvailableConnection($options);
+        $result = $this->findAvailableConnection();
         if (!isset($result['connection'])) {
             throw new ConnectionException('No servers available');
         } elseif (empty($result['hello']) || empty($result['hello']['nodes']) || empty($result['hello']['id'])) {
@@ -112,22 +155,21 @@ class Manager implements ManagerInterface
         $hello = $result['hello'];
         $connection = $result['connection'];
 
-        $nodes = [];
+        $this->nodes = [];
+        $this->nodeId = $hello['id'];
         foreach ($hello['nodes'] as $node) {
-            $nodes[$node['id']] = [
-                'connection' => null,
+            $this->nodePrefixes[substr($node['id'], 2, 8)] = $node['id'];
+            $this->nodes[$node['id']] = [
+                'connection' => ($node['id'] === $this->nodeId ? $connection : null),
                 'port' => (int) $node['port'],
+                'jobs' => 0
             ] + array_intersect_key($node, ['id'=>null, 'host'=>null, 'version'=>null]);
         }
 
-        if (!array_key_exists($hello['id'], $nodes)) {
+        if (!array_key_exists($hello['id'], $this->nodes)) {
             throw new ConnectionException("Connected node #{$hello['id']} could not be found in list of nodes");
         }
 
-        $nodes[$hello['id']]['connection'] = $connection;
-
-        $this->nodeId = $hello['id'];
-        $this->nodes = $nodes;
         return $hello;
     }
 
@@ -139,12 +181,25 @@ class Manager implements ManagerInterface
      */
     public function execute(CommandInterface $command)
     {
-        if (empty($this->nodes) || !isset($this->nodeId) || !isset($this->nodes[$this->nodeId]['connection'])) {
+        if (
+            empty($this->nodes) ||
+            !isset($this->nodeId) ||
+            !isset($this->nodes[$this->nodeId]['connection']) ||
+            !$this->nodes[$this->nodeId]['connection']->isConnected()
+        ) {
             throw new ConnectionException('Not connected');
         }
 
         $connection = $this->nodes[$this->nodeId]['connection'];
-        return $this->command($connection, $command);
+        $response = $this->command($connection, $command);
+        if ($command instanceof GetJob && $this->minimumJobsToChangeNode > 0) {
+            try {
+                $this->changeNodeIfNeeded($command->parse($response));
+            } catch (ConnectionException $e) {
+                // If we couldn't, let's stay with the current node
+            }
+        }
+        return $response;
     }
 
     /**
@@ -162,34 +217,52 @@ class Manager implements ManagerInterface
     /**
      * Get connection
      *
-     * @param array $options Connection options
      * @return array Indexed array with `connection` and `hello`. `connection`
      * could end up being null
      * @throws ConnectionException
      */
-    protected function findAvailableConnection(array $options)
+    protected function findAvailableConnection()
     {
         if (empty($this->servers)) {
             throw new ConnectionException('No servers specified');
         }
 
         $servers = $this->servers;
-        $connection = null;
-        $hello = [];
-        $helloCommand = new Hello();
         while (!empty($servers)) {
             $key = array_rand($servers, 1);
             $server = $servers[$key];
-            $connection = $this->buildConnection($server['host'], $server['port']);
-            try {
-                $connection->connect($options);
-                $hello = $helloCommand->parse($this->command($connection, $helloCommand));
+            $node = $this->getNodeConnection($server);
+            if (isset($node['connection'])) {
+                $connection = $node['connection'];
+                $hello = $node['hello'];
                 break;
-            } catch (ConnectionException $e) {
-                unset($servers[$key]);
-                $connection = null;
-                continue;
             }
+            unset($servers[$key]);
+        }
+        return [
+            'connection' => $node['connection'],
+            'hello' => $node['hello']
+        ];
+    }
+
+    /**
+     * Get a node connection and its HELLO result
+     *
+     * @param array $server Server (with `host`, and `port`)
+     * @return array Indexed array with `connection` and `hello`. `connection`
+     * could end up being null
+     */
+    protected function getNodeConnection(array $server)
+    {
+        $helloCommand = new Hello();
+        $connection = $this->buildConnection($server['host'], $server['port']);
+        $hello = [];
+        try {
+            $connection->connect($this->options);
+            $hello = $helloCommand->parse($this->command($connection, $helloCommand));
+        } catch (ConnectionException $e) {
+            $connection = null;
+            $hello = [];
         }
         return compact('connection', 'hello');
     }
@@ -208,5 +281,60 @@ class Manager implements ManagerInterface
         $connection->setHost($host);
         $connection->setPort($port);
         return $connection;
+    }
+
+    /**
+     * Decide if we should change the current node based on the jobs returned.
+     * If so, attempt to switch to that node
+     *
+     * @param array $jobs Jobs
+     * @throws ConnectionException
+     */
+    private function changeNodeIfNeeded(array $jobs)
+    {
+        foreach ($jobs as $job) {
+            $nodePrefix = substr($job['id'], 2, 8);
+            if (
+                !isset($this->nodePrefixes[$nodePrefix]) ||
+                !array_key_exists($this->nodePrefixes[$nodePrefix], $this->nodes)
+            ) {
+                continue;
+            }
+
+            $nodeId = $this->nodePrefixes[$nodePrefix];
+            $this->nodes[$nodeId]['jobs']++;
+            if ($this->nodes[$nodeId]['jobs'] >= $this->minimumJobsToChangeNode) {
+                $newNodeId = $nodeId;
+                break;
+            }
+        }
+
+        if (!isset($newNodeId) || $newNodeId === $this->nodeId) {
+            return;
+        }
+
+        $this->setNode($nodeId);
+        foreach ($this->nodes as $id => $node) {
+            $this->nodes[$id]['jobs'] = 0;
+        }
+    }
+
+    /**
+     * Choose this node for future connections
+     *
+     * @param string $id Node ID
+     * @throws ConnectionException
+     */
+    private function setNode($id)
+    {
+        if (!isset($this->nodes[$id]['connection'])) {
+            $node = $this->getNodeConnection($this->nodes[$id]);
+            if (!isset($node['connection'])) {
+                throw new ConnectionException("Could not connect to node {$id}");
+            }
+            $this->nodes[$id]['connection'] = $node['connection'];
+        }
+
+        $this->nodeId = $id;
     }
 }

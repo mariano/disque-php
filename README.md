@@ -15,6 +15,7 @@ distributed job queue. Features:
 * Support for multi-node connection
 * Connect to Disque with the built-in connection, or reutilize your existing Redis client (such as [predis](https://github.com/nrk/predis))
 * Supporting all current Disque commands, and allows you to easily implement support for custom commands
+* Smart node connection support based on number of jobs produced by nodes
 * Fully unit tested
 
 ## Installation
@@ -92,13 +93,14 @@ instead of using the issue tracker.
 - [x] DEQUEUE
 - [x] QLEN
 - [x] QPEEK
-- [ ] `QSTAT`, `SCAN` when they are implemented upstream
 - [x] Add support for several connections
-- [ ] Allow GETJOB to influence what node the Client should be connected to
 - [x] Implement direct protocol to Disque to avoid depending on Predis
 - [x] Turn Predis integration into a ConnectionInterface
 - [x] Allow user to specify their own ConnectionInterface implementation
 - [ ] ~~Add support for PSR Logging~~
+- [x] Allow GETJOB to influence what node the Client should be connected to
+- [ ] `QSTAT`, `SCAN` when they are implemented upstream
+- [ ] Higher level API for queueing and retrieving jobs
 
 ## Acknowledgments
 

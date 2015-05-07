@@ -1,12 +1,18 @@
 # Changelog
 
-All Notable changes will be documented in this file
+All Notable changes will be documented in this file. This project adheres to 
+[Semantic Versioning](http://semver.org/).
 
-## 2.0.0 (IN PROGRESS)
+## [1.1.0]
 
 ### Added
 - Refactoring of response parsing for greater flexibility.
 - Added new `Disque\Connection\Manager` class to manage connections to nodes.
+- `GETJOB` can now influence which node we are connected to. By means of
+`$disque->getConnectionManager()->setMinimumJobsToChangeNode()` we can specify
+that if a certain node produces that many jobs, then we should instead connect
+to the node producing those jobs (as suggested by [Disque](https://github.com/antirez/disque#client-libraries)
+itself).
 
 ### Changed
 - `Disque\Connection\Connection` is now named `Disque\Connection\Socket`.
@@ -15,7 +21,7 @@ All Notable changes will be documented in this file
 a disque instance you can change it via: 
 `$disque->getConnectionManager()->setConnectionClass($class)`
 
-## 1.0.0
+## [1.0.0] - 2015-05-04
 
 ### Added
 - Added support for commands `HELLO`, `INFO`, `SHOW`, `ADDJOB`, `DELJOB`, 
@@ -23,3 +29,6 @@ a disque instance you can change it via:
 - Added built-in connection to Disque.
 - Added support for Predis connections, and allowing adding new connection
 methods via `ConnectionInterface`.
+
+[1.1.0]: https://github.com/mariano/disque-php/compare/1.0.0...HEAD
+[1.0.0]: https://github.com/mariano/disque-php/releases/tag/1.0.0
