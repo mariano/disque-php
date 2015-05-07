@@ -2,7 +2,7 @@
 namespace Disque;
 
 use Disque\Command;
-use Disque\Connection\Connection;
+use Disque\Connection\Socket;
 use Disque\Connection\ConnectionInterface;
 use Disque\Connection\Exception\ConnectionException;
 use Disque\Exception\InvalidCommandException;
@@ -77,7 +77,7 @@ class Client
      */
     public function __construct(array $servers = ['127.0.0.1:7711'])
     {
-        $this->setConnectionImplementation(Connection::class);
+        $this->setConnectionImplementation(Socket::class);
         foreach ($servers as $uri) {
             $port = 7711;
             if (strpos($uri, ':') !== false) {

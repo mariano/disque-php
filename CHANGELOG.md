@@ -2,10 +2,13 @@
 
 All Notable changes will be documented in this file
 
-## 1.0.1 (IN PROGRESS)
+## 1.1.0 (IN PROGRESS)
 
 ### Added
 - Refactoring of response parsing for greater flexibility
+
+### Changed
+- `Disque\Connection\Connection` is now named `Disque\Connection\Socket`
 
 ## 1.0.0
 

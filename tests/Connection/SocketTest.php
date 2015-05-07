@@ -5,11 +5,11 @@ use Mockery as m;
 use PHPUnit_Framework_TestCase;
 use Disque\Command;
 use Disque\Connection\ConnectionInterface;
-use Disque\Connection\Connection;
+use Disque\Connection\Socket;
 use Disque\Connection\Exception\ConnectionException;
 use Disque\Connection\Exception\ResponseException;
 
-class MockConnection extends Connection
+class MockSocket extends Socket
 {
     public function setSocket($socket)
     {
@@ -27,14 +27,14 @@ class ConnectionTest extends PHPUnit_Framework_TestCase
 
     public function testInstance()
     {
-        $c = new Connection();
+        $c = new Socket();
         $this->assertInstanceOf(ConnectionInterface::class, $c);
     }
 
     public function testConnectNoHost()
     {
         $this->setExpectedException(ConnectionException::class, 'Invalid host or port specified');
-        $connection = new Connection();
+        $connection = new Socket();
         $connection->setHost(null);
         $connection->connect();
     }
@@ -42,7 +42,7 @@ class ConnectionTest extends PHPUnit_Framework_TestCase
     public function testConnectWrongHost()
     {
         $this->setExpectedException(ConnectionException::class, 'Invalid host or port specified');
-        $connection = new Connection();
+        $connection = new Socket();
         $connection->setHost(128);
         $connection->connect();
     }
@@ -50,7 +50,7 @@ class ConnectionTest extends PHPUnit_Framework_TestCase
     public function testConnectNoPort()
     {
         $this->setExpectedException(ConnectionException::class, 'Invalid host or port specified');
-        $connection = new Connection();
+        $connection = new Socket();
         $connection->setPort(null);
         $connection->connect();
     }
@@ -58,28 +58,28 @@ class ConnectionTest extends PHPUnit_Framework_TestCase
     public function testConnectWrongPort()
     {
         $this->setExpectedException(ConnectionException::class, 'Invalid host or port specified');
-        $connection = new Connection();
+        $connection = new Socket();
         $connection->setPort('port');
         $connection->connect();
     }
 
     public function testIsConnectedFalse()
     {
-        $connection = new Connection();
+        $connection = new Socket();
         $this->assertFalse($connection->isConnected());
     }
 
     public function testIsConnectedTrue()
     {
         $socket = fopen('php://memory','rw');
-        $connection = new MockConnection();
+        $connection = new MockSocket();
         $connection->setSocket($socket);
         $this->assertTrue($connection->isConnected());
     }
 
     public function testDisconnectNotConnected()
     {
-        $connection = new Connection();
+        $connection = new Socket();
         $this->assertFalse($connection->isConnected());
         $connection->disconnect();
         $this->assertFalse($connection->isConnected());
@@ -88,7 +88,7 @@ class ConnectionTest extends PHPUnit_Framework_TestCase
     public function testDisconnectConnected()
     {
         $socket = fopen('php://memory','rw');
-        $connection = new MockConnection();
+        $connection = new MockSocket();
         $connection->setSocket($socket);
         $this->assertTrue($connection->isConnected());
         $connection->disconnect();
@@ -99,7 +99,7 @@ class ConnectionTest extends PHPUnit_Framework_TestCase
     {
         $this->setExpectedException(ConnectionException::class, 'No connection established');
 
-        $connection = new MockConnection();
+        $connection = new MockSocket();
         $connection->send("stuff");
     }
 
@@ -108,7 +108,7 @@ class ConnectionTest extends PHPUnit_Framework_TestCase
         $this->setExpectedException(ConnectionException::class, 'Invalid data to be sent to client');
 
         $socket = fopen('php://memory','rw');
-        $connection = new MockConnection();
+        $connection = new MockSocket();
         $connection->setSocket($socket);
         $connection->send(['test' => 'stuff']);
     }
@@ -116,7 +116,7 @@ class ConnectionTest extends PHPUnit_Framework_TestCase
     public function testSend()
     {
         $socket = fopen('php://memory','rw');
-        $connection = new MockConnection();
+        $connection = new MockSocket();
         $connection->setSocket($socket);
 
         rewind($socket);
@@ -138,7 +138,7 @@ class ConnectionTest extends PHPUnit_Framework_TestCase
         fwrite($socket, "-Error from Disque\r\n");
         rewind($socket);
 
-        $connection = new MockConnection();
+        $connection = new MockSocket();
         $connection->setSocket($socket);
         $connection->receive();
     }
@@ -147,7 +147,7 @@ class ConnectionTest extends PHPUnit_Framework_TestCase
     {
         $this->setExpectedException(ConnectionException::class, 'No connection established');
 
-        $connection = new MockConnection();
+        $connection = new MockSocket();
         $connection->receive();
     }
 
@@ -157,7 +157,7 @@ class ConnectionTest extends PHPUnit_Framework_TestCase
 
         $socket = fopen('php://memory','rw');
 
-        $connection = new MockConnection();
+        $connection = new MockSocket();
         $connection->setSocket($socket);
         $connection->receive();
     }
@@ -170,7 +170,7 @@ class ConnectionTest extends PHPUnit_Framework_TestCase
         fwrite($socket, "A\r\n");
         rewind($socket);
 
-        $connection = new MockConnection();
+        $connection = new MockSocket();
         $connection->setSocket($socket);
         $connection->receive();
     }
@@ -183,7 +183,7 @@ class ConnectionTest extends PHPUnit_Framework_TestCase
         fwrite($socket, "+");
         rewind($socket);
 
-        $connection = new MockConnection();
+        $connection = new MockSocket();
         $connection->setSocket($socket);
         $connection->receive();
     }
@@ -196,7 +196,7 @@ class ConnectionTest extends PHPUnit_Framework_TestCase
         fwrite($socket, "$0\r\n");
         rewind($socket);
 
-        $connection = new MockConnection();
+        $connection = new MockSocket();
         $connection->setSocket($socket);
         $connection->receive();
     }
@@ -210,7 +210,7 @@ class ConnectionTest extends PHPUnit_Framework_TestCase
         fwrite($socket, "$data\r\n");
         rewind($socket);
 
-        $connection = new MockConnection();
+        $connection = new MockSocket();
         $connection->setSocket($socket);
 
         $this->assertEquals($parsed, $connection->receive());
@@ -218,7 +218,7 @@ class ConnectionTest extends PHPUnit_Framework_TestCase
 
     public static function dataProviderForTestReceive()
     {
-        $longString = str_repeat('ABC', Connection::READ_BUFFER_LENGTH * 10);
+        $longString = str_repeat('ABC', Socket::READ_BUFFER_LENGTH * 10);
         return [
             [
                 'data' => '+',
@@ -369,7 +369,7 @@ class ConnectionTest extends PHPUnit_Framework_TestCase
         $command = new Command\AckJob();
         $command->setArguments(['id']);
 
-        $connection = m::mock(MockConnection::class)
+        $connection = m::mock(MockSocket::class)
             ->makePartial()
             ->shouldReceive('send')
             ->with("*2\r\n$6\r\nACKJOB\r\n$2\r\nid\r\n")
@@ -388,7 +388,7 @@ class ConnectionTest extends PHPUnit_Framework_TestCase
         $command = new Command\AddJob();
         $command->setArguments(['queue', '大']);
 
-        $connection = m::mock(MockConnection::class)
+        $connection = m::mock(MockSocket::class)
             ->makePartial()
             ->shouldReceive('send')
             ->with(implode("\r\n", [
@@ -417,7 +417,7 @@ class ConnectionTest extends PHPUnit_Framework_TestCase
     {
         $command = new Command\Hello();
 
-        $connection = m::mock(MockConnection::class)
+        $connection = m::mock(MockSocket::class)
             ->makePartial()
             ->shouldReceive('send')
             ->with("*1\r\n$5\r\nHELLO\r\n")

@@ -9,7 +9,7 @@ use Disque\Client;
 use Disque\Command;
 use Disque\Command\CommandInterface;
 use Disque\Connection\BaseConnection;
-use Disque\Connection\Connection;
+use Disque\Connection\Socket;
 use Disque\Connection\ConnectionInterface;
 use Disque\Connection\Exception\ConnectionException;
 use Disque\Exception\InvalidCommandException;
@@ -214,7 +214,7 @@ class ClientTest extends PHPUnit_Framework_TestCase
     public function testDefaultConnectionImplementation()
     {
         $c = new MockClient();
-        $this->assertSame(Connection::class, $c->getConnectionImplementation());
+        $this->assertSame(Socket::class, $c->getConnectionImplementation());
     }
 
     public function testSetConnectionImplementationInvalidClass()

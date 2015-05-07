@@ -11,7 +11,7 @@ use Disque\Connection\Exception\ResponseException;
  * by Daniele Alessandri <suppakilla@gmail.com>. All credits go to him where
  * relevant.
  */
-class Connection extends BaseConnection implements ConnectionInterface
+class Socket extends BaseConnection implements ConnectionInterface
 {
     const READ_BUFFER_LENGTH = 8192;
 
@@ -26,7 +26,7 @@ class Connection extends BaseConnection implements ConnectionInterface
      * Connect
      *
      * @param array $options Connection options
-     * @throws Disque\Connection\Exception\ConnectionException
+     * @throws ConnectionException
      */
     public function connect(array $options = [])
     {
@@ -74,7 +74,7 @@ class Connection extends BaseConnection implements ConnectionInterface
      *
      * @param CommandInterface $command
      * @return mixed Response
-     * @throws Disque\Connection\Exception\ConnectionException
+     * @throws ConnectionException
      */
     public function execute(CommandInterface $command)
     {
@@ -102,7 +102,7 @@ class Connection extends BaseConnection implements ConnectionInterface
      * Execute a command on the connection
      *
      * @param string $data Data to send
-     * @throws Disque\Connection\Exception\ConnectionException
+     * @throws ConnectionException
      */
     public function send($data)
     {
@@ -133,7 +133,7 @@ class Connection extends BaseConnection implements ConnectionInterface
      * Read data from connection
      *
      * @return mixed Data received
-     * @throws Disque\Connection\Exception\ConnectionException
+     * @throws ConnectionException
      * @throws Disque\Connection\Exception\ResponseException
      */
     public function receive()
