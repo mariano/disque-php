@@ -36,7 +36,7 @@ $client = \Disque\Client([
 ]);
 try {
     $client->connect();
-} catch (\Disque\Exception\ConnectionException $e) {
+} catch (\Disque\Connection\Exception\ConnectionException $e) {
     die($e->getMessage());
 }
 ```
