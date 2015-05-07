@@ -182,16 +182,13 @@ class Manager implements ManagerInterface
     public function execute(CommandInterface $command)
     {
         if (
-            empty($this->nodes) ||
-            !isset($this->nodeId) ||
             !isset($this->nodes[$this->nodeId]['connection']) ||
             !$this->nodes[$this->nodeId]['connection']->isConnected()
         ) {
             throw new ConnectionException('Not connected');
         }
 
-        $connection = $this->nodes[$this->nodeId]['connection'];
-        $response = $this->command($connection, $command);
+        $response = $this->nodes[$this->nodeId]['connection']->execute($command);
         if ($command instanceof GetJob && $this->minimumJobsToChangeNode > 0) {
             try {
                 $this->changeNodeIfNeeded($command->parse($response));
@@ -200,18 +197,6 @@ class Manager implements ManagerInterface
             }
         }
         return $response;
-    }
-
-    /**
-     * Execute the given command on the given connection
-     *
-     * @param ConnectionInterface $connection Connection
-     * @param CommandInterface $command Command
-     * @return mixed Command response
-     */
-    protected function command(ConnectionInterface $connection, CommandInterface $command)
-    {
-        return $connection->execute($command);
     }
 
     /**
@@ -259,7 +244,7 @@ class Manager implements ManagerInterface
         $hello = [];
         try {
             $connection->connect($this->options);
-            $hello = $helloCommand->parse($this->command($connection, $helloCommand));
+            $hello = $helloCommand->parse($connection->execute($helloCommand));
         } catch (ConnectionException $e) {
             $connection = null;
             $hello = [];
@@ -313,7 +298,7 @@ class Manager implements ManagerInterface
             return;
         }
 
-        $this->setNode($nodeId);
+        $this->setNode($newNodeId);
         foreach ($this->nodes as $id => $node) {
             $this->nodes[$id]['jobs'] = 0;
         }
