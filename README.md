@@ -98,7 +98,7 @@ instead of using the issue tracker.
 - [x] Implement direct protocol to Disque to avoid depending on Predis
 - [x] Turn Predis integration into a ConnectionInterface
 - [x] Allow user to specify their own ConnectionInterface implementation
-- [ ] Add support for PSR Logging
+- [ ] ~~Add support for PSR Logging~~
 
 ## Acknowledgments
 

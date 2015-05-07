@@ -7,9 +7,6 @@ All Notable changes will be documented in this file
 ### Added
 - Refactoring of response parsing for greater flexibility
 
-### Fixed
-- Unicode support for ADDJOB and GETJOB, and all commands in general
-
 ## 1.0.0
 
 ### Added
