@@ -2,9 +2,7 @@
 namespace Disque;
 
 use Disque\Command;
-use Disque\Connection\Socket;
-use Disque\Connection\ConnectionInterface;
-use Disque\Connection\Exception\ConnectionException;
+use Disque\Connection\Manager;
 use Disque\Exception\InvalidCommandException;
 use InvalidArgumentException;
 
@@ -25,29 +23,11 @@ use InvalidArgumentException;
 class Client
 {
     /**
-     * List of servers
+     * Connection manager
      *
-     * @var array
+     * @var Manager
      */
-    protected $servers = [];
-
-    /**
-     * List of nodes. Indexed by node ID, and as value an array with:
-     * - ConnectionInterface|null `connection`
-     * - string `host`
-     * - int `port`
-     * - string `version`
-     *
-     * @var array
-     */
-    protected $nodes = [];
-
-    /**
-     * Current node ID we are connected to
-     *
-     * @var string
-     */
-    protected $nodeId;
+    protected $connectionManager;
 
     /**
      * Command handlers
@@ -64,37 +44,12 @@ class Client
     protected $commands = [];
 
     /**
-     * Connection implementation class
-     *
-     * @var string
-     */
-    protected $connectionImplementation;
-
-    /**
      * Create a new Client
      *
      * @param array $servers Servers (`host`:`port`)
      */
     public function __construct(array $servers = ['127.0.0.1:7711'])
     {
-        $this->setConnectionImplementation(Socket::class);
-        foreach ($servers as $uri) {
-            $port = 7711;
-            if (strpos($uri, ':') !== false) {
-                $server = parse_url($uri);
-                if ($server === false || empty($server['host'])) {
-                    continue;
-                }
-                $host = $server['host'];
-                if (!empty($server['port'])) {
-                    $port = $server['port'];
-                }
-            } else {
-                $host = $uri;
-            }
-            $this->addServer($host, $port);
-        }
-
         foreach ([
             'ACKJOB' => Command\AckJob::class,
             'ADDJOB' => Command\AddJob::class,
@@ -111,20 +66,35 @@ class Client
         ] as $command => $handlerClass) {
             $this->registerCommand($command, $handlerClass);
         }
+
+        $this->connectionManager = new Manager();
+        foreach ($servers as $uri) {
+            $port = 7711;
+            if (strpos($uri, ':') !== false) {
+                $server = parse_url($uri);
+                if ($server === false || empty($server['host'])) {
+                    continue;
+                }
+                $host = $server['host'];
+                if (!empty($server['port'])) {
+                    $port = $server['port'];
+                }
+            } else {
+                $host = $uri;
+            }
+
+            $this->addServer($host, $port);
+        }
     }
 
     /**
-     * Set the connection implementation class
+     * Get connection manager
      *
-     * @param string $class A fully classified class name that must implement ConnectionInterface
-     * @throws InvalidArgumentException
+     * @return Disque\Connection\Manager
      */
-    public function setConnectionImplementation($class)
+    public function getConnectionManager()
     {
-        if (!in_array(ConnectionInterface::class, class_implements($class))) {
-            throw new InvalidArgumentException("Class {$class} does not implement ConnectionInterface");
-        }
-        $this->connectionImplementation = $class;
+        return $this->connectionManager;
     }
 
     /**
@@ -132,16 +102,12 @@ class Client
      *
      * @param string $host Host
      * @param int $port Port
+     * @return void
      * @throws InvalidArgumentException
      */
     public function addServer($host, $port = 7711)
     {
-        if (!is_string($host) || !is_int($port)) {
-            throw new InvalidArgumentException('Invalid server specified');
-        }
-
-        $port = (int) $port;
-        $this->servers[] = compact('host', 'port');
+        $this->connectionManager->addServer($host, $port);
     }
 
     /**
@@ -153,92 +119,28 @@ class Client
      */
     public function connect(array $options = [])
     {
-        $result = $this->findAvailableConnection($options);
-        if (!isset($result['connection'])) {
-            throw new ConnectionException('No servers available');
-        } elseif (empty($result['hello']) || empty($result['hello']['nodes']) || empty($result['hello']['id'])) {
-            throw new ConnectionException('Invalid HELLO response when connecting');
-        }
-
-        $hello = $result['hello'];
-        $connection = $result['connection'];
-
-        $nodes = [];
-        foreach ($hello['nodes'] as $node) {
-            $nodes[$node['id']] = [
-                'connection' => null,
-                'port' => (int) $node['port'],
-            ] + array_intersect_key($node, ['id'=>null, 'host'=>null, 'version'=>null]);
-        }
-
-        if (!array_key_exists($hello['id'], $nodes)) {
-            throw new ConnectionException("Connected node #{$hello['id']} could not be found in list of nodes");
-        }
-
-        $nodes[$hello['id']]['connection'] = $connection;
-
-        $this->nodeId = $hello['id'];
-        $this->nodes = $nodes;
-        return $hello;
+        return $this->connectionManager->connect($options);
     }
 
     /**
-     * Get current connection
-     *
-     * @return ConnectionInterface
-     * @throws ConnectionException
+     * @throws Disque\Exception\InvalidCommandException
      */
-    protected function getConnection()
+    public function __call($command, array $arguments)
     {
-        if (empty($this->nodes) || !isset($this->nodeId) || !isset($this->nodes[$this->nodeId]['connection'])) {
-            throw new ConnectionException('Not connected');
+        $command = strtoupper($command);
+        if (!isset($this->commandHandlers[$command])) {
+            throw new InvalidCommandException($command);
         }
-        return $this->nodes[$this->nodeId]['connection'];
-    }
 
-    /**
-     * Get connection
-     *
-     * @param array $options Connection options
-     * @return array Indexed array with `connection` and `hello`. `connection`
-     * could end up being null
-     */
-    protected function findAvailableConnection(array $options)
-    {
-        $servers = $this->servers;
-        $connection = null;
-        $hello = [];
-        while (!empty($servers)) {
-            $key = array_rand($servers, 1);
-            $server = $servers[$key];
-            $connection = $this->buildConnection($server['host'], $server['port']);
-            try {
-                $connection->connect($options);
-                $hello = $this->execute($connection, 'HELLO');
-                break;
-            } catch (ConnectionException $e) {
-                unset($servers[$key]);
-                $connection = null;
-                continue;
-            }
+        if (!isset($this->commands[$command])) {
+            $class = $this->commandHandlers[$command];
+            $this->commands[$command] = new $class();
         }
-        return compact('connection', 'hello');
-    }
 
-    /**
-     * Build a new connection
-     *
-     * @param string $host Host
-     * @param int $port Port
-     * @return ConnectionInterface
-     */
-    protected function buildConnection($host, $port)
-    {
-        $connectionClass = $this->connectionImplementation;
-        $connection = new $connectionClass();
-        $connection->setHost($host);
-        $connection->setPort($port);
-        return $connection;
+        $command = $this->commands[$command];
+        $command->setArguments($arguments);
+        $result = $this->connectionManager->execute($command);
+        return $command->parse($result);
     }
 
     /**
@@ -252,40 +154,6 @@ class Client
         if (!in_array(Command\CommandInterface::class, class_implements($class))) {
             throw new InvalidArgumentException("Class {$class} does not implement CommandInterface");
         }
-        $this->commandHandlers[mb_strtoupper($command)] = $class;
-    }
-
-    /**
-     * @throws Disque\Exception\InvalidCommandException
-     */
-    public function __call($command, array $arguments)
-    {
-        $command = mb_strtoupper($command);
-        if (!isset($this->commandHandlers[$command])) {
-            throw new InvalidCommandException($command);
-        }
-        return $this->execute($this->getConnection(), $command, $arguments);
-    }
-
-    /**
-     * Execute the given command on the given connection
-     *
-     * @param ConnectionInterface $connection Connection
-     * @param string $command Command
-     * @param array $arguments Arguments for command
-     * @return mixed Command response
-     * @throws InvalidCommandException
-     */
-    protected function execute(ConnectionInterface $connection, $command, array $arguments = [])
-    {
-        if (!isset($this->commands[$command])) {
-            $class = $this->commandHandlers[$command];
-            $this->commands[$command] = new $class();
-        }
-
-        $command = $this->commands[$command];
-        $command->setArguments($arguments);
-        $response = $connection->execute($command);
-        return $command->parse($response);
+        $this->commandHandlers[strtoupper($command)] = $class;
     }
 }

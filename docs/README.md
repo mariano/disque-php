@@ -89,7 +89,7 @@ $ composer require predis/predis --no-dev
 And then configure the connection implementation class:
 
 ```php
-$client->setConnectionImplementation(\Disque\Connection\Predis::class);
+$client->getConnectionManager()->setConnectionClass(\Disque\Connection\Predis::class);
 ```
 
 ## Commands
