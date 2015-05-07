@@ -207,6 +207,6 @@ class Socket extends BaseConnection implements ConnectionInterface
      */
     protected function getSocket($host, $port, $timeout)
     {
-        return stream_socket_client("tcp://{$this->host}:{$this->port}", $error, $message, $timeout, STREAM_CLIENT_CONNECT | STREAM_CLIENT_PERSISTENT);
+        return stream_socket_client("tcp://{$host}:{$port}", $error, $message, $timeout, STREAM_CLIENT_CONNECT | STREAM_CLIENT_PERSISTENT);
     }
 }

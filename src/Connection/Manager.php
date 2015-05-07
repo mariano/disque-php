@@ -212,17 +212,19 @@ class Manager implements ManagerInterface
             throw new ConnectionException('No servers specified');
         }
 
+        $node = [];
         $servers = $this->servers;
         while (!empty($servers)) {
             $key = array_rand($servers, 1);
             $server = $servers[$key];
             $node = $this->getNodeConnection($server);
             if (isset($node['connection'])) {
-                $connection = $node['connection'];
-                $hello = $node['hello'];
                 break;
             }
             unset($servers[$key]);
+        }
+        if (!isset($node['connection'])) {
+            throw new ConnectionException('No servers available');
         }
         return [
             'connection' => $node['connection'],
