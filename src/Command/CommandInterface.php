@@ -22,7 +22,7 @@ interface CommandInterface
      *
      * @param array $arguments Arguments
      * @return void
-     * @throws Disque\Exception\InvalidCommandArgumentException
+     * @throws Disque\Command\Argument\InvalidCommandArgumentException
      */
     public function setArguments(array $arguments);
 
@@ -31,7 +31,7 @@ interface CommandInterface
      *
      * @param mixed $body Response body
      * @return mixed Parsed response
-     * @throws Disque\Exception\InvalidCommandResponseException
+     * @throws Disque\Command\Response\InvalidResponseException
      */
     public function parse($body);
 }

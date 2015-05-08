@@ -5,7 +5,7 @@ use PHPUnit_Framework_TestCase;
 use Disque\Command\Hello;
 use Disque\Command\Response\ResponseInterface;
 use Disque\Command\Response\StringResponse;
-use Disque\Exception\InvalidCommandResponseException;
+use Disque\Command\Response\InvalidResponseException;
 
 class StringResponseTest extends PHPUnit_Framework_TestCase
 {
@@ -17,7 +17,7 @@ class StringResponseTest extends PHPUnit_Framework_TestCase
 
     public function testInvalidBodyNotStringArray()
     {
-        $this->setExpectedException(InvalidCommandResponseException::class, 'Invalid command response. Command Disque\\Command\\Hello got: ["test"]');
+        $this->setExpectedException(InvalidResponseException::class, 'Invalid command response. Command Disque\\Command\\Hello got: ["test"]');
         $r = new StringResponse();
         $r->setCommand(new Hello());
         $r->setBody(['test']);
@@ -25,7 +25,7 @@ class StringResponseTest extends PHPUnit_Framework_TestCase
 
     public function testInvalidBodyNotStringNumeric()
     {
-        $this->setExpectedException(InvalidCommandResponseException::class, 'Invalid command response. Command Disque\\Command\\Hello got: 128');
+        $this->setExpectedException(InvalidResponseException::class, 'Invalid command response. Command Disque\\Command\\Hello got: 128');
         $r = new StringResponse();
         $r->setCommand(new Hello());
         $r->setBody(128);

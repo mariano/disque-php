@@ -14,7 +14,6 @@ class IntResponse extends BasicTypeResponse implements ResponseInterface
      * Parse response
      *
      * @return int Parsed response
-     * @throws InvalidCommandResponseException
      */
     public function parse()
     {

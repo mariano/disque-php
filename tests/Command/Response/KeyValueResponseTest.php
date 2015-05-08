@@ -5,7 +5,7 @@ use PHPUnit_Framework_TestCase;
 use Disque\Command\Hello;
 use Disque\Command\Response\ResponseInterface;
 use Disque\Command\Response\KeyValueResponse;
-use Disque\Exception\InvalidCommandResponseException;
+use Disque\Command\Response\InvalidResponseException;
 
 class KeyValueResponseTest extends PHPUnit_Framework_TestCase
 {
@@ -17,7 +17,7 @@ class KeyValueResponseTest extends PHPUnit_Framework_TestCase
 
     public function testInvalidBodyNotArrayString()
     {
-        $this->setExpectedException(InvalidCommandResponseException::class, 'Invalid command response. Command Disque\\Command\\Hello got: "test"');
+        $this->setExpectedException(InvalidResponseException::class, 'Invalid command response. Command Disque\\Command\\Hello got: "test"');
         $r = new KeyValueResponse();
         $r->setCommand(new Hello());
         $r->setBody('test');
@@ -25,7 +25,7 @@ class KeyValueResponseTest extends PHPUnit_Framework_TestCase
 
     public function testInvalidBodyNotArrayNumeric()
     {
-        $this->setExpectedException(InvalidCommandResponseException::class, 'Invalid command response. Command Disque\\Command\\Hello got: 128');
+        $this->setExpectedException(InvalidResponseException::class, 'Invalid command response. Command Disque\\Command\\Hello got: 128');
         $r = new KeyValueResponse();
         $r->setCommand(new Hello());
         $r->setBody(128);
@@ -33,7 +33,7 @@ class KeyValueResponseTest extends PHPUnit_Framework_TestCase
 
     public function testInvalidBodyNotEnoughElements()
     {
-        $this->setExpectedException(InvalidCommandResponseException::class, 'Invalid command response. Command Disque\\Command\\Hello got: []');
+        $this->setExpectedException(InvalidResponseException::class, 'Invalid command response. Command Disque\\Command\\Hello got: []');
         $r = new KeyValueResponse();
         $r->setCommand(new Hello());
         $r->setBody([]);
@@ -41,7 +41,7 @@ class KeyValueResponseTest extends PHPUnit_Framework_TestCase
 
     public function testInvalidBodyOddElements()
     {
-        $this->setExpectedException(InvalidCommandResponseException::class, 'Invalid command response. Command Disque\\Command\\Hello got: ["test"]');
+        $this->setExpectedException(InvalidResponseException::class, 'Invalid command response. Command Disque\\Command\\Hello got: ["test"]');
         $r = new KeyValueResponse();
         $r->setCommand(new Hello());
         $r->setBody(['test']);
@@ -49,7 +49,7 @@ class KeyValueResponseTest extends PHPUnit_Framework_TestCase
 
     public function testInvalidBodyOddMoreElements()
     {
-        $this->setExpectedException(InvalidCommandResponseException::class, 'Invalid command response. Command Disque\\Command\\Hello got: ["test","stuff","element"]');
+        $this->setExpectedException(InvalidResponseException::class, 'Invalid command response. Command Disque\\Command\\Hello got: ["test","stuff","element"]');
         $r = new KeyValueResponse();
         $r->setCommand(new Hello());
         $r->setBody(['test', 'stuff', 'element']);

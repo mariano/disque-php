@@ -55,6 +55,13 @@ interface ManagerInterface
     public function setOptions(array $options);
 
     /**
+     * Tells if connection is established
+     *
+     * @return bool Success
+     */
+    public function isConnected();
+
+    /**
      * Connect to Disque
      *
      * @return array Connected node information

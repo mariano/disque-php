@@ -10,8 +10,8 @@ use Disque\Command\CommandInterface;
 use Disque\Command\GetJob;
 use Disque\Command\Hello;
 use Disque\Connection\BaseConnection;
+use Disque\Connection\ConnectionException;
 use Disque\Connection\ConnectionInterface;
-use Disque\Connection\Exception\ConnectionException;
 use Disque\Connection\Manager;
 use Disque\Connection\Socket;
 

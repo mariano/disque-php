@@ -2,11 +2,11 @@
 namespace Disque\Test\Command;
 
 use PHPUnit_Framework_TestCase;
+use Disque\Command\Argument\InvalidCommandArgumentException;
+use Disque\Command\Argument\InvalidOptionException;
 use Disque\Command\CommandInterface;
 use Disque\Command\GetJob;
-use Disque\Exception\InvalidCommandArgumentException;
-use Disque\Exception\InvalidCommandOptionException;
-use Disque\Exception\InvalidCommandResponseException;
+use Disque\Command\Response\InvalidResponseException;
 
 class GetJobTest extends PHPUnit_Framework_TestCase
 {
@@ -46,42 +46,42 @@ class GetJobTest extends PHPUnit_Framework_TestCase
 
     public function testBuildInvalidOption()
     {
-        $this->setExpectedException(InvalidCommandOptionException::class, 'Invalid command options. Options for command Disque\\Command\\GetJob: {"test":"stuff"}');
+        $this->setExpectedException(InvalidOptionException::class, 'Invalid command options. Options for command Disque\\Command\\GetJob: {"test":"stuff"}');
         $c = new GetJob();
         $c->setArguments(['q1', 'q2', ['test' => 'stuff']]);
     }
 
     public function testBuildInvalidOptionWithValid()
     {
-        $this->setExpectedException(InvalidCommandOptionException::class, 'Invalid command options. Options for command Disque\\Command\\GetJob: {"test":"stuff","count":10}');
+        $this->setExpectedException(InvalidOptionException::class, 'Invalid command options. Options for command Disque\\Command\\GetJob: {"test":"stuff","count":10}');
         $c = new GetJob();
         $c->setArguments(['q1', 'q2', ['test' => 'stuff', 'count' => 10]]);
     }
 
     public function testBuildInvalidOptionCountNonNumeric()
     {
-        $this->setExpectedException(InvalidCommandOptionException::class, 'Invalid command options. Options for command Disque\\Command\\GetJob: {"count":"stuff"}');
+        $this->setExpectedException(InvalidOptionException::class, 'Invalid command options. Options for command Disque\\Command\\GetJob: {"count":"stuff"}');
         $c = new GetJob();
         $c->setArguments(['q1', 'q2', ['count' => 'stuff']]);
     }
 
     public function testBuildInvalidOptionCountNonInt()
     {
-        $this->setExpectedException(InvalidCommandOptionException::class, 'Invalid command options. Options for command Disque\\Command\\GetJob: {"count":3.14}');
+        $this->setExpectedException(InvalidOptionException::class, 'Invalid command options. Options for command Disque\\Command\\GetJob: {"count":3.14}');
         $c = new GetJob();
         $c->setArguments(['q1', 'q2', ['count' => 3.14]]);
     }
 
     public function testBuildInvalidOptionTimeoutNonNumeric()
     {
-        $this->setExpectedException(InvalidCommandOptionException::class, 'Invalid command options. Options for command Disque\\Command\\GetJob: {"timeout":"stuff"}');
+        $this->setExpectedException(InvalidOptionException::class, 'Invalid command options. Options for command Disque\\Command\\GetJob: {"timeout":"stuff"}');
         $c = new GetJob();
         $c->setArguments(['q1', 'q2', ['timeout' => 'stuff']]);
     }
 
     public function testBuildInvalidOptionTimeoutNonInt()
     {
-        $this->setExpectedException(InvalidCommandOptionException::class, 'Invalid command options. Options for command Disque\\Command\\GetJob: {"timeout":3.14}');
+        $this->setExpectedException(InvalidOptionException::class, 'Invalid command options. Options for command Disque\\Command\\GetJob: {"timeout":3.14}');
         $c = new GetJob();
         $c->setArguments(['q1', 'q2', ['timeout' => 3.14]]);
     }
@@ -120,49 +120,42 @@ class GetJobTest extends PHPUnit_Framework_TestCase
 
     public function testParseInvalidString()
     {
-        $this->setExpectedException(InvalidCommandResponseException::class, 'Invalid command response. Command Disque\\Command\\GetJob got: "test"');
+        $this->setExpectedException(InvalidResponseException::class, 'Invalid command response. Command Disque\\Command\\GetJob got: "test"');
         $c = new GetJob();
         $c->parse('test');
     }
 
-    public function testParseInvalidArrayEmpty()
-    {
-        $this->setExpectedException(InvalidCommandResponseException::class, 'Invalid command response. Command Disque\\Command\\GetJob got: []');
-        $c = new GetJob();
-        $c->parse([]);
-    }
-
     public function testParseInvalidArrayElementsNonArray()
     {
-        $this->setExpectedException(InvalidCommandResponseException::class, 'Invalid command response. Command Disque\\Command\\GetJob got: ["test","stuff"]');
+        $this->setExpectedException(InvalidResponseException::class, 'Invalid command response. Command Disque\\Command\\GetJob got: ["test","stuff"]');
         $c = new GetJob();
         $c->parse(['test', 'stuff']);
     }
 
     public function testParseInvalidArrayElementsSomeNonArray()
     {
-        $this->setExpectedException(InvalidCommandResponseException::class, 'Invalid command response. Command Disque\\Command\\GetJob got: [["test","stuff","val"],"stuff"]');
+        $this->setExpectedException(InvalidResponseException::class, 'Invalid command response. Command Disque\\Command\\GetJob got: [["test","stuff","val"],"stuff"]');
         $c = new GetJob();
         $c->parse([['test', 'stuff', 'val'], 'stuff']);
     }
 
     public function testParseInvalidArrayElementsNon0()
     {
-        $this->setExpectedException(InvalidCommandResponseException::class, 'Invalid command response. Command Disque\\Command\\GetJob got: [{"1":"test","2":"stuff","3":"val"}]');
+        $this->setExpectedException(InvalidResponseException::class, 'Invalid command response. Command Disque\\Command\\GetJob got: [{"1":"test","2":"stuff","3":"val"}]');
         $c = new GetJob();
         $c->parse([[1=>'test', 2=>'stuff', 3=>'val']]);
     }
 
     public function testParseInvalidArrayElementsNon1()
     {
-        $this->setExpectedException(InvalidCommandResponseException::class, 'Invalid command response. Command Disque\\Command\\GetJob got: [{"0":"test","2":"stuff","3":"val"}]');
+        $this->setExpectedException(InvalidResponseException::class, 'Invalid command response. Command Disque\\Command\\GetJob got: [{"0":"test","2":"stuff","3":"val"}]');
         $c = new GetJob();
         $c->parse([[0=>'test', 2=>'stuff', 3=>'val']]);
     }
 
     public function testParseInvalidArrayElementsNon2()
     {
-        $this->setExpectedException(InvalidCommandResponseException::class, 'Invalid command response. Command Disque\\Command\\GetJob got: [{"0":"test","1":"stuff","3":"val"}]');
+        $this->setExpectedException(InvalidResponseException::class, 'Invalid command response. Command Disque\\Command\\GetJob got: [{"0":"test","1":"stuff","3":"val"}]');
         $c = new GetJob();
         $c->parse([[0=>'test', 1=>'stuff', 3=>'val']]);
     }

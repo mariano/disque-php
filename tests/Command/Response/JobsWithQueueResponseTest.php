@@ -5,7 +5,7 @@ use PHPUnit_Framework_TestCase;
 use Disque\Command\Hello;
 use Disque\Command\Response\ResponseInterface;
 use Disque\Command\Response\JobsWithQueueResponse;
-use Disque\Exception\InvalidCommandResponseException;
+use Disque\Command\Response\InvalidResponseException;
 
 class JobsWithQueueResponseTest extends PHPUnit_Framework_TestCase
 {
@@ -17,7 +17,7 @@ class JobsWithQueueResponseTest extends PHPUnit_Framework_TestCase
 
     public function testInvalidBodyNotArrayString()
     {
-        $this->setExpectedException(InvalidCommandResponseException::class, 'Invalid command response. Command Disque\\Command\\Hello got: "test"');
+        $this->setExpectedException(InvalidResponseException::class, 'Invalid command response. Command Disque\\Command\\Hello got: "test"');
         $r = new JobsWithQueueResponse();
         $r->setCommand(new Hello());
         $r->setBody('test');
@@ -25,23 +25,15 @@ class JobsWithQueueResponseTest extends PHPUnit_Framework_TestCase
 
     public function testInvalidBodyNotArrayNumeric()
     {
-        $this->setExpectedException(InvalidCommandResponseException::class, 'Invalid command response. Command Disque\\Command\\Hello got: 128');
+        $this->setExpectedException(InvalidResponseException::class, 'Invalid command response. Command Disque\\Command\\Hello got: 128');
         $r = new JobsWithQueueResponse();
         $r->setCommand(new Hello());
         $r->setBody(128);
     }
 
-    public function testInvalidBodyNotEnoughElements()
-    {
-        $this->setExpectedException(InvalidCommandResponseException::class, 'Invalid command response. Command Disque\\Command\\Hello got: []');
-        $r = new JobsWithQueueResponse();
-        $r->setCommand(new Hello());
-        $r->setBody([]);
-    }
-
     public function testInvalidBodyElementsNotArray()
     {
-        $this->setExpectedException(InvalidCommandResponseException::class, 'Invalid command response. Command Disque\\Command\\Hello got: ["test"]');
+        $this->setExpectedException(InvalidResponseException::class, 'Invalid command response. Command Disque\\Command\\Hello got: ["test"]');
         $r = new JobsWithQueueResponse();
         $r->setCommand(new Hello());
         $r->setBody(['test']);
@@ -49,7 +41,7 @@ class JobsWithQueueResponseTest extends PHPUnit_Framework_TestCase
 
     public function testInvalidBodyNotEnoughElementsInJob()
     {
-        $this->setExpectedException(InvalidCommandResponseException::class, 'Invalid command response. Command Disque\\Command\\Hello got: [["id","body"]]');
+        $this->setExpectedException(InvalidResponseException::class, 'Invalid command response. Command Disque\\Command\\Hello got: [["id","body"]]');
         $r = new JobsWithQueueResponse();
         $r->setCommand(new Hello());
         $r->setBody([['id','body']]);
@@ -57,7 +49,7 @@ class JobsWithQueueResponseTest extends PHPUnit_Framework_TestCase
 
     public function testInvalidBodyTooManyElementsInJob()
     {
-        $this->setExpectedException(InvalidCommandResponseException::class, 'Invalid command response. Command Disque\\Command\\Hello got: [["queue","id","body","test"]]');
+        $this->setExpectedException(InvalidResponseException::class, 'Invalid command response. Command Disque\\Command\\Hello got: [["queue","id","body","test"]]');
         $r = new JobsWithQueueResponse();
         $r->setCommand(new Hello());
         $r->setBody([['queue', 'id', 'body', 'test']]);
@@ -65,7 +57,7 @@ class JobsWithQueueResponseTest extends PHPUnit_Framework_TestCase
 
     public function testInvalidBodyInvalidJobIDPrefix()
     {
-        $this->setExpectedException(InvalidCommandResponseException::class, 'Invalid command response. Command Disque\\Command\\Hello got: [["queue","XX01234567890","body"]]');
+        $this->setExpectedException(InvalidResponseException::class, 'Invalid command response. Command Disque\\Command\\Hello got: [["queue","XX01234567890","body"]]');
         $r = new JobsWithQueueResponse();
         $r->setCommand(new Hello());
         $r->setBody([['queue', 'XX01234567890', 'body']]);
@@ -73,10 +65,19 @@ class JobsWithQueueResponseTest extends PHPUnit_Framework_TestCase
 
     public function testInvalidBodyInvalidJobIDLength()
     {
-        $this->setExpectedException(InvalidCommandResponseException::class, 'Invalid command response. Command Disque\\Command\\Hello got: [["queue","DI012345","body"]]');
+        $this->setExpectedException(InvalidResponseException::class, 'Invalid command response. Command Disque\\Command\\Hello got: [["queue","DI012345","body"]]');
         $r = new JobsWithQueueResponse();
         $r->setCommand(new Hello());
         $r->setBody([['queue', 'DI012345', 'body']]);
+    }
+
+    public function testParseNoJob()
+    {
+        $r = new JobsWithQueueResponse();
+        $r->setCommand(new Hello());
+        $r->setBody(null);
+        $result = $r->parse();
+        $this->assertSame([], $result);
     }
 
     public function testParseOneJob()

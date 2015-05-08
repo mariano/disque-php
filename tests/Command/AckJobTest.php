@@ -2,10 +2,10 @@
 namespace Disque\Test\Command;
 
 use PHPUnit_Framework_TestCase;
+use Disque\Command\Argument\InvalidCommandArgumentException;
 use Disque\Command\CommandInterface;
 use Disque\Command\AckJob;
-use Disque\Exception\InvalidCommandArgumentException;
-use Disque\Exception\InvalidCommandResponseException;
+use Disque\Command\Response\InvalidResponseException;
 
 class AckJobTest extends PHPUnit_Framework_TestCase
 {
@@ -68,14 +68,14 @@ class AckJobTest extends PHPUnit_Framework_TestCase
 
     public function testParseInvalidNonNumericArray()
     {
-        $this->setExpectedException(InvalidCommandResponseException::class, 'Invalid command response. Command Disque\\Command\\AckJob got: ["test"]');
+        $this->setExpectedException(InvalidResponseException::class, 'Invalid command response. Command Disque\\Command\\AckJob got: ["test"]');
         $c = new AckJob();
         $c->parse(['test']);
     }
 
     public function testParseInvalidNonNumericString()
     {
-        $this->setExpectedException(InvalidCommandResponseException::class, 'Invalid command response. Command Disque\\Command\\AckJob got: "test"');
+        $this->setExpectedException(InvalidResponseException::class, 'Invalid command response. Command Disque\\Command\\AckJob got: "test"');
         $c = new AckJob();
         $c->parse('test');
     }

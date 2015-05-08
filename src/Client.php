@@ -3,7 +3,9 @@ namespace Disque;
 
 use Disque\Command;
 use Disque\Connection\Manager;
-use Disque\Exception\InvalidCommandException;
+use Disque\Command\CommandInterface;
+use Disque\Command\InvalidCommandException;
+use Disque\Queue\Queue;
 use InvalidArgumentException;
 
 /**
@@ -42,6 +44,13 @@ class Client
      * @var array
      */
     protected $commands = [];
+
+    /**
+     * List of built queues
+     *
+     * @var array
+     */
+    private $queues;
 
     /**
      * Create a new Client
@@ -111,11 +120,21 @@ class Client
     }
 
     /**
+     * Tells if connection is established
+     *
+     * @return bool Success
+     */
+    public function isConnected()
+    {
+        return $this->connectionManager->isConnected();
+    }
+
+    /**
      * Connect to Disque
      *
      * @param array $options Connection options
      * @return array Connected node information
-     * @throws ConnectionException
+     * @throws Disque\Connection\ConnectionException
      */
     public function connect(array $options = [])
     {
@@ -148,13 +167,28 @@ class Client
      * Register a command handler
      *
      * @param string $command Command
-     * @param string $class Class that should implement Command\CommandInterface
+     * @param string $class Class that should implement `CommandInterface`
+     * @return void
      */
     public function registerCommand($command, $class)
     {
-        if (!in_array(Command\CommandInterface::class, class_implements($class))) {
+        if (!in_array(CommandInterface::class, class_implements($class))) {
             throw new InvalidArgumentException("Class {$class} does not implement CommandInterface");
         }
         $this->commandHandlers[strtoupper($command)] = $class;
+    }
+
+    /**
+     * Get a queue
+     *
+     * @param string $name Queue name
+     * @return Queue Queue
+     */
+    public function queue($name)
+    {
+        if (!isset($this->queues[$name])) {
+            $this->queues[$name] = new Queue($this, $name);
+        }
+        return $this->queues[$name];
     }
 }

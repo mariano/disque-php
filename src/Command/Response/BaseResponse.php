@@ -33,7 +33,7 @@ abstract class BaseResponse implements ResponseInterface
      * Set response body
      *
      * @param mixed $body Response body
-     * @throws Disque\Exception\InvalidCommandResponseException
+     * @throws InvalidResponseException
      */
     public function setBody($body)
     {
@@ -44,7 +44,7 @@ abstract class BaseResponse implements ResponseInterface
      * Parse response
      *
      * @return mixed Parsed response
-     * @throws Disque\Exception\InvalidCommandResponseException
+     * @throws InvalidResponseException
      */
     abstract public function parse();
 }

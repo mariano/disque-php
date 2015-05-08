@@ -2,11 +2,11 @@
 namespace Disque\Test\Command;
 
 use PHPUnit_Framework_TestCase;
-use Disque\Command\CommandInterface;
 use Disque\Command\AddJob;
-use Disque\Exception\InvalidCommandArgumentException;
-use Disque\Exception\InvalidCommandOptionException;
-use Disque\Exception\InvalidCommandResponseException;
+use Disque\Command\Argument\InvalidCommandArgumentException;
+use Disque\Command\Argument\InvalidOptionException;
+use Disque\Command\CommandInterface;
+use Disque\Command\Response\InvalidResponseException;
 
 class AddJobTest extends PHPUnit_Framework_TestCase
 {
@@ -95,98 +95,98 @@ class AddJobTest extends PHPUnit_Framework_TestCase
 
     public function testBuildInvalidOption()
     {
-        $this->setExpectedException(InvalidCommandOptionException::class, 'Invalid command options. Options for command Disque\\Command\\AddJob: {"test":"stuff"}');
+        $this->setExpectedException(InvalidOptionException::class, 'Invalid command options. Options for command Disque\\Command\\AddJob: {"test":"stuff"}');
         $c = new AddJob();
         $c->setArguments(['q', 'j', ['test' => 'stuff']]);
     }
 
     public function testBuildInvalidOptionWithValid()
     {
-        $this->setExpectedException(InvalidCommandOptionException::class, 'Invalid command options. Options for command Disque\\Command\\AddJob: {"test":"stuff","count":10}');
+        $this->setExpectedException(InvalidOptionException::class, 'Invalid command options. Options for command Disque\\Command\\AddJob: {"test":"stuff","count":10}');
         $c = new AddJob();
         $c->setArguments(['q', 'j', ['test' => 'stuff', 'count' => 10]]);
     }
 
     public function testBuildInvalidOptionTimeoutNonNumeric()
     {
-        $this->setExpectedException(InvalidCommandOptionException::class, 'Invalid command options. Options for command Disque\\Command\\AddJob: {"timeout":"stuff"}');
+        $this->setExpectedException(InvalidOptionException::class, 'Invalid command options. Options for command Disque\\Command\\AddJob: {"timeout":"stuff"}');
         $c = new AddJob();
         $c->setArguments(['q', 'j', ['timeout' => 'stuff']]);
     }
 
     public function testBuildInvalidOptionTimeoutNonInt()
     {
-        $this->setExpectedException(InvalidCommandOptionException::class, 'Invalid command options. Options for command Disque\\Command\\AddJob: {"timeout":3.14}');
+        $this->setExpectedException(InvalidOptionException::class, 'Invalid command options. Options for command Disque\\Command\\AddJob: {"timeout":3.14}');
         $c = new AddJob();
         $c->setArguments(['q', 'j', ['timeout' => 3.14]]);
     }
 
     public function testBuildInvalidOptionReplicateNonNumeric()
     {
-        $this->setExpectedException(InvalidCommandOptionException::class, 'Invalid command options. Options for command Disque\\Command\\AddJob: {"replicate":"stuff"}');
+        $this->setExpectedException(InvalidOptionException::class, 'Invalid command options. Options for command Disque\\Command\\AddJob: {"replicate":"stuff"}');
         $c = new AddJob();
         $c->setArguments(['q', 'j', ['replicate' => 'stuff']]);
     }
 
     public function testBuildInvalidOptionReplicateNonInt()
     {
-        $this->setExpectedException(InvalidCommandOptionException::class, 'Invalid command options. Options for command Disque\\Command\\AddJob: {"replicate":3.14}');
+        $this->setExpectedException(InvalidOptionException::class, 'Invalid command options. Options for command Disque\\Command\\AddJob: {"replicate":3.14}');
         $c = new AddJob();
         $c->setArguments(['q', 'j', ['replicate' => 3.14]]);
     }
 
     public function testBuildInvalidOptionDelayNonNumeric()
     {
-        $this->setExpectedException(InvalidCommandOptionException::class, 'Invalid command options. Options for command Disque\\Command\\AddJob: {"delay":"stuff"}');
+        $this->setExpectedException(InvalidOptionException::class, 'Invalid command options. Options for command Disque\\Command\\AddJob: {"delay":"stuff"}');
         $c = new AddJob();
         $c->setArguments(['q', 'j', ['delay' => 'stuff']]);
     }
 
     public function testBuildInvalidOptionDelayNonInt()
     {
-        $this->setExpectedException(InvalidCommandOptionException::class, 'Invalid command options. Options for command Disque\\Command\\AddJob: {"delay":3.14}');
+        $this->setExpectedException(InvalidOptionException::class, 'Invalid command options. Options for command Disque\\Command\\AddJob: {"delay":3.14}');
         $c = new AddJob();
         $c->setArguments(['q', 'j', ['delay' => 3.14]]);
     }
 
     public function testBuildInvalidOptionRetryNonNumeric()
     {
-        $this->setExpectedException(InvalidCommandOptionException::class, 'Invalid command options. Options for command Disque\\Command\\AddJob: {"retry":"stuff"}');
+        $this->setExpectedException(InvalidOptionException::class, 'Invalid command options. Options for command Disque\\Command\\AddJob: {"retry":"stuff"}');
         $c = new AddJob();
         $c->setArguments(['q', 'j', ['retry' => 'stuff']]);
     }
 
     public function testBuildInvalidOptionRetryNonInt()
     {
-        $this->setExpectedException(InvalidCommandOptionException::class, 'Invalid command options. Options for command Disque\\Command\\AddJob: {"retry":3.14}');
+        $this->setExpectedException(InvalidOptionException::class, 'Invalid command options. Options for command Disque\\Command\\AddJob: {"retry":3.14}');
         $c = new AddJob();
         $c->setArguments(['q', 'j', ['retry' => 3.14]]);
     }
 
     public function testBuildInvalidOptionTtlNonNumeric()
     {
-        $this->setExpectedException(InvalidCommandOptionException::class, 'Invalid command options. Options for command Disque\\Command\\AddJob: {"ttl":"stuff"}');
+        $this->setExpectedException(InvalidOptionException::class, 'Invalid command options. Options for command Disque\\Command\\AddJob: {"ttl":"stuff"}');
         $c = new AddJob();
         $c->setArguments(['q', 'j', ['ttl' => 'stuff']]);
     }
 
     public function testBuildInvalidOptionTtlNonInt()
     {
-        $this->setExpectedException(InvalidCommandOptionException::class, 'Invalid command options. Options for command Disque\\Command\\AddJob: {"ttl":3.14}');
+        $this->setExpectedException(InvalidOptionException::class, 'Invalid command options. Options for command Disque\\Command\\AddJob: {"ttl":3.14}');
         $c = new AddJob();
         $c->setArguments(['q', 'j', ['ttl' => 3.14]]);
     }
 
     public function testBuildInvalidOptionMaxlenNonNumeric()
     {
-        $this->setExpectedException(InvalidCommandOptionException::class, 'Invalid command options. Options for command Disque\\Command\\AddJob: {"maxlen":"stuff"}');
+        $this->setExpectedException(InvalidOptionException::class, 'Invalid command options. Options for command Disque\\Command\\AddJob: {"maxlen":"stuff"}');
         $c = new AddJob();
         $c->setArguments(['q', 'j', ['maxlen' => 'stuff']]);
     }
 
     public function testBuildInvalidOptionMaxlenNonInt()
     {
-        $this->setExpectedException(InvalidCommandOptionException::class, 'Invalid command options. Options for command Disque\\Command\\AddJob: {"maxlen":3.14}');
+        $this->setExpectedException(InvalidOptionException::class, 'Invalid command options. Options for command Disque\\Command\\AddJob: {"maxlen":3.14}');
         $c = new AddJob();
         $c->setArguments(['q', 'j', ['maxlen' => 3.14]]);
     }
@@ -273,14 +273,14 @@ class AddJobTest extends PHPUnit_Framework_TestCase
 
     public function testParseInvalidNonString()
     {
-        $this->setExpectedException(InvalidCommandResponseException::class, 'Invalid command response. Command Disque\\Command\\AddJob got: 10');
+        $this->setExpectedException(InvalidResponseException::class, 'Invalid command response. Command Disque\\Command\\AddJob got: 10');
         $c = new AddJob();
         $c->parse(10);
     }
 
     public function testParseInvalidNonStringBoolTrue()
     {
-        $this->setExpectedException(InvalidCommandResponseException::class, 'Invalid command response. Command Disque\\Command\\AddJob got: true');
+        $this->setExpectedException(InvalidResponseException::class, 'Invalid command response. Command Disque\\Command\\AddJob got: true');
         $c = new AddJob();
         $c->parse(true);
     }

@@ -1,8 +1,6 @@
 <?php
 namespace Disque\Command\Response;
 
-use Disque\Exception\InvalidCommandResponseException;
-
 class KeyValueResponse extends BaseResponse implements ResponseInterface
 {
     /**
@@ -10,12 +8,12 @@ class KeyValueResponse extends BaseResponse implements ResponseInterface
      *
      * @param mixed $body Response body
      * @return void
-     * @throws InvalidCommandResponseException
+     * @throws InvalidResponseException
      */
     public function setBody($body)
     {
         if ($body !== false && (empty($body) || !is_array($body) || (count($body) % 2) !== 0)) {
-            throw new InvalidCommandResponseException($this->command, $body);
+            throw new InvalidResponseException($this->command, $body);
         }
         parent::setBody($body);
     }
@@ -24,7 +22,6 @@ class KeyValueResponse extends BaseResponse implements ResponseInterface
      * Parse response
      *
      * @return array Parsed response
-     * @throws InvalidCommandResponseException
      */
     public function parse()
     {

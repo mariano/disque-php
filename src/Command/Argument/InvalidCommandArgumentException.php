@@ -1,7 +1,8 @@
 <?php
-namespace Disque\Exception;
+namespace Disque\Command\Argument;
 
 use Disque\Command\CommandInterface;
+use Disque\DisqueException;
 
 class InvalidCommandArgumentException extends DisqueException
 {

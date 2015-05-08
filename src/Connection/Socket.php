@@ -2,8 +2,6 @@
 namespace Disque\Connection;
 
 use Disque\Command\CommandInterface;
-use Disque\Connection\Exception\ConnectionException;
-use Disque\Connection\Exception\ResponseException;
 
 /**
  * This class is greatly inspired by `Predis\Connection\StreamConnection`,
@@ -134,7 +132,7 @@ class Socket extends BaseConnection implements ConnectionInterface
      *
      * @return mixed Data received
      * @throws ConnectionException
-     * @throws Disque\Connection\Exception\ResponseException
+     * @throws ResponseException
      */
     public function receive()
     {

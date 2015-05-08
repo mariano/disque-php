@@ -1,5 +1,7 @@
 <?php
-namespace Disque\Exception;
+namespace Disque\Command;
+
+use Disque\DisqueException;
 
 class InvalidCommandException extends DisqueException
 {

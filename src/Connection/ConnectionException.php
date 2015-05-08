@@ -1,5 +1,5 @@
 <?php
-namespace Disque\Connection\Exception;
+namespace Disque\Connection;
 
 use Exception;
 

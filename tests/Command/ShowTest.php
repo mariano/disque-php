@@ -2,10 +2,10 @@
 namespace Disque\Test\Command;
 
 use PHPUnit_Framework_TestCase;
+use Disque\Command\Argument\InvalidCommandArgumentException;
 use Disque\Command\CommandInterface;
 use Disque\Command\Show;
-use Disque\Exception\InvalidCommandArgumentException;
-use Disque\Exception\InvalidCommandResponseException;
+use Disque\Command\Response\InvalidResponseException;
 
 class ShowTest extends PHPUnit_Framework_TestCase
 {
@@ -67,21 +67,21 @@ class ShowTest extends PHPUnit_Framework_TestCase
 
     public function testParseInvalidNonArrayString()
     {
-        $this->setExpectedException(InvalidCommandResponseException::class, 'Invalid command response. Command Disque\\Command\\Show got: "test"');
+        $this->setExpectedException(InvalidResponseException::class, 'Invalid command response. Command Disque\\Command\\Show got: "test"');
         $c = new Show();
         $c->parse('test');
     }
 
     public function testParseInvalidEmptyArray()
     {
-        $this->setExpectedException(InvalidCommandResponseException::class, 'Invalid command response. Command Disque\\Command\\Show got: []');
+        $this->setExpectedException(InvalidResponseException::class, 'Invalid command response. Command Disque\\Command\\Show got: []');
         $c = new Show();
         $c->parse([]);
     }
 
     public function testParseInvalidOddArray()
     {
-        $this->setExpectedException(InvalidCommandResponseException::class, 'Invalid command response. Command Disque\\Command\\Show got: ["odd","elements","array"]');
+        $this->setExpectedException(InvalidResponseException::class, 'Invalid command response. Command Disque\\Command\\Show got: ["odd","elements","array"]');
         $c = new Show();
         $c->parse(['odd','elements','array']);
     }

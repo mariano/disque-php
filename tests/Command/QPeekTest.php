@@ -2,10 +2,10 @@
 namespace Disque\Test\Command;
 
 use PHPUnit_Framework_TestCase;
+use Disque\Command\Argument\InvalidCommandArgumentException;
 use Disque\Command\CommandInterface;
 use Disque\Command\QPeek;
-use Disque\Exception\InvalidCommandArgumentException;
-use Disque\Exception\InvalidCommandResponseException;
+use Disque\Command\Response\InvalidResponseException;
 
 class QPeekTest extends PHPUnit_Framework_TestCase
 {
@@ -88,42 +88,35 @@ class QPeekTest extends PHPUnit_Framework_TestCase
 
     public function testParseInvalidString()
     {
-        $this->setExpectedException(InvalidCommandResponseException::class, 'Invalid command response. Command Disque\\Command\\QPeek got: "test"');
+        $this->setExpectedException(InvalidResponseException::class, 'Invalid command response. Command Disque\\Command\\QPeek got: "test"');
         $c = new QPeek();
         $c->parse('test');
     }
 
-    public function testParseInvalidArrayEmpty()
-    {
-        $this->setExpectedException(InvalidCommandResponseException::class, 'Invalid command response. Command Disque\\Command\\QPeek got: []');
-        $c = new QPeek();
-        $c->parse([]);
-    }
-
     public function testParseInvalidArrayElementsNonArray()
     {
-        $this->setExpectedException(InvalidCommandResponseException::class, 'Invalid command response. Command Disque\\Command\\QPeek got: ["test","stuff"]');
+        $this->setExpectedException(InvalidResponseException::class, 'Invalid command response. Command Disque\\Command\\QPeek got: ["test","stuff"]');
         $c = new QPeek();
         $c->parse(['test', 'stuff']);
     }
 
     public function testParseInvalidArrayElementsSomeNonArray()
     {
-        $this->setExpectedException(InvalidCommandResponseException::class, 'Invalid command response. Command Disque\\Command\\QPeek got: [["test","val"],"stuff"]');
+        $this->setExpectedException(InvalidResponseException::class, 'Invalid command response. Command Disque\\Command\\QPeek got: [["test","val"],"stuff"]');
         $c = new QPeek();
         $c->parse([['test', 'val'], 'stuff']);
     }
 
     public function testParseInvalidArrayElementsNon0()
     {
-        $this->setExpectedException(InvalidCommandResponseException::class, 'Invalid command response. Command Disque\\Command\\QPeek got: [{"1":"test","2":"stuff"}]');
+        $this->setExpectedException(InvalidResponseException::class, 'Invalid command response. Command Disque\\Command\\QPeek got: [{"1":"test","2":"stuff"}]');
         $c = new QPeek();
         $c->parse([[1=>'test', 2=>'stuff']]);
     }
 
     public function testParseInvalidArrayElementsNon1()
     {
-        $this->setExpectedException(InvalidCommandResponseException::class, 'Invalid command response. Command Disque\\Command\\QPeek got: [{"0":"test","2":"stuff"}]');
+        $this->setExpectedException(InvalidResponseException::class, 'Invalid command response. Command Disque\\Command\\QPeek got: [{"0":"test","2":"stuff"}]');
         $c = new QPeek();
         $c->parse([[0=>'test', 2=>'stuff']]);
     }

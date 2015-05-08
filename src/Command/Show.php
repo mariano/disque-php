@@ -1,8 +1,7 @@
 <?php
 namespace Disque\Command;
 
-use Disque\Command\Response;
-use Disque\Exception\InvalidCommandResponseException;
+use Disque\Command\Response\KeyValueResponse;
 
 class Show extends BaseCommand implements CommandInterface
 {
@@ -18,7 +17,7 @@ class Show extends BaseCommand implements CommandInterface
      *
      * @var int
      */
-    protected $responseHandler = Response\KeyValueResponse::class;
+    protected $responseHandler = KeyValueResponse::class;
 
     /**
      * Get command

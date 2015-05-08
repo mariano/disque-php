@@ -5,7 +5,7 @@ use InvalidArgumentException;
 use Disque\Command\CommandInterface;
 use Disque\Command\GetJob;
 use Disque\Command\Hello;
-use Disque\Connection\Exception\ConnectionException;
+use Disque\Connection\ConnectionException;
 
 class Manager implements ManagerInterface
 {
@@ -138,6 +138,20 @@ class Manager implements ManagerInterface
     }
 
     /**
+     * Tells if connection is established
+     *
+     * @return bool Success
+     */
+    public function isConnected()
+    {
+        return (
+            isset($this->nodeId) &&
+            isset($this->nodes[$this->nodeId]['connection']) &&
+            $this->nodes[$this->nodeId]['connection']->isConnected()
+        );
+    }
+
+    /**
      * Connect to Disque
      *
      * @return array Connected node information
@@ -181,10 +195,7 @@ class Manager implements ManagerInterface
      */
     public function execute(CommandInterface $command)
     {
-        if (
-            !isset($this->nodes[$this->nodeId]['connection']) ||
-            !$this->nodes[$this->nodeId]['connection']->isConnected()
-        ) {
+        if (!$this->isConnected()) {
             throw new ConnectionException('Not connected');
         }
 

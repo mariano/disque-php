@@ -1,8 +1,7 @@
 <?php
 namespace Disque\Command;
 
-use Disque\Command\Response;
-use Disque\Exception\InvalidCommandResponseException;
+use Disque\Command\Response\HelloResponse;
 
 class Hello extends BaseCommand implements CommandInterface
 {
@@ -18,7 +17,7 @@ class Hello extends BaseCommand implements CommandInterface
      *
      * @var int
      */
-    protected $responseHandler = Response\HelloResponse::class;
+    protected $responseHandler = HelloResponse::class;
 
     /**
      * Get command

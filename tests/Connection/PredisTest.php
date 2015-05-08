@@ -4,7 +4,7 @@ namespace Disque\Test\Connection;
 use Mockery as m;
 use PHPUnit_Framework_TestCase;
 use Disque\Command;
-use Disque\Connection\Exception\ConnectionException;
+use Disque\Connection\ConnectionException;
 use Disque\Connection\ConnectionInterface;
 use Disque\Connection\Predis;
 

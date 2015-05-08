@@ -2,7 +2,6 @@
 namespace Disque\Command\Response;
 
 use Disque\Command\Argument\ArrayChecker;
-use Disque\Exception\InvalidCommandResponseException;
 
 class JobsResponse extends BaseResponse implements ResponseInterface
 {
@@ -30,21 +29,24 @@ class JobsResponse extends BaseResponse implements ResponseInterface
      *
      * @param mixed $body Response body
      * @return void
-     * @throws InvalidCommandResponseException
+     * @throws InvalidResponseException
      */
     public function setBody($body)
     {
-        if (empty($body) || !is_array($body)) {
-            throw new InvalidCommandResponseException($this->command, $body);
+        if (is_null($body)) {
+            $body = [];
+        }
+        if (!is_array($body)) {
+            throw new InvalidResponseException($this->command, $body);
         }
         $totalJobDetails = count($this->jobDetails);
         foreach ($body as $job) {
             if (!$this->checkFixedArray($job, $totalJobDetails)) {
-                throw new InvalidCommandResponseException($this->command, $body);
+                throw new InvalidResponseException($this->command, $body);
             }
             $id = ($totalJobDetails > 2 ? $job[1] : $job[0]);
             if (strpos($id, 'DI') !== 0 || strlen($id) < 10) {
-                throw new InvalidCommandResponseException($this->command, $body);
+                throw new InvalidResponseException($this->command, $body);
             }
         }
 
@@ -55,7 +57,6 @@ class JobsResponse extends BaseResponse implements ResponseInterface
      * Parse response
      *
      * @return array Parsed response
-     * @throws InvalidCommandResponseException
      */
     public function parse()
     {

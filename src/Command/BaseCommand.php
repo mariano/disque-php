@@ -2,8 +2,11 @@
 namespace Disque\Command;
 
 use InvalidArgumentException;
+use Disque\Command\Argument\InvalidCommandArgumentException;
+use Disque\Command\Argument\InvalidOptionException;
 use Disque\Command\Argument\StringChecker;
 use Disque\Exception;
+use Disque\Command\Response\StringResponse;
 
 abstract class BaseCommand implements CommandInterface
 {
@@ -47,7 +50,7 @@ abstract class BaseCommand implements CommandInterface
      *
      * @var string
      */
-    protected $responseHandler = Response\StringResponse::class;
+    protected $responseHandler = StringResponse::class;
 
     /**
      * Get command
@@ -71,14 +74,14 @@ abstract class BaseCommand implements CommandInterface
      *
      * @param array $arguments Arguments
      * @return void
-     * @throws Disque\Exception\InvalidCommandArgumentException
+     * @throws InvalidCommandArgumentException
      */
     public function setArguments(array $arguments)
     {
         switch ($this->argumentsType) {
             case self::ARGUMENTS_TYPE_EMPTY:
                 if (!empty($arguments)) {
-                    throw new Exception\InvalidCommandArgumentException($this, $arguments);
+                    throw new InvalidCommandArgumentException($this, $arguments);
                 }
                 $arguments = [];
                 break;
@@ -89,7 +92,7 @@ abstract class BaseCommand implements CommandInterface
             case self::ARGUMENTS_TYPE_STRING_INT:
                 $this->checkStringArgument($arguments, 2);
                 if (!is_int($arguments[1])) {
-                    throw new Exception\InvalidCommandArgumentException($this, $arguments);
+                    throw new InvalidCommandArgumentException($this, $arguments);
                 }
                 $arguments = [$arguments[0], (int) $arguments[1]];
                 break;
@@ -105,7 +108,7 @@ abstract class BaseCommand implements CommandInterface
      *
      * @param mixed $body Response body
      * @return mixed Parsed response
-     * @throws Disque\Exception\InvalidCommandResponseException
+     * @throws Disque\Command\Response\InvalidResponseException
      */
     public function parse($body)
     {
@@ -121,14 +124,14 @@ abstract class BaseCommand implements CommandInterface
      *
      * @param array $options Command options
      * @return array Command arguments
-     * @throws Disque\Exception\InvalidCommandOptionException
+     * @throws InvalidOptionException
      */
     protected function toArguments(array $options)
     {
         if (empty($options)) {
             return [];
         } elseif (!empty(array_diff_key($options, $this->availableArguments))) {
-            throw new Exception\InvalidCommandOptionException($this, $options);
+            throw new InvalidOptionException($this, $options);
         }
 
         $options += $this->options;

@@ -1,8 +1,6 @@
 <?php
 namespace Disque\Command\Response;
 
-use Disque\Exception\InvalidCommandResponseException;
-
 class JobsWithQueueResponse extends JobsResponse implements ResponseInterface
 {
     /**

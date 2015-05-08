@@ -2,10 +2,10 @@
 namespace Disque\Test\Command;
 
 use PHPUnit_Framework_TestCase;
+use Disque\Command\Argument\InvalidCommandArgumentException;
 use Disque\Command\CommandInterface;
 use Disque\Command\QLen;
-use Disque\Exception\InvalidCommandArgumentException;
-use Disque\Exception\InvalidCommandResponseException;
+use Disque\Command\Response\InvalidResponseException;
 
 class QLenTest extends PHPUnit_Framework_TestCase
 {
@@ -67,14 +67,14 @@ class QLenTest extends PHPUnit_Framework_TestCase
 
     public function testParseInvalidNonNumericArray()
     {
-        $this->setExpectedException(InvalidCommandResponseException::class, 'Invalid command response. Command Disque\\Command\\QLen got: ["test"]');
+        $this->setExpectedException(InvalidResponseException::class, 'Invalid command response. Command Disque\\Command\\QLen got: ["test"]');
         $c = new QLen();
         $c->parse(['test']);
     }
 
     public function testParseInvalidNonNumericString()
     {
-        $this->setExpectedException(InvalidCommandResponseException::class, 'Invalid command response. Command Disque\\Command\\QLen got: "test"');
+        $this->setExpectedException(InvalidResponseException::class, 'Invalid command response. Command Disque\\Command\\QLen got: "test"');
         $c = new QLen();
         $c->parse('test');
     }

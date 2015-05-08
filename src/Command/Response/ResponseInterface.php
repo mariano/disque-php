@@ -18,7 +18,7 @@ interface ResponseInterface
      *
      * @param mixed $body Response body
      * @return void
-     * @throws Disque\Exception\InvalidCommandResponseException
+     * @throws InvalidResponseException
      */
     public function setBody($body);
 
@@ -26,7 +26,7 @@ interface ResponseInterface
      * Parse response
      *
      * @return mixed Parsed response
-     * @throws Disque\Exception\InvalidCommandResponseException
+     * @throws InvalidResponseException
      */
     public function parse();
 }

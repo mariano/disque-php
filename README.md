@@ -37,27 +37,51 @@ $client = \Disque\Client([
 ]);
 try {
     $client->connect();
-} catch (\Disque\Connection\Exception\ConnectionException $e) {
+} catch (\Disque\Connection\ConnectionException $e) {
     die($e->getMessage());
 }
 ```
 
+You can use the Queue API, or the underlying Client when queueing / retrieving 
+jobs. For more details [read the full documentation](docs/README.md)
+
+### Queue API
+
 Queue jobs:
+
+```php
+$queue = $disque->queue('my_queue');
+$queue->push(new \Disque\Queue\Job(['name' => 'Mariano']));
+```
+
+Fetch job, and acknowledge it as processed:
+
+```php
+$queue = $disque->queue('my_queue');
+
+$job = $queue->pull();
+var_dump($job->getBody());
+$queue->processed($job)
+```
+
+### Direct client access
+
+Queue jobs directly with the client:
 
 ```php
 $payload = ['name' => 'Mariano'];
 $client->addJob('queue', json_encode($payload));
 ```
 
-Get jobs from queue:
+Get jobs using the client directly, and acknowledge them:
 
 ```php
-$job = $client->getJob('queue');
-$payload = json_decode($job, true);
-var_dump($payload);
+foreach ($client->getJob('queue') as $job) {
+    $payload = json_decode($job['body'], true);
+    var_dump($payload);
+    $client->ackJob($job['id']);
+}
 ```
-
-For a full coverage of the API, read the [full documentation](docs/README.md).
 
 ## Testing
 
@@ -97,10 +121,10 @@ instead of using the issue tracker.
 - [x] Implement direct protocol to Disque to avoid depending on Predis
 - [x] Turn Predis integration into a ConnectionInterface
 - [x] Allow user to specify their own ConnectionInterface implementation
-- [ ] ~~Add support for PSR Logging~~
 - [x] Allow GETJOB to influence what node the Client should be connected to
+- [x] Higher level API for queueing and retrieving jobs
+- [ ] Method in `Queue` to schedule future jobs based on DateTime
 - [ ] `QSTAT`, `SCAN` when they are implemented upstream
-- [ ] Higher level API for queueing and retrieving jobs
 
 ## Acknowledgments
 

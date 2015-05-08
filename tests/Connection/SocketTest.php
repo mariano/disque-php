@@ -4,10 +4,10 @@ namespace Disque\Test\Connection;
 use Mockery as m;
 use PHPUnit_Framework_TestCase;
 use Disque\Command;
+use Disque\Connection\ConnectionException;
 use Disque\Connection\ConnectionInterface;
+use Disque\Connection\ResponseException;
 use Disque\Connection\Socket;
-use Disque\Connection\Exception\ConnectionException;
-use Disque\Connection\Exception\ResponseException;
 
 class MockSocket extends Socket
 {

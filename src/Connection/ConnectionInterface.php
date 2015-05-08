@@ -2,7 +2,6 @@
 namespace Disque\Connection;
 
 use Disque\Command\CommandInterface;
-use Disque\Connection\Exception\ConnectionException;
 
 interface ConnectionInterface
 {
@@ -27,7 +26,7 @@ interface ConnectionInterface
      *
      * @param array $options Connection options
      * @return void
-     * @throws Disque\Connection\Exception\ConnectionException
+     * @throws ConnectionException
      */
     public function connect(array $options = []);
 
@@ -50,7 +49,7 @@ interface ConnectionInterface
      *
      * @param CommandInterface $command
      * @return mixed Response
-     * @throws Disque\Connection\Exception\ConnectionException
+     * @throws ConnectionException
      */
     public function execute(CommandInterface $command);
 }

@@ -2,10 +2,10 @@
 namespace Disque\Test\Command;
 
 use PHPUnit_Framework_TestCase;
+use Disque\Command\Argument\InvalidCommandArgumentException;
 use Disque\Command\CommandInterface;
 use Disque\Command\DelJob;
-use Disque\Exception\InvalidCommandArgumentException;
-use Disque\Exception\InvalidCommandResponseException;
+use Disque\Command\Response\InvalidResponseException;
 
 class DelJobTest extends PHPUnit_Framework_TestCase
 {
@@ -68,14 +68,14 @@ class DelJobTest extends PHPUnit_Framework_TestCase
 
     public function testParseInvalidNonNumericArray()
     {
-        $this->setExpectedException(InvalidCommandResponseException::class, 'Invalid command response. Command Disque\\Command\\DelJob got: ["test"]');
+        $this->setExpectedException(InvalidResponseException::class, 'Invalid command response. Command Disque\\Command\\DelJob got: ["test"]');
         $c = new DelJob();
         $c->parse(['test']);
     }
 
     public function testParseInvalidNonNumericString()
     {
-        $this->setExpectedException(InvalidCommandResponseException::class, 'Invalid command response. Command Disque\\Command\\DelJob got: "test"');
+        $this->setExpectedException(InvalidResponseException::class, 'Invalid command response. Command Disque\\Command\\DelJob got: "test"');
         $c = new DelJob();
         $c->parse('test');
     }

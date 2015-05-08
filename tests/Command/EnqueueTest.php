@@ -2,10 +2,10 @@
 namespace Disque\Test\Command;
 
 use PHPUnit_Framework_TestCase;
+use Disque\Command\Argument\InvalidCommandArgumentException;
 use Disque\Command\CommandInterface;
 use Disque\Command\Enqueue;
-use Disque\Exception\InvalidCommandArgumentException;
-use Disque\Exception\InvalidCommandResponseException;
+use Disque\Command\Response\InvalidResponseException;
 
 class EnqueueTest extends PHPUnit_Framework_TestCase
 {
@@ -68,14 +68,14 @@ class EnqueueTest extends PHPUnit_Framework_TestCase
 
     public function testParseInvalidNonNumericArray()
     {
-        $this->setExpectedException(InvalidCommandResponseException::class, 'Invalid command response. Command Disque\\Command\\Enqueue got: ["test"]');
+        $this->setExpectedException(InvalidResponseException::class, 'Invalid command response. Command Disque\\Command\\Enqueue got: ["test"]');
         $c = new Enqueue();
         $c->parse(['test']);
     }
 
     public function testParseInvalidNonNumericString()
     {
-        $this->setExpectedException(InvalidCommandResponseException::class, 'Invalid command response. Command Disque\\Command\\Enqueue got: "test"');
+        $this->setExpectedException(InvalidResponseException::class, 'Invalid command response. Command Disque\\Command\\Enqueue got: "test"');
         $c = new Enqueue();
         $c->parse('test');
     }

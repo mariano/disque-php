@@ -2,8 +2,8 @@
 namespace Disque\Command;
 
 use Disque\Command\Argument\ArrayChecker;
-use Disque\Exception\InvalidCommandArgumentException;
-use Disque\Exception\InvalidCommandOptionException;
+use Disque\Command\Argument\InvalidCommandArgumentException;
+use Disque\Command\Argument\InvalidOptionException;
 
 class AddJob extends BaseCommand implements CommandInterface
 {
@@ -53,7 +53,7 @@ class AddJob extends BaseCommand implements CommandInterface
      *
      * @param array $arguments Arguments
      * @throws InvalidCommandArgumentException
-     * @throws InvalidCommandOptionException
+     * @throws InvalidOptionException
      */
     public function setArguments(array $arguments)
     {
@@ -69,7 +69,7 @@ class AddJob extends BaseCommand implements CommandInterface
         $options = (!empty($arguments[2]) ? $arguments[2] : []) + ['timeout' => $this->options['timeout']];
         foreach (['timeout', 'replicate', 'delay', 'retry', 'ttl', 'maxlen'] as $intOption) {
             if (isset($options[$intOption]) && !is_int($options[$intOption])) {
-                throw new InvalidCommandOptionException($this, (array) $arguments[2]);
+                throw new InvalidOptionException($this, (array) $arguments[2]);
             }
         }
 

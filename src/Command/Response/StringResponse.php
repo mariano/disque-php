@@ -14,7 +14,6 @@ class StringResponse extends BasicTypeResponse implements ResponseInterface
      * Parse response
      *
      * @return string Parsed response
-     * @throws InvalidCommandResponseException
      */
     public function parse()
     {

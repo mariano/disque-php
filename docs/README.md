@@ -1,6 +1,4 @@
-# disque-php
-
-## Installation
+# Installation
 
 Install disque-php via Composer:
 
@@ -10,7 +8,7 @@ $ composer require mariano/disque-php --no-dev
 
 If you want to run its tests remove the `--no-dev` argument.
 
-## Connecting
+# Connecting
 
 First you will need to create an instance of `Disque\Client`, specifying a list
 of hosts and ports where different Disque nodes are installed:
@@ -40,7 +38,7 @@ random node is tried.
 * If a connection is successfull, the `HELLO` command is issued against this
 server. If this fails, another random node is tried.
 * If no connection is established and there are no servers left, a
-`Disque\Connection\Exception\ConnectionException` is thrown.
+`Disque\Connection\ConnectionException` is thrown.
 
 Example call:
 
@@ -72,7 +70,7 @@ The above `connect()` call will return an output similar to the following:
 ]
 ```
 
-### Using another connector
+## Using another connector
 
 By default disque-php does not require any other packages or libraries. It has
 its own connector to Disque, that is fast and focused. If you wish to instead
@@ -92,7 +90,7 @@ And then configure the connection implementation class:
 $client->getConnectionManager()->setConnectionClass(\Disque\Connection\Predis::class);
 ```
 
-### Smart node connection based on GETJOB
+## Smart node connection based on jobs being fetched
 
 [Disque](https://github.com/antirez/disque#client-libraries) suggests that if a
 consumer sees a high message rate received from a specific node, then clients
@@ -129,7 +127,8 @@ Now we process jobs as we normally do:
 ```php
 while ($job = $disque->getJob()) {
     echo 'DO SOMETHING!';
-    var_dump($job);
+    var_dump($job['body']);
+    $disque->ackJob($job['id']);
 }
 ```
 
@@ -137,7 +136,137 @@ If a specific node produces at least 3 jobs, the connection will automatically
 switch to the node producing these many jobs. This is all done behind the
 scenes, automatically.
 
-## Commands
+# Queue API
+
+To simplify the most common tasks with Disque this package offers a higher level
+API to push jobs to Disque, and retrieve jobs from it.
+
+## Getting a queue
+
+You start by fetching a queue (which is actually an instance of 
+`Disque\Queue\Queue`) by name. No need to create / delete queues, Disque
+manages the queue lifecycle automatically.
+
+```php
+$queue = $disque->queue('emails');
+```
+
+Once you have obtained the queue, you can either push jobs to it, or pull jobs
+from it. Either way jobs are instances of `Disque\Queue\Job`, which offers a
+convinient `setBody(array $body)` method to set the body of the job, and a
+`getBody(): array` method to get the body.
+
+### Changing the Job class
+
+If you want to change the class used to represent a job, you can specify the 
+new class implementation (which should implement `Disque\Queue\JobInterface`)
+via the queue's `setJobClass()` method, like so:
+
+```php
+class EmailJob extends \Disque\Queue\Job 
+{
+    // ...
+}
+
+$queue->setJobClass(MyJobClass);
+```
+
+## Pushing jobs to the queue
+
+The simplest way to push a job to the queue is by using its `push()` method:
+
+```php
+$job = new Job(['name' => 'Mariano']);
+$queue->push($job);
+```
+
+You can specify different options that will affect how the job is placed on
+the queue through `push()` second, optional, argument `$options`. Available
+options are:
+
+* `timeout`: an `int`, which specifies the timeout in milliseconds for the
+    job. See [Disque's API](https://github.com/antirez/disque#api).
+* `replicate`: an`int`, to specify the number of nodes the job should be
+    replicated to.
+* `delay`: an `int`, to specify the number of seconds that should elapse 
+    before the job is queued by any server.
+* `retry`: an `int`, to specify the period (in seconds) after which, if the
+    job is not acknowledged, the job is put again into the queue for delivery.
+    See [Disque's API](https://github.com/antirez/disque#api).
+* `ttl`: an `int`, which is the maximum job life in seconds.
+* `maxlen`: an `int`, to specify that if there are already these many
+    jobs queued in the given queue, then this new job is refused.
+* `async`: a `bool`, if `true`, tells the server to let the command return
+    ASAP and replicate the job to the other nodes in background. See 
+    [Disque's API](https://github.com/antirez/disque#api).
+
+For example to push a job to the queue but automatically remove it from the
+queue if after 1 minute it wasn't processed, we'd do:
+
+```php
+$job = new Job(['description' => 'To be handled within the minute!']);
+$queue->push($job, ['ttl' => 60]);
+```
+
+## Pulling jobs from the queue
+
+You get jobs, one at a time, using the `pull()` method. If there are no jobs
+available, this call **will block** until a job is placed on the queue.
+
+To get a job:
+
+```php
+$job = $queue->pull();
+var_dump($job->getBody());
+```
+
+You can obviously process as many jobs as there are, or become queued:
+
+```php
+while ($job = $queue->pull()) {
+    echo "GOT JOB!\n";
+    var_dump($job->getBody());
+}
+```
+
+Since this is a blocking call, you may find yourself in the need to do something
+with the useless time while you are waiting for jobs. Fortunately `pull()` 
+receives an optional argument: the number of milliseconds to wait for a job. 
+If this time passed and no job was available, a 
+`Disque\Queue\JobNotAvailableException` is thrown. For example if we want to
+wait for jobs, but do something else if after 1 second passed without jobs,
+and then keep waiting for jobs, we would do:
+
+```php
+while (true) {
+    try {
+        $job = $queue->pull(1000);
+    } catch (\Disque\Queue\JobNotAvailableException $e) {
+        // Do something else while waiting!
+        echo "Still waiting...\n";
+        continue;
+    }
+
+    echo "GOT JOB!\n";
+    var_dump($job->getBody());
+}
+```
+
+Make sure to always acknowledge a job once you are done with it.
+
+#### Acknowledging jobs
+
+Once you have processed a job succesfully, you will need to acknowledge it, to
+avoid Disque from putting it back on the queue 
+([details from Disque itself](https://github.com/antirez/disque#give-me-the-details)).
+
+You do so via the `processed()` method, like so:
+
+```php
+$queue->processed($job);
+```
+
+## Client API
 
 Currently all Disque commands are implemented, and can be executed via the
 `Disque\Client` class. Once you have established a connection, you can run
@@ -191,7 +320,7 @@ but you can specify whatever string you want.
     job is not acknowledged, the job is put again into the queue for delivery.
     See [Disque's API](https://github.com/antirez/disque#api).
   * `ttl`: an `int`, which is the maximum job life in seconds.
-  * `maxlen`: an `int`, to specify that if there are alreayd these many
+  * `maxlen`: an `int`, to specify that if there are already these many
     jobs queued in the given queue, then this new job is refused.
   * `async`: a `bool`, if `true`, tells the server to let the command return
     ASAP and replicate the job to the other nodes in background. See 
@@ -302,7 +431,7 @@ $jobCount = $client->fastAck('jobid1', 'jobid2');
 ### GETJOB
 
 Gets a job (or several jobs if the option `count` is used) from the specified 
-queue, and acknowledges the job (so it is no longer pending). Signature:
+queue. Signature:
 
 ```php
 getJob(string... $queues, array $options = []): array

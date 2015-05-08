@@ -19,6 +19,9 @@
         <testsuite name="Connection">
             <directory suffix="Test.php">tests/Connection</directory>
         </testsuite>
+        <testsuite name="Queue">
+            <directory suffix="Test.php">tests/Queue</directory>
+        </testsuite>
     </testsuites>
 
     <filter>

@@ -1,5 +1,5 @@
 <?php
-namespace Disque\Exception;
+namespace Disque;
 
 use Exception;
 

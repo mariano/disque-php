@@ -5,7 +5,7 @@ use PHPUnit_Framework_TestCase;
 use Disque\Command\Hello;
 use Disque\Command\Response\ResponseInterface;
 use Disque\Command\Response\HelloResponse;
-use Disque\Exception\InvalidCommandResponseException;
+use Disque\Command\Response\InvalidResponseException;
 
 class HelloResponseTest extends PHPUnit_Framework_TestCase
 {
@@ -17,7 +17,7 @@ class HelloResponseTest extends PHPUnit_Framework_TestCase
 
     public function testInvalidBodyNotArrayString()
     {
-        $this->setExpectedException(InvalidCommandResponseException::class, 'Invalid command response. Command Disque\\Command\\Hello got: "test"');
+        $this->setExpectedException(InvalidResponseException::class, 'Invalid command response. Command Disque\\Command\\Hello got: "test"');
         $r = new HelloResponse();
         $r->setCommand(new Hello());
         $r->setBody('test');
@@ -25,7 +25,7 @@ class HelloResponseTest extends PHPUnit_Framework_TestCase
 
     public function testInvalidBodyNotArrayNumeric()
     {
-        $this->setExpectedException(InvalidCommandResponseException::class, 'Invalid command response. Command Disque\\Command\\Hello got: 128');
+        $this->setExpectedException(InvalidResponseException::class, 'Invalid command response. Command Disque\\Command\\Hello got: 128');
         $r = new HelloResponse();
         $r->setCommand(new Hello());
         $r->setBody(128);
@@ -33,7 +33,7 @@ class HelloResponseTest extends PHPUnit_Framework_TestCase
 
     public function testInvalidBodyNotEnoughElements()
     {
-        $this->setExpectedException(InvalidCommandResponseException::class, 'Invalid command response. Command Disque\\Command\\Hello got: ["test","stuff"]');
+        $this->setExpectedException(InvalidResponseException::class, 'Invalid command response. Command Disque\\Command\\Hello got: ["test","stuff"]');
         $r = new HelloResponse();
         $r->setCommand(new Hello());
         $r->setBody(['test','stuff']);
@@ -41,7 +41,7 @@ class HelloResponseTest extends PHPUnit_Framework_TestCase
 
     public function testInvalidBodyNotEnoughElementsInNode()
     {
-        $this->setExpectedException(InvalidCommandResponseException::class, 'Invalid command response. Command Disque\\Command\\Hello got: ["version","id",["id","host","port"]]');
+        $this->setExpectedException(InvalidResponseException::class, 'Invalid command response. Command Disque\\Command\\Hello got: ["version","id",["id","host","port"]]');
         $r = new HelloResponse();
         $r->setCommand(new Hello());
         $r->setBody(['version', 'id', ['id', 'host', 'port']]);
@@ -49,7 +49,7 @@ class HelloResponseTest extends PHPUnit_Framework_TestCase
 
     public function testInvalidBodyTooManyElementsInNode()
     {
-        $this->setExpectedException(InvalidCommandResponseException::class, 'Invalid command response. Command Disque\\Command\\Hello got: ["version","id",["id","host","port","version","stuff"]]');
+        $this->setExpectedException(InvalidResponseException::class, 'Invalid command response. Command Disque\\Command\\Hello got: ["version","id",["id","host","port","version","stuff"]]');
         $r = new HelloResponse();
         $r->setCommand(new Hello());
         $r->setBody(['version', 'id', ['id', 'host', 'port', 'version', 'stuff']]);

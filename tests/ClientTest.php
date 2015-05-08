@@ -8,9 +8,10 @@ use PHPUnit_Framework_TestCase;
 use Disque\Client;
 use Disque\Command;
 use Disque\Command\CommandInterface;
+use Disque\Command\InvalidCommandException;
 use Disque\Connection\ManagerInterface;
-use Disque\Connection\Exception\ConnectionException;
-use Disque\Exception\InvalidCommandException;
+use Disque\Connection\ConnectionException;
+use Disque\Queue\Queue;
 
 class MockClient extends Client
 {
@@ -160,7 +161,7 @@ class ClientTest extends PHPUnit_Framework_TestCase
         $this->assertSame(['test' => 'stuff'], $result);
     }
 
-    public function testConnectWithOptionsCallsManagerSetOptions()
+    public function testConnectWithOptionsCallsManager()
     {
         $manager = m::mock(ManagerInterface::class)
             ->shouldReceive('setOptions')
@@ -174,6 +175,22 @@ class ClientTest extends PHPUnit_Framework_TestCase
         $c->setConnectionManager($manager);
 
         $c->connect(['test' => 'stuff']);
+    }
+
+    public function testIsConnectedCallsManager()
+    {
+        $manager = m::mock(ManagerInterface::class)
+            ->shouldReceive('isConnected')
+            ->with()
+            ->andReturn(true)
+            ->once()
+            ->mock();
+
+        $c = new MockClient();
+        $c->setConnectionManager($manager);
+
+        $result = $c->isConnected();
+        $this->assertTrue($result);
     }
 
     public function testCallCommandCustom()
@@ -201,5 +218,32 @@ class ClientTest extends PHPUnit_Framework_TestCase
 
         $result = $c->MyCommand('id');
         $this->assertSame('PARSED_RESPONSE', $result);
+    }
+
+    public function testQueue()
+    {
+        $c = new Client();
+        $queue = $c->queue('queue');
+        $this->assertInstanceOf(Queue::class, $queue);
+    }
+
+    public function testQueueDifferent()
+    {
+        $c = new Client();
+        $queue = $c->queue('queue');
+        $this->assertInstanceOf(Queue::class, $queue);
+        $queue2 = $c->queue('queue2');
+        $this->assertInstanceOf(Queue::class, $queue);
+        $this->assertNotSame($queue, $queue2);
+    }
+
+    public function testQueueSame()
+    {
+        $c = new Client();
+        $queue = $c->queue('queue');
+        $this->assertInstanceOf(Queue::class, $queue);
+        $queue2 = $c->queue('queue');
+        $this->assertInstanceOf(Queue::class, $queue);
+        $this->assertSame($queue, $queue2);
     }
 }

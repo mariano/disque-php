@@ -1,8 +1,6 @@
 <?php
 namespace Disque\Command\Response;
 
-use Disque\Exception\InvalidCommandResponseException;
-
 abstract class BasicTypeResponse extends BaseResponse implements ResponseInterface
 {
     const TYPE_STRING = 0;
@@ -20,7 +18,7 @@ abstract class BasicTypeResponse extends BaseResponse implements ResponseInterfa
      *
      * @param mixed $body Response body
      * @return void
-     * @throws InvalidCommandResponseException
+     * @throws InvalidResponseException
      */
     public function setBody($body)
     {
@@ -34,7 +32,7 @@ abstract class BasicTypeResponse extends BaseResponse implements ResponseInterfa
                 break;
         }
         if ($error) {
-            throw new InvalidCommandResponseException($this->command, $body);
+            throw new InvalidResponseException($this->command, $body);
         }
         parent::setBody($body);
     }

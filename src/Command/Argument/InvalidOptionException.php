@@ -1,9 +1,9 @@
 <?php
-namespace Disque\Exception;
+namespace Disque\Command\Argument;
 
 use Disque\Command\CommandInterface;
 
-class InvalidCommandOptionException extends InvalidCommandArgumentException
+class InvalidOptionException extends InvalidCommandArgumentException
 {
     public function __construct(CommandInterface $command, array $options)
     {

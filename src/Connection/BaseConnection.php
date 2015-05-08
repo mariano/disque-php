@@ -1,8 +1,6 @@
 <?php
 namespace Disque\Connection;
 
-use Disque\Connection\Exception\ConnectionException;
-
 abstract class BaseConnection implements ConnectionInterface
 {
     /**

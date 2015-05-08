@@ -1,8 +1,6 @@
 <?php
 namespace Disque\Command\Argument;
 
-use Disque\Exception\InvalidCommandArgumentException;
-
 trait StringChecker
 {
     use ArrayChecker;

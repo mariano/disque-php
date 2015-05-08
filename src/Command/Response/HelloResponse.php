@@ -2,7 +2,6 @@
 namespace Disque\Command\Response;
 
 use Disque\Command\Argument\ArrayChecker;
-use Disque\Exception\InvalidCommandResponseException;
 
 class HelloResponse extends BaseResponse implements ResponseInterface
 {
@@ -13,16 +12,16 @@ class HelloResponse extends BaseResponse implements ResponseInterface
      *
      * @param mixed $body Response body
      * @return void
-     * @throws InvalidCommandResponseException
+     * @throws InvalidResponseException
      */
     public function setBody($body)
     {
         if (!$this->checkFixedArray($body, 3, true)) {
-            throw new InvalidCommandResponseException($this->command, $body);
+            throw new InvalidResponseException($this->command, $body);
         }
         foreach (array_slice($body, 2) as $node) {
             if (!$this->checkFixedArray($node, 4)) {
-                throw new InvalidCommandResponseException($this->command, $body);
+                throw new InvalidResponseException($this->command, $body);
             }
         }
         parent::setBody($body);
@@ -32,7 +31,6 @@ class HelloResponse extends BaseResponse implements ResponseInterface
      * Parse response
      *
      * @return array Parsed response
-     * @throws InvalidCommandResponseException
      */
     public function parse()
     {

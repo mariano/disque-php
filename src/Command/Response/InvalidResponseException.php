@@ -1,9 +1,10 @@
 <?php
-namespace Disque\Exception;
+namespace Disque\Command\Response;
 
 use Disque\Command\CommandInterface;
+use Disque\DisqueException;
 
-class InvalidCommandResponseException extends DisqueException
+class InvalidResponseException extends DisqueException
 {
     public function __construct(CommandInterface $command, $response)
     {
