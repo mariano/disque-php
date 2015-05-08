@@ -218,6 +218,7 @@ To get a job:
 ```php
 $job = $queue->pull();
 var_dump($job->getBody());
+$queue->processed($job);
 ```
 
 You can obviously process as many jobs as there are, or become queued:
@@ -226,6 +227,7 @@ You can obviously process as many jobs as there are, or become queued:
 while ($job = $queue->pull()) {
     echo "GOT JOB!\n";
     var_dump($job->getBody());
+    $queue->processed($job);
 }
 ```
 
@@ -249,6 +251,7 @@ while (true) {
 
     echo "GOT JOB!\n";
     var_dump($job->getBody());
+    $queue->processed($job);
 }
 ```
 
@@ -364,7 +367,7 @@ $jobCount = $client->delJob('jobid1', 'jobid2');
 Remove the given jobs from the queue. Signature:
 
 ```php
-dequeueJob(string... $ids): int
+dequeue(string... $ids): int
 ```
 
 Arguments:
@@ -378,7 +381,7 @@ Return value:
 Example call:
 
 ```php
-$jobCount = $client->dequeueJob('jobid1', 'jobid2');
+$jobCount = $client->dequeue('jobid1', 'jobid2');
 ```
 
 ### ENQUEUE
@@ -386,7 +389,7 @@ $jobCount = $client->dequeueJob('jobid1', 'jobid2');
 Queue the given jobs, if not already queued. Signature:
 
 ```php
-enqueueJob(string... $ids): int
+enqueue(string... $ids): int
 ```
 
 Arguments:
@@ -400,7 +403,7 @@ Return value:
 Example call:
 
 ```php
-$jobCount = $client->enqueueJob('jobid1', 'jobid2');
+$jobCount = $client->enqueue('jobid1', 'jobid2');
 ```
 
 ### FASTACK

@@ -1,8 +1,8 @@
 <?php
 namespace Disque\Queue;
 
-use InvalidArgumentException;
 use Disque\Client;
+use InvalidArgumentException;
 
 class Queue
 {
@@ -74,7 +74,7 @@ class Queue
      * specified, then wait only this much time for a job, otherwise throw a
      * `JobNotAvailableException`)
      *
-     * @param float $timeout If specified, wait these many seconds
+     * @param int $timeout If specified, wait these many seconds
      * @return Job
      * @throws JobNotAvailableException
      */

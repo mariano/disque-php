@@ -9,13 +9,13 @@ use Disque\Queue\Queue;
 use InvalidArgumentException;
 
 /**
- * @method int ackjob(string... $ids)
- * @method string addjob(array $job)
- * @method int deljob(string... $ids)
+ * @method int ackJob(string... $ids)
+ * @method string addJob(string $queue, string $payload, array $options = [])
+ * @method int delJob(string... $ids)
  * @method int dequeue(string... $ids)
  * @method int enqueue(string... $ids)
- * @method int fastack(string... $ids)
- * @method array getjob(string... $queues, array $options)
+ * @method int fastAck(string... $ids)
+ * @method array getJob(string... $queues, array $options = [)
  * @method array hello()
  * @method string info()
  * @method int qlen(string $queue)

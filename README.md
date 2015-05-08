@@ -12,6 +12,7 @@ distributed job queue. Features:
 
 * Support for both PHP (5.5+) and HHVM
 * No dependencies: Fast connection to Disque out-of-the-box
+* High level API to easily push jobs to a queue, and retrieve jobs from queues
 * Support for multi-node connection
 * Connect to Disque with the built-in connection, or reutilize your existing Redis client (such as [predis](https://github.com/nrk/predis))
 * Supporting all current Disque commands, and allows you to easily implement support for custom commands
