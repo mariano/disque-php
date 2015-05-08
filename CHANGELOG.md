@@ -44,6 +44,8 @@ a disque instance you can change it via:
 - Fixed issue where when a `timeout` was using when calling `getJob()`, and the
 call timed out because there were no jobs available, an non-array would be
 returned. No on that case it will return an empty array.
+- Fixed issue where if no options were provided to `addJob()`, yet all three
+parameters were specified, an `InvalidCommandArgumentException` was thrown.
 
 ## [1.0.0] - 2015-05-04
 

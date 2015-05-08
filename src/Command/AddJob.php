@@ -62,7 +62,7 @@ class AddJob extends BaseCommand implements CommandInterface
             throw new InvalidCommandArgumentException($this, $arguments);
         } elseif (!is_string($arguments[0]) || !is_string($arguments[1])) {
             throw new InvalidCommandArgumentException($this, $arguments);
-        } elseif ($count === 3 && (!isset($arguments[2]) || !is_array($arguments[2]) || empty($arguments[2]))) {
+        } elseif ($count === 3 && (!isset($arguments[2]) || !is_array($arguments[2]))) {
             throw new InvalidCommandArgumentException($this, $arguments);
         }
 

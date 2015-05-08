@@ -32,7 +32,7 @@ Now you are ready to start interacting with Disque. This library provides a
 **Queue API** for easy job pushing/pulling, and direct 
 access to all Disque commands via its **Client API**. If you are
 looking to get jobs into queues, and process them in a simple way, then the 
-[Queue API](#queue-api) is your best choice as it abstracts Disque internal
+[Queue API](#queue-api) is your best choice as it abstracts Disque's internal
 protocol. If you instead wish to do more advanced stuff with Disque, use the 
 [Client API](#client-api).
 
@@ -42,39 +42,102 @@ To simplify the most common tasks with Disque this package offers a higher level
 API to push jobs to Disque, and retrieve jobs from it.
 
 When using the Queue API you won't need to tell the client when to connect, 
-as it will do it automatically on a need-to basis. If however you want to 
-influence the way connections are established (such as by setting it to smartly 
-switch between nodes based on where the jobs come from), then go ahead and 
-[read the documentation on the connection](#connecting) from the Client API.
+as it will do it automatically as needed. If however you want to influence the 
+way connections are established (such as by setting it to smartly switch 
+between nodes based on where the jobs come from), then go ahead and 
+[read the documentation on connections](#connecting) from the Client API.
 
 ## Getting a queue
 
-You start by fetching a queue (which is actually an instance of 
-`Disque\Queue\Queue`) by name. No need to create / delete queues, Disque
-manages the queue lifecycle automatically.
+Before being able to push jobs into queues, or pull jobs from them, you will
+need to get a queue. You can fetch a queue by name. No need to create nor delete 
+queues, Disque manages the queue lifecycle automatically.
 
 ```php
 $queue = $disque->queue('emails');
 ```
 
 Once you have obtained the queue, you can either push jobs to it, or pull jobs
-from it. Either way jobs are instances of `Disque\Queue\Job`, which offers a
-convinient `setBody(array $body)` method to set the body of the job, and a
-`getBody(): array` method to get the body.
+from it. Jobs are instances of `Disque\Queue\JobInterface`, which offers the
+following methods (among others used by the Queue API):
+
+* `getBody(): mixed`: gets the body of the job.
+* `setBody(mixed $body)`: sets the body of the job.
+
+By default the Queue API uses an implementation (`Disque\Queue\Job`) that 
+forces job bodies to be arrays, and serializes the body to JSON when sending it
+to Disque.
 
 ### Changing the Job class
 
 If you want to change the class used to represent a job, you can specify the 
 new class implementation (which should implement `Disque\Queue\JobInterface`)
-via the queue's `setJobClass()` method, like so:
+via the queue's `setJobClass()` method.
+
+If you are comfortable with the job body being an array, and serialization on
+Disque being in JSON format, then you can easily extend the default job
+implementation, and add your logic on top of it:
 
 ```php
-class EmailJob implements \Disque\Queue\JobInterface
+class EmailJob extends \Disque\Queue\Job implements \Disque\Queue\JobInterface
 {
-    // ...
-}
+    private $email;
+    private $subject;
+    private $message;
 
+    public function __construct($email = null, $subject = null, $message = null)
+    {
+        parent::__construct(compact('email', 'subject', 'message'));
+    }
+
+    public function getBody()
+    {
+        return [
+            'email' => $this->email,
+            'subject' => $this->subject,
+            'message' => $this->message
+        ];
+    }
+
+    public function setBody($body)
+    {
+        if (!is_array($body)) {
+            throw new InvalidArgumentException("This doesn't look like an email!");
+        }
+
+        $this->email = $body['email'];
+        $this->subject = $body['subject'];
+        $this->message = $body['message'];
+    }
+
+    public function send()
+    {
+        echo "SEND EMAIL TO {$this->email}:\n";
+        echo $this->subject . "\n\n";
+        echo $this->message;
+    }
+}
+```
+
+You can now push your email jobs to a queue:
+
+```php
+$queue = $disque->queue('emails');
 $queue->setJobClass(EmailJob::class);
+$queue->push(new EmailJob('john@example.com', 'Hello world!', 'Hello from Disque :)'));
+```
+
+When pulling jobs from the queue, you can take advantage of your custom job
+implementation:
+
+```php
+$queue = $disque->queue('emails');
+$queue->setJobClass(EmailJob::class);
+
+while ($job = $queue->pull()) {
+    $job->send();
+    $queue->processed($job);
+}
 ```
 
 ## Pushing jobs to the queue

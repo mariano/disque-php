@@ -86,13 +86,6 @@ class AddJobTest extends PHPUnit_Framework_TestCase
         $c->setArguments(['test', 'stuff', 'more']);
     }
 
-    public function testBuildInvalidArguments2EmptyArray()
-    {
-        $this->setExpectedException(InvalidCommandArgumentException::class, 'Invalid command arguments. Arguments for command Disque\\Command\\AddJob: ["test","stuff",[]]');
-        $c = new AddJob();
-        $c->setArguments(['test', 'stuff', []]);
-    }
-
     public function testBuildInvalidOption()
     {
         $this->setExpectedException(InvalidOptionException::class, 'Invalid command options. Options for command Disque\\Command\\AddJob: {"test":"stuff"}');
@@ -195,6 +188,14 @@ class AddJobTest extends PHPUnit_Framework_TestCase
     {
         $c = new AddJob();
         $c->setArguments(['queue', 'job']);
+        $result = $c->getArguments();
+        $this->assertSame(['queue', 'job', 0], $result);
+    }
+
+    public function testBuildEmptyOptions()
+    {
+        $c = new AddJob();
+        $c->setArguments(['queue', 'job', []]);
         $result = $c->getArguments();
         $this->assertSame(['queue', 'job', 0], $result);
     }
