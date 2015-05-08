@@ -8,13 +8,13 @@ $ composer require mariano/disque-php --no-dev
 
 If you want to run its tests remove the `--no-dev` argument.
 
-# Connecting
+# Creating the client
 
 First you will need to create an instance of `Disque\Client`, specifying a list
 of hosts and ports where different Disque nodes are installed:
 
 ```php
-$client = new Disque\Client([
+$client = new \Disque\Client([
     '127.0.0.1:7711',
     '127.0.0.1:7712'
 ]);
@@ -28,118 +28,24 @@ $client = new Client();
 $client->addServer('127.0.0.1', 7712);
 ```
 
-At this point no connection is yet established. You force the connection via 
-the `connect()` method. As recommended by Disque, the connection is done 
-as follows:
-
-* The list of hosts is used to pick a random server.
-* A connection is attempted against the picked server. If it fails, another
-random node is tried.
-* If a connection is successfull, the `HELLO` command is issued against this
-server. If this fails, another random node is tried.
-* If no connection is established and there are no servers left, a
-`Disque\Connection\ConnectionException` is thrown.
-
-Example call:
-
-```php
-$result = $client->connect();
-var_dump($result);
-```
-
-The above `connect()` call will return an output similar to the following:
-
-```
-[
-    'version' => 1,
-    'id' => "7eff078744b72d24d9ab71db1fb600c48cf7ec2f",
-    'nodes' => [
-        [
-            'id' => "7eff078744b72d24d9ab71db1fb600c48cf7ec2f",
-            'host' => "127.0.0.1",
-            'port' => "7711",
-            'version' => "1"
-        ],
-        [
-            'id' => "d8f6333f5386bae67a216e0365ea09323eadc127",
-            'host' => "127.0.0.1",
-            'port' => "7712",
-            'version' => "1"
-        ],
-    ]
-]
-```
-
-## Using another connector
-
-By default disque-php does not require any other packages or libraries. It has
-its own connector to Disque, that is fast and focused. If you wish to instead
-use another connector to handle the connection with Disque, you can specify
-so via the `setConnectionImplementation()` method. For example, if you wish
-to use [predis](https://github.com/nrk/predis) (maybe because you are already
-using its PHP extension), you would first add predis to your Composer
-requirements:
-
-```bash
-$ composer require predis/predis --no-dev
-```
-
-And then configure the connection implementation class:
-
-```php
-$client->getConnectionManager()->setConnectionClass(\Disque\Connection\Predis::class);
-```
-
-## Smart node connection based on jobs being fetched
-
-[Disque](https://github.com/antirez/disque#client-libraries) suggests that if a
-consumer sees a high message rate received from a specific node, then clients
-should connect to that node directly to reduce the number of messages between
-nodes.
-
-To achieve this, disquephp connection manager has a method that allows you to
-specify how many jobs are required to be produced by a specific node before
-we automatically switch connection to that node.
-
-For example if we do:
-
-```php
-$disque = new \Disque\Client([
-    '127.0.0.1:7711',
-    '127.0.0.2:7712'
-]);
-$disque->connect();
-```
-
-We are currently connected to one of these nodes (no guarantee as to which one
-since nodes are selected randomly.) Say that we are connected to the node at
-port `7711`. By default no automatic connection change will take place, so we
-will always be connected to the selected node. Say that we want to switch to
-a node the moment a specific node produces at least 3 jobs. We first set this
-option via the manager:
-
-```php
-$disque->getManager()->setMinimumJobsToChangeNode(3);
-```
-
-Now we process jobs as we normally do:
-
-```php
-while ($job = $disque->getJob()) {
-    echo 'DO SOMETHING!';
-    var_dump($job['body']);
-    $disque->ackJob($job['id']);
-}
-```
-
-If a specific node produces at least 3 jobs, the connection will automatically
-switch to the node producing these many jobs. This is all done behind the
-scenes, automatically.
+Now you are ready to start interacting with Disque. This library provides a 
+**Queue API** for easy job pushing/pulling, and direct 
+access to all Disque commands via its **Client API**. If you are
+looking to get jobs into queues, and process them in a simple way, then the 
+[Queue API](#queue-api) is your best choice as it abstracts Disque internal
+protocol. If you instead wish to do more advanced stuff with Disque, use the 
+[Client API](#client-api).
 
 # Queue API
 
 To simplify the most common tasks with Disque this package offers a higher level
 API to push jobs to Disque, and retrieve jobs from it.
+
+When using the Queue API you won't need to tell the client when to connect, 
+as it will do it automatically on a need-to basis. If however you want to 
+influence the way connections are established (such as by setting it to smartly 
+switch between nodes based on where the jobs come from), then go ahead and 
+[read the documentation on the connection](#connecting) from the Client API.
 
 ## Getting a queue
 
@@ -163,12 +69,12 @@ new class implementation (which should implement `Disque\Queue\JobInterface`)
 via the queue's `setJobClass()` method, like so:
 
 ```php
-class EmailJob extends \Disque\Queue\Job 
+class EmailJob implements \Disque\Queue\JobInterface
 {
     // ...
 }
 
-$queue->setJobClass(MyJobClass);
+$queue->setJobClass(EmailJob::class);
 ```
 
 ## Pushing jobs to the queue
@@ -181,24 +87,8 @@ $queue->push($job);
 ```
 
 You can specify different options that will affect how the job is placed on
-the queue through `push()` second, optional, argument `$options`. Available
-options are:
-
-* `timeout`: an `int`, which specifies the timeout in milliseconds for the
-    job. See [Disque's API](https://github.com/antirez/disque#api).
-* `replicate`: an`int`, to specify the number of nodes the job should be
-    replicated to.
-* `delay`: an `int`, to specify the number of seconds that should elapse 
-    before the job is queued by any server.
-* `retry`: an `int`, to specify the period (in seconds) after which, if the
-    job is not acknowledged, the job is put again into the queue for delivery.
-    See [Disque's API](https://github.com/antirez/disque#api).
-* `ttl`: an `int`, which is the maximum job life in seconds.
-* `maxlen`: an `int`, to specify that if there are already these many
-    jobs queued in the given queue, then this new job is refused.
-* `async`: a `bool`, if `true`, tells the server to let the command return
-    ASAP and replicate the job to the other nodes in background. See 
-    [Disque's API](https://github.com/antirez/disque#api).
+the queue through `push()` second, optional, argument `$options`. For available
+options see the documentation on [addJob](#addjob).
 
 For example to push a job to the queue but automatically remove it from the
 queue if after 1 minute it wasn't processed, we'd do:
@@ -269,13 +159,129 @@ You do so via the `processed()` method, like so:
 $queue->processed($job);
 ```
 
-## Client API
+# Client API
+
+## Connecting
+
+When using the Client API directly (that is, using the commands provided by
+`\Disque\Client`), you will have to connect manually.. You can connect via
+the `connect()` method. As recommended by Disque, the connection is done 
+as follows:
+
+* The list of hosts is used to pick a random server.
+* A connection is attempted against the picked server. If it fails, another
+random node is tried.
+* If a connection is successfull, the `HELLO` command is issued against this
+server. If this fails, another random node is tried.
+* If no connection is established and there are no servers left, a
+`Disque\Connection\ConnectionException` is thrown.
+
+Example call:
+
+```phpa
+$client = new \Disque\Client([
+    '127.0.0.1:7711',
+    '127.0.0.1:7712'
+]);
+$result = $client->connect();
+var_dump($result);
+```
+
+The above `connect()` call will return an output similar to the following:
+
+```
+[
+    'version' => 1,
+    'id' => "7eff078744b72d24d9ab71db1fb600c48cf7ec2f",
+    'nodes' => [
+        [
+            'id' => "7eff078744b72d24d9ab71db1fb600c48cf7ec2f",
+            'host' => "127.0.0.1",
+            'port' => "7711",
+            'version' => "1"
+        ],
+        [
+            'id' => "d8f6333f5386bae67a216e0365ea09323eadc127",
+            'host' => "127.0.0.1",
+            'port' => "7712",
+            'version' => "1"
+        ],
+    ]
+]
+```
+
+### Using another connector
+
+By default disque-php does not require any other packages or libraries. It has
+its own connector to Disque, that is fast and focused. If you wish to instead
+use another connector to handle the connection with Disque, you can specify
+so via the `setConnectionImplementation()` method. For example, if you wish
+to use [predis](https://github.com/nrk/predis) (maybe because you are already
+using its PHP extension), you would first add predis to your Composer
+requirements:
+
+```bash
+$ composer require predis/predis --no-dev
+```
+
+And then configure the connection implementation class:
+
+```php
+$client->getConnectionManager()->setConnectionClass(\Disque\Connection\Predis::class);
+```
+
+### Smart node connection based on jobs being fetched
+
+[Disque suggests](https://github.com/antirez/disque#client-libraries) that if a
+consumer sees a high message rate received from a specific node, then clients
+should connect to that node directly to reduce the number of messages between
+nodes.
+
+To achieve this, disquephp connection manager has a method that allows you to
+specify how many jobs are required to be produced by a specific node before
+we automatically switch connection to that node.
+
+For example if we do:
+
+```php
+$disque = new \Disque\Client([
+    '127.0.0.1:7711',
+    '127.0.0.2:7712'
+]);
+$disque->connect();
+```
+
+We are currently connected to one of these nodes (no guarantee as to which one
+since nodes are selected randomly.) Say that we are connected to the node at
+port `7711`. By default no automatic connection change will take place, so we
+will always be connected to the selected node. Say that we want to switch to
+a node the moment a specific node produces at least 3 jobs. We first set this
+option via the manager:
+
+```php
+$disque->getManager()->setMinimumJobsToChangeNode(3);
+```
+
+Now we process jobs as we normally do:
+
+```php
+while ($job = $disque->getJob()) {
+    echo 'DO SOMETHING!';
+    var_dump($job['body']);
+    $disque->ackJob($job['id']);
+}
+```
+
+If a specific node produces at least 3 jobs, the connection will automatically
+switch to the node producing these many jobs. This is all done behind the
+scenes, automatically.
+
 
 Currently all Disque commands are implemented, and can be executed via the
 `Disque\Client` class. Once you have established a connection, you can run
 any of the following commands.
 
-### ACKJOB
+## ackJob
 
 Acknowledges the execution of one or more jobs via job IDs. Signature:
 
@@ -297,7 +303,7 @@ Example call:
 $jobCount = $client->ackJob('jobid1', 'jobid2');
 ```
 
-### ADDJOB
+## addJob
 
 Adds a job to the specified queue. Signature:
 
@@ -340,7 +346,7 @@ $jobId = $client->addJob('queue', json_encode(['name' => 'Mariano']));
 var_dump($jobId);
 ```
 
-### DELJOB
+## delJob
 
 Completely delete a job from a specific node. Signature:
 
@@ -362,7 +368,7 @@ Example call:
 $jobCount = $client->delJob('jobid1', 'jobid2');
 ```
 
-### DEQUEUE
+## dequeue
 
 Remove the given jobs from the queue. Signature:
 
@@ -384,7 +390,7 @@ Example call:
 $jobCount = $client->dequeue('jobid1', 'jobid2');
 ```
 
-### ENQUEUE
+## enqueue
 
 Queue the given jobs, if not already queued. Signature:
 
@@ -406,7 +412,7 @@ Example call:
 $jobCount = $client->enqueue('jobid1', 'jobid2');
 ```
 
-### FASTACK
+## fastAck
 
 Acknowledges the execution of one or more jobs via job IDs, using a faster
 approach than `ACKJOB`. See [Disque's API](https://github.com/antirez/disque#api)
@@ -431,7 +437,7 @@ Example call:
 $jobCount = $client->fastAck('jobid1', 'jobid2');
 ```
 
-### GETJOB
+## getJob()
 
 Gets a job (or several jobs if the option `count` is used) from the specified 
 queue. Signature:
@@ -472,7 +478,7 @@ echo "ID: {$job['id']}\n";
 var_dump(json_decode($job['body'], true));
 ```
 
-### HELLO
+## hello
 
 Returns information from the connected node. You would normally not need to
 use this, as it is using during the connection handshake. Signature:
@@ -504,7 +510,7 @@ $hello = $client->hello();
 var_dump($hello);
 ```
 
-### INFO
+## info
 
 Get generic server information and statistics. You would normally not need to
 use this. Signature:
@@ -528,7 +534,7 @@ $info = $client->info();
 echo $info;
 ```
 
-### QLEN
+## qlen
 
 The length of the queue, that is, the number of jobs available in the given
 queue. Signature:
@@ -552,7 +558,7 @@ $count = $client->qlen('queue');
 var_dump($hello);
 ```
 
-### QPEEK
+## qpeek
 
 Gets the given number of jobs from the given queue without consuming them (so
 they will still be pending in the queue). Signature:
@@ -586,7 +592,7 @@ echo "ID: {$job['id']}\n";
 var_dump(json_decode($job['body'], true));
 ```
 
-### SHOW
+## show
 
 Get information about the given job. Signature:
 
@@ -610,4 +616,3 @@ Example call:
 $details = $client->show('jobid1');
 var_dump($details);
 ```
-

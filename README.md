@@ -68,25 +68,6 @@ while ($job = $queue->pull()) {
 For more information on the APIs provided, 
 [read the full documentation](docs/README.md)
 
-### Direct client access
-
-Queue jobs directly with the client:
-
-```php
-$payload = ['name' => 'Mariano'];
-$client->addJob('queue', json_encode($payload));
-```
-
-Get jobs using the client directly, and acknowledge them:
-
-```php
-foreach ($client->getJob('queue') as $job) {
-    $payload = json_decode($job['body'], true);
-    var_dump($payload);
-    $client->ackJob($job['id']);
-}
-```
-
 ## Testing
 
 ``` bash
