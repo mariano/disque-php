@@ -43,10 +43,9 @@ try {
 }
 ```
 
-You can use the Queue API, or the underlying Client when queueing / retrieving 
-jobs. For more details [read the full documentation](docs/README.md)
-
-### Queue API
+This library provides a [Queue API](docs/README.md#queue-api) for easy job 
+pushing/pulling, and direct access to all Disque commands via its 
+[Client API](docs/README.md#client-api).
 
 Queue jobs:
 
@@ -55,15 +54,19 @@ $queue = $disque->queue('my_queue');
 $queue->push(new \Disque\Queue\Job(['name' => 'Mariano']));
 ```
 
-Fetch job, and acknowledge it as processed:
+Fetch queued jobs, mark them as processed, and keep waiting on jobs:
 
 ```php
 $queue = $disque->queue('my_queue');
-
-$job = $queue->pull();
-var_dump($job->getBody());
-$queue->processed($job)
+while ($job = $queue->pull()) {
+    echo "GOT JOB!";
+    var_dump($job->getBody());
+    $queue->processed($job);
+}
 ```
+
+For more information on the APIs provided, 
+[read the full documentation](docs/README.md)
 
 ### Direct client access
 
@@ -106,18 +109,8 @@ instead of using the issue tracker.
 
 ## TODO
 
-- [x] HELLO
-- [x] INFO
-- [x] SHOW
-- [x] ADDJOB
-- [x] DELJOB
-- [x] GETJOB
-- [x] ACKJOB
-- [x] FASTACK
-- [x] ENQUEUE
-- [x] DEQUEUE
-- [x] QLEN
-- [x] QPEEK
+- [x] HELLO, INFO, SHOW, ADDJOB, DELJOB, GETJOB, ACKJOB, FASTACK
+- [x] ENQUEUE, DEQUEUE, QLEN, QPEEK
 - [x] Add support for several connections
 - [x] Implement direct protocol to Disque to avoid depending on Predis
 - [x] Turn Predis integration into a ConnectionInterface
