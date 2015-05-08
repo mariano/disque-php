@@ -85,9 +85,11 @@ class EmailJob extends \Disque\Queue\Job implements \Disque\Queue\JobInterface
     private $subject;
     private $message;
 
-    public function __construct($email = null, $subject = null, $message = null)
+    public static function getInstance($email, $subject, $message)
     {
-        parent::__construct(compact('email', 'subject', 'message'));
+        $job = new static();
+        $job->setBody(compact('email', 'subject', 'message'));
+        return $job;
     }
 
     public function getBody()
@@ -105,6 +107,7 @@ class EmailJob extends \Disque\Queue\Job implements \Disque\Queue\JobInterface
             throw new InvalidArgumentException("This doesn't look like an email!");
         }
 
+        $body += array_fill_keys(['email', 'subject', 'message'], null);
         $this->email = $body['email'];
         $this->subject = $body['subject'];
         $this->message = $body['message'];
@@ -124,7 +127,9 @@ You can now push your email jobs to a queue:
 ```php
 $queue = $disque->queue('emails');
 $queue->setJobClass(EmailJob::class);
-$queue->push(new EmailJob('john@example.com', 'Hello world!', 'Hello from Disque :)'));
+
+$job = EmailJob::getInstance('john@example.com', 'Hello world!', 'Hello from Disque :)');
+$queue->push($job);
 ```
 
 When pulling jobs from the queue, you can take advantage of your custom job
