@@ -66,7 +66,9 @@ following methods (among others used by the Queue API):
 
 By default the Queue API uses an implementation (`Disque\Queue\Job`) that 
 forces job bodies to be arrays, and serializes the body to JSON when sending it
-to Disque.
+to Disque. If you want to change the default job implementation used in a queue,
+you can do so as shown in the [Changing the Job class](#changing-the-job-class) 
+section.
 
 ## Pushing jobs to the queue
 
