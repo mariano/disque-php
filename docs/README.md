@@ -339,13 +339,9 @@ $client->getConnectionManager()->setConnectionClass(\Disque\Connection\Predis::c
 [Disque suggests](https://github.com/antirez/disque#client-libraries) that if a
 consumer sees a high message rate received from a specific node, then clients
 should connect to that node directly to reduce the number of messages between
-nodes.
-
-To achieve this, disquephp connection manager has a method that allows you to
+nodes. To achieve this, disquephp connection manager has a method that allows you to
 specify how many jobs are required to be produced by a specific node before
-we automatically switch connection to that node.
-
-For example if we do:
+we automatically switch connection to that node. For example if we do:
 
 ```php
 $disque = new \Disque\Client([
@@ -380,12 +376,13 @@ If a specific node produces at least 3 jobs, the connection will automatically
 switch to the node producing these many jobs. This is all done behind the
 scenes, automatically.
 
+## Commands
 
 Currently all Disque commands are implemented, and can be executed via the
 `Disque\Client` class. Once you have established a connection, you can run
 any of the following commands.
 
-## ackJob
+### ackJob
 
 Acknowledges the execution of one or more jobs via job IDs. Signature:
 
@@ -407,7 +404,7 @@ Example call:
 $jobCount = $client->ackJob('jobid1', 'jobid2');
 ```
 
-## addJob
+### addJob
 
 Adds a job to the specified queue. Signature:
 
@@ -450,7 +447,7 @@ $jobId = $client->addJob('queue', json_encode(['name' => 'Mariano']));
 var_dump($jobId);
 ```
 
-## delJob
+### delJob
 
 Completely delete a job from a specific node. Signature:
 
@@ -472,7 +469,7 @@ Example call:
 $jobCount = $client->delJob('jobid1', 'jobid2');
 ```
 
-## dequeue
+### dequeue
 
 Remove the given jobs from the queue. Signature:
 
@@ -494,7 +491,7 @@ Example call:
 $jobCount = $client->dequeue('jobid1', 'jobid2');
 ```
 
-## enqueue
+### enqueue
 
 Queue the given jobs, if not already queued. Signature:
 
@@ -516,7 +513,7 @@ Example call:
 $jobCount = $client->enqueue('jobid1', 'jobid2');
 ```
 
-## fastAck
+### fastAck
 
 Acknowledges the execution of one or more jobs via job IDs, using a faster
 approach than `ACKJOB`. See [Disque's API](https://github.com/antirez/disque#api)
@@ -541,7 +538,7 @@ Example call:
 $jobCount = $client->fastAck('jobid1', 'jobid2');
 ```
 
-## getJob()
+### getJob()
 
 Gets a job (or several jobs if the option `count` is used) from the specified 
 queue. Signature:
@@ -582,7 +579,7 @@ echo "ID: {$job['id']}\n";
 var_dump(json_decode($job['body'], true));
 ```
 
-## hello
+### hello
 
 Returns information from the connected node. You would normally not need to
 use this, as it is using during the connection handshake. Signature:
@@ -614,7 +611,7 @@ $hello = $client->hello();
 var_dump($hello);
 ```
 
-## info
+### info
 
 Get generic server information and statistics. You would normally not need to
 use this. Signature:
@@ -638,7 +635,7 @@ $info = $client->info();
 echo $info;
 ```
 
-## qlen
+### qlen
 
 The length of the queue, that is, the number of jobs available in the given
 queue. Signature:
@@ -662,7 +659,7 @@ $count = $client->qlen('queue');
 var_dump($hello);
 ```
 
-## qpeek
+### qpeek
 
 Gets the given number of jobs from the given queue without consuming them (so
 they will still be pending in the queue). Signature:
@@ -696,7 +693,7 @@ echo "ID: {$job['id']}\n";
 var_dump(json_decode($job['body'], true));
 ```
 
-## show
+### show
 
 Get information about the given job. Signature:
 
