@@ -59,7 +59,8 @@ $disque->queue('my_queue')->schedule($job, new \DateTime('+2 hours'));
 Fetch queued jobs, mark them as processed, and keep waiting on jobs:
 
 ```php
-while ($job = $disque->queue('my_queue')->pull()) {
+$queue = $disque->queue('my_queue');
+while ($job = $queue->pull()) {
     echo "GOT JOB!";
     var_dump($job->getBody());
     $queue->processed($job);
