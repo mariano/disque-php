@@ -538,7 +538,7 @@ Example call:
 $jobCount = $client->fastAck('jobid1', 'jobid2');
 ```
 
-### getJob()
+### getJob
 
 Gets a job (or several jobs if the option `count` is used) from the specified 
 queue. Signature:
