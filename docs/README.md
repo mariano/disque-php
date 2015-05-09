@@ -76,19 +76,18 @@ The simplest way to push a job to the queue is by using its `push()` method:
 
 ```php
 $job = new \Disque\Queue\Job(['name' => 'Mariano']);
-$queue->push($job);
+$disque->queue('my_queue')->push($job);
 ```
 
 You can specify different options that will affect how the job is placed on
 the queue through `push()` second, optional, argument `$options`. For available
-options see the documentation on [addJob](#addjob).
-
-For example to push a job to the queue but automatically remove it from the
-queue if after 1 minute it wasn't processed, we'd do:
+options see the documentation on [addJob](#addjob). For example to push a job 
+to the queue but automatically remove it from the queue if after 1 minute it 
+wasn't processed, we would do:
 
 ```php
 $job = new \Disque\Queue\Job(['description' => 'To be handled within the minute!']);
-$queue->push($job, ['ttl' => 60]);
+$disque->queue('my_queue')->push($job, ['ttl' => 60]);
 ```
 
 If you want to push a job to be processed at a specific time in the future,
@@ -97,19 +96,24 @@ check out the [Scheduling jobs](#scheduling-jobs) section.
 ## Pulling jobs from the queue
 
 You get jobs, one at a time, using the `pull()` method. If there are no jobs
-available, this call **will block** until a job is placed on the queue.
-
-To get a job:
+available, this call **will block** until a job is placed on the queue. To get 
+a job:
 
 ```php
+$queue = $disque->queue('my_queue');
 $job = $queue->pull();
 var_dump($job->getBody());
 $queue->processed($job);
 ```
 
-You can obviously process as many jobs as there are, or become queued:
+Make sure to always acknowledge a job once you are done processing it, as
+explained in the [Acknowledging jobs](#acknowledging-jobs) section.
+
+You can obviously process as many jobs as there are already, or become 
+available:
 
 ```php
+$queue = $disque->queue('my_queue');
 while ($job = $queue->pull()) {
     echo "GOT JOB!\n";
     var_dump($job->getBody());
@@ -117,8 +121,8 @@ while ($job = $queue->pull()) {
 }
 ```
 
-Since this is a blocking call, you may find yourself in the need to do something
-with the useless time while you are waiting for jobs. Fortunately `pull()` 
+The call to `pull()` is blocking, so you may find yourself in the need to do 
+something with the time you spend while waiting for jobs. Fortunately `pull()` 
 receives an optional argument: the number of milliseconds to wait for a job. 
 If this time passed and no job was available, a 
 `Disque\Queue\JobNotAvailableException` is thrown. For example if we want to
@@ -126,6 +130,7 @@ wait for jobs, but do something else if after 1 second passed without jobs,
 and then keep waiting for jobs, we would do:
 
 ```php
+$queue = $disque->queue('my_queue');
 while (true) {
     try {
         $job = $queue->pull(1000);
@@ -141,21 +146,17 @@ while (true) {
 }
 ```
 
-Make sure to always acknowledge a job once you are done with it.
-
 ## Scheduling jobs
 
 If you want to push jobs to the queue but don't have them ready for processing
 until a certain time, you can take advantage of the `schedule()` method. This
 method takes the job as its first argument, and a `DateTime` (which should be
-set to the future) for when it should be ready.
-
-For example to push a job and have it ready for processing in 15 seconds, you
-can do:
+set to the future) for when it should be ready. For example to push a job and 
+have it ready for processing in 15 seconds, we would do:
 
 ```php
 $job = new \Disque\Queue\Job(['name' => 'Mariano']);
-$queue->schedule($job, new \DateTime('+15 seconds'));
+$disque->queue('my_queue')->schedule($job, new \DateTime('+15 seconds'));
 ```
 
 While testing this feature, you can wait for jobs every second to see it working
@@ -164,7 +165,7 @@ as expected:
 ```php
 while (true) {
     try {
-        $job = $queue->pull(1000);
+        $job = $disque->queue('my_queue')->pull(1000);
     } catch (\Disque\Queue\JobNotAvailableException $e) {
         echo "[" . date('Y-m-d H:i:s') . "] Waiting...\n";
         continue;
@@ -180,22 +181,20 @@ while (true) {
 Once you have processed a job succesfully, you will need to acknowledge it, to
 avoid Disque from putting it back on the queue 
 ([details from Disque itself](https://github.com/antirez/disque#give-me-the-details)).
-
 You do so via the `processed()` method, like so:
 
 ```php
-$queue->processed($job);
+$disque->queue('my_queue')->processed($job);
 ```
 
 ## Changing the Job class
 
 If you want to change the class used to represent a job, you can specify the 
 new class implementation (which should implement `Disque\Queue\JobInterface`)
-via the queue's `setJobClass()` method.
-
-If you are comfortable with the job body being an array, and serialization on
-Disque being in JSON format, then you can easily extend the default job
-implementation, and add your logic on top of it:
+via the queue's `setJobClass()` method. If you are comfortable with the job 
+body being an array, and serialization on Disque being in JSON format, then you 
+can easily extend the default job implementation, and add your logic on top of 
+it:
 
 ```php
 class EmailJob extends \Disque\Queue\Job implements \Disque\Queue\JobInterface
@@ -283,7 +282,7 @@ server. If this fails, another random node is tried.
 
 Example call:
 
-```phpa
+```php
 $client = new \Disque\Client([
     '127.0.0.1:7711',
     '127.0.0.1:7712'
@@ -294,7 +293,7 @@ var_dump($result);
 
 The above `connect()` call will return an output similar to the following:
 
-```
+```php
 [
     'version' => 1,
     'id' => "7eff078744b72d24d9ab71db1fb600c48cf7ec2f",
