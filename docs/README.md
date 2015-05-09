@@ -68,83 +68,6 @@ By default the Queue API uses an implementation (`Disque\Queue\Job`) that
 forces job bodies to be arrays, and serializes the body to JSON when sending it
 to Disque.
 
-### Changing the Job class
-
-If you want to change the class used to represent a job, you can specify the 
-new class implementation (which should implement `Disque\Queue\JobInterface`)
-via the queue's `setJobClass()` method.
-
-If you are comfortable with the job body being an array, and serialization on
-Disque being in JSON format, then you can easily extend the default job
-implementation, and add your logic on top of it:
-
-```php
-class EmailJob extends \Disque\Queue\Job implements \Disque\Queue\JobInterface
-{
-    private $email;
-    private $subject;
-    private $message;
-
-    public static function getInstance($email, $subject, $message)
-    {
-        $job = new static();
-        $job->setBody(compact('email', 'subject', 'message'));
-        return $job;
-    }
-
-    public function getBody()
-    {
-        return [
-            'email' => $this->email,
-            'subject' => $this->subject,
-            'message' => $this->message
-        ];
-    }
-
-    public function setBody($body)
-    {
-        if (!is_array($body)) {
-            throw new InvalidArgumentException("This doesn't look like an email!");
-        }
-
-        $body += array_fill_keys(['email', 'subject', 'message'], null);
-        $this->email = $body['email'];
-        $this->subject = $body['subject'];
-        $this->message = $body['message'];
-    }
-
-    public function send()
-    {
-        echo "SEND EMAIL TO {$this->email}:\n";
-        echo $this->subject . "\n\n";
-        echo $this->message;
-    }
-}
-```
-
-You can now push your email jobs to a queue:
-
-```php
-$queue = $disque->queue('emails');
-$queue->setJobClass(EmailJob::class);
-
-$job = EmailJob::getInstance('john@example.com', 'Hello world!', 'Hello from Disque :)');
-$queue->push($job);
-```
-
-When pulling jobs from the queue, you can take advantage of your custom job
-implementation:
-
-```php
-$queue = $disque->queue('emails');
-$queue->setJobClass(EmailJob::class);
-
-while ($job = $queue->pull()) {
-    $job->send();
-    $queue->processed($job);
-}
-```
-
 ## Pushing jobs to the queue
 
 The simplest way to push a job to the queue is by using its `push()` method:
@@ -250,7 +173,7 @@ while (true) {
 }
 ```
 
-#### Acknowledging jobs
+## Acknowledging jobs
 
 Once you have processed a job succesfully, you will need to acknowledge it, to
 avoid Disque from putting it back on the queue 
@@ -260,6 +183,83 @@ You do so via the `processed()` method, like so:
 
 ```php
 $queue->processed($job);
+```
+
+## Changing the Job class
+
+If you want to change the class used to represent a job, you can specify the 
+new class implementation (which should implement `Disque\Queue\JobInterface`)
+via the queue's `setJobClass()` method.
+
+If you are comfortable with the job body being an array, and serialization on
+Disque being in JSON format, then you can easily extend the default job
+implementation, and add your logic on top of it:
+
+```php
+class EmailJob extends \Disque\Queue\Job implements \Disque\Queue\JobInterface
+{
+    private $email;
+    private $subject;
+    private $message;
+
+    public static function getInstance($email, $subject, $message)
+    {
+        $job = new static();
+        $job->setBody(compact('email', 'subject', 'message'));
+        return $job;
+    }
+
+    public function getBody()
+    {
+        return [
+            'email' => $this->email,
+            'subject' => $this->subject,
+            'message' => $this->message
+        ];
+    }
+
+    public function setBody($body)
+    {
+        if (!is_array($body)) {
+            throw new InvalidArgumentException("This doesn't look like an email!");
+        }
+
+        $body += array_fill_keys(['email', 'subject', 'message'], null);
+        $this->email = $body['email'];
+        $this->subject = $body['subject'];
+        $this->message = $body['message'];
+    }
+
+    public function send()
+    {
+        echo "SEND EMAIL TO {$this->email}:\n";
+        echo $this->subject . "\n\n";
+        echo $this->message;
+    }
+}
+```
+
+You can now push your email jobs to a queue:
+
+```php
+$queue = $disque->queue('emails');
+$queue->setJobClass(EmailJob::class);
+
+$job = EmailJob::getInstance('john@example.com', 'Hello world!', 'Hello from Disque :)');
+$queue->push($job);
+```
+
+When pulling jobs from the queue, you can take advantage of your custom job
+implementation:
+
+```php
+$queue = $disque->queue('emails');
+$queue->setJobClass(EmailJob::class);
+
+while ($job = $queue->pull()) {
+    $job->send();
+    $queue->processed($job);
+}
 ```
 
 # Client API
