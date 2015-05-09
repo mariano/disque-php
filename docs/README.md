@@ -64,11 +64,10 @@ methods (among others used by the Queue API):
 * `getBody(): array`: gets the body of the job.
 * `setBody(array $body)`: sets the body of the job.
 
-By default the Queue API uses an implementation (`Disque\Queue\Job`) that 
-forces job bodies to be arrays, and serializes the body to JSON when sending it
-to Disque. If you want to change the default job implementation used in a queue,
-you can do so as shown in the [Changing the Job class](#changing-the-job-class) 
-section.
+These methods show that by default job bodies are arrays, and they get 
+serialized into JSON when sending them to Disque. If you want to change the 
+default job implementation used in a queue, you can do so as shown in the 
+[Changing the Job class](#changing-the-job-class) section.
 
 ## Pushing jobs to the queue
 
@@ -80,7 +79,7 @@ $disque->queue('my_queue')->push($job);
 ```
 
 You can specify different options that will affect how the job is placed on
-the queue through `push()` second, optional, argument `$options`. For available
+the queue through its second, optional, argument `$options`. For available
 options see the documentation on [addJob](#addjob). For example to push a job 
 to the queue but automatically remove it from the queue if after 1 minute it 
 wasn't processed, we would do:
@@ -126,8 +125,8 @@ something with the time you spend while waiting for jobs. Fortunately `pull()`
 receives an optional argument: the number of milliseconds to wait for a job. 
 If this time passed and no job was available, a 
 `Disque\Queue\JobNotAvailableException` is thrown. For example if we want to
-wait for jobs, but do something else if after 1 second passed without jobs,
-and then keep waiting for jobs, we would do:
+wait for jobs, but do something else if after 1 second passed without jobs
+becoming available, and then keep waiting for jobs, we would do:
 
 ```php
 $queue = $disque->queue('my_queue');
@@ -201,6 +200,13 @@ class EmailJob implements \Disque\Queue\JobInterface
     private $subject;
     private $message;
 
+    public function __construct($email, $subject, $message)
+    {
+        $this->email = $email;
+        $this->subject = $subject;
+        $this->message = $message ?: 'No message';
+    }
+
     public static function load($source)
     {
         $body = @json_decode($source, true);
@@ -211,15 +217,7 @@ class EmailJob implements \Disque\Queue\JobInterface
         }
 
         $body += ['message' => null];
-        $job = new static($body['email'], $body['subject'], $body['message']);
-        return $job;
-    }
-
-    public function __construct($email, $subject, $message)
-    {
-        $this->email = $email;
-        $this->subject = $subject;
-        $this->message = $message ?: 'No message';
+        return new static($body['email'], $body['subject'], $body['message']);
     }
 
     public function dump()
@@ -256,7 +254,7 @@ You can now push your email jobs to a queue:
 $queue = $disque->queue('emails');
 $queue->setJobClass(EmailJob::class);
 
-$job = new EmailJob('jane@example.com', 'Hello world!', 'Hello from Disque :)');
+$job = new EmailJob('claudia@example.com', 'Hello world!', 'Hello from Disque :)');
 $queue->push($job);
 echo "JOB #{$job->getId()} pushed!\n";
 ```
