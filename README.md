@@ -29,36 +29,37 @@ If you want to run its tests remove the `--no-dev` argument.
 
 ## Usage
 
-Connect:
-
-```php
-$client = \Disque\Client([
-    '127.0.0.1:7111',
-    '127.0.0.2:7112'
-]);
-try {
-    $client->connect();
-} catch (\Disque\Connection\ConnectionException $e) {
-    die($e->getMessage());
-}
-```
-
 This library provides a [Queue API](docs/README.md#queue-api) for easy job 
 pushing/pulling, and direct access to all Disque commands via its 
 [Client API](docs/README.md#client-api).
 
-Queue jobs:
+Create the client:
 
 ```php
-$queue = $disque->queue('my_queue');
-$queue->push(new \Disque\Queue\Job(['name' => 'Mariano']));
+$disque = new \Disque\Client([
+    '127.0.0.1:7111',
+    '127.0.0.2:7112'
+]);
+```
+
+Queue a job:
+
+```php
+$job = new \Disque\Queue\Job(['name' => 'Claudia']);
+$disque->queue('my_queue')->push($job);
+```
+
+Schedule job to be processed at a certain time:
+
+```php
+$job = new \Disque\Queue\Job(['name' => 'Mariano']);
+$disque->queue('my_queue')->schedule($job, new \DateTime('+2 hours'));
 ```
 
 Fetch queued jobs, mark them as processed, and keep waiting on jobs:
 
 ```php
-$queue = $disque->queue('my_queue');
-while ($job = $queue->pull()) {
+while ($job = $disque->queue('my_queue')->pull()) {
     echo "GOT JOB!";
     var_dump($job->getBody());
     $queue->processed($job);
@@ -98,7 +99,7 @@ instead of using the issue tracker.
 - [x] Allow user to specify their own ConnectionInterface implementation
 - [x] Allow GETJOB to influence what node the Client should be connected to
 - [x] Higher level API for queueing and retrieving jobs
-- [ ] Method in `Queue` to schedule future jobs based on DateTime
+- [x] Method in `Queue` to schedule future jobs based on DateTime
 - [ ] `QSTAT`, `SCAN` when they are implemented upstream
 
 ## Acknowledgments

@@ -2,6 +2,7 @@
 namespace Disque\Test\Queue;
 
 use DateTime;
+use DateTimeZone;
 use Disque\Client;
 use Disque\Queue\Job;
 use Disque\Queue\JobInterface;
@@ -311,5 +312,57 @@ class QueueTest extends PHPUnit_Framework_TestCase
         $this->setExpectedException(JobNotAvailableException::class);
 
         $q->pull(3000);
+    }
+
+    public function testScheduleInvalidDateInPast()
+    {
+        $this->setExpectedException(InvalidArgumentException::class, 'Specified schedule time has passed');
+        $date = new DateTime('-10 seconds');
+        $q = new Queue(m::mock(Client::class), 'queue');
+        $q->schedule(new Job(), $date);
+    }
+
+    public function testScheduleDefaultTimeZone()
+    {
+        $job = new Job();
+        $queue = m::mock(Queue::class.'[push]', [m::mock(Client::class), 'queue'])
+            ->shouldReceive('push')
+            ->with($job, ['delay' => 10])
+            ->andReturn($job)
+            ->once()
+            ->mock();
+
+        $result = $queue->schedule($job, new DateTime('+10 seconds', new DateTimeZone(Queue::DEFAULT_JOB_TIMEZONE)));
+        $this->assertSame($job, $result);
+    }
+
+    public function testScheduleDifferentTimeZone()
+    {
+        $job = new Job();
+        $queue = m::mock(Queue::class.'[push]', [m::mock(Client::class), 'queue'])
+            ->shouldReceive('push')
+            ->with($job, ['delay' => 10])
+            ->andReturn($job)
+            ->once()
+            ->mock();
+
+        $timeZone = new DateTimeZone('America/Argentina/Buenos_Aires');
+        $this->assertNotSame(Queue::DEFAULT_JOB_TIMEZONE, $timeZone->getName());
+        $result = $queue->schedule($job, new DateTime('+10 seconds', $timeZone));
+        $this->assertSame($job, $result);
+    }
+
+    public function testScheduleWayInTheFuture()
+    {
+        $job = new Job();
+        $queue = m::mock(Queue::class.'[push]', [m::mock(Client::class), 'queue'])
+            ->shouldReceive('push')
+            ->with($job, ['delay' => (25 * 24 * 60 * 60)])
+            ->andReturn($job)
+            ->once()
+            ->mock();
+
+        $result = $queue->schedule($job, new DateTime('+25 days', new DateTimeZone(Queue::DEFAULT_JOB_TIMEZONE)));
+        $this->assertSame($job, $result);
     }
 }

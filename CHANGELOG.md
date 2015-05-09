@@ -17,6 +17,8 @@ itself).
 level API that simplifies queueing and fetching jobs
 - Added method `queue()` to `Disque\Client` to create / fetch a queue which
 is an instance of `Disque\Queue\Queue`
+- Added `schedule()` method to `Disque\Queue` that allows to easily schedule
+jobs to be processed at a certain time.
 
 ### Changed
 - `Disque\Connection\Connection` is now named `Disque\Connection\Socket`.

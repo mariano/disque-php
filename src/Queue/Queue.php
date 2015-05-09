@@ -1,11 +1,15 @@
 <?php
 namespace Disque\Queue;
 
+use DateTime;
+use DateTimeZone;
 use Disque\Client;
 use InvalidArgumentException;
 
 class Queue
 {
+    const DEFAULT_JOB_TIMEZONE = 'UTC';
+
     /**
      * Client
      *
@@ -26,6 +30,13 @@ class Queue
      * @var string
      */
     private $jobClass;
+
+    /**
+     * Default time zone
+     *
+     * @var DateTimeZone
+     */
+    private $timeZone;
 
     /**
      * Create a queue
@@ -52,6 +63,33 @@ class Queue
             throw new InvalidArgumentException("Class {$class} does not implement JobInterface");
         }
         $this->jobClass = $class;
+    }
+
+    /**
+     * Pushes a job into the queue, setting it to be up for processing only at
+     * the specific date & time.
+     *
+     * @param JobInterface $job Job
+     * @param DateTime $when Date & time on when job should be ready for processing
+     * @return JobInterface Job pushed
+     * @throws InvalidArgumentException
+     */
+    public function schedule(JobInterface $job, DateTime $when)
+    {
+        if (!isset($this->timeZone)) {
+            $this->timeZone = new DateTimeZone(self::DEFAULT_JOB_TIMEZONE);
+        }
+
+        $date = clone($when);
+        $date->setTimeZone($this->timeZone);
+        $now = new DateTime('now', $this->timeZone);
+        if ($date < $now) {
+            throw new InvalidArgumentException('Specified schedule time has passed');
+        }
+
+        return $this->push($job, [
+            'delay' => ($date->getTimestamp() - $now->getTimestamp())
+        ]);
     }
 
     /**

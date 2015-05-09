@@ -24,7 +24,7 @@ If no host is specified, `127.0.0.1:7711` is assumed. Hosts can also be added
 via the `addServer($host, $port)` method:
 
 ```php
-$client = new Client();
+$client = new \Disque\Client();
 $client->addServer('127.0.0.1', 7712);
 ```
 
@@ -150,7 +150,7 @@ while ($job = $queue->pull()) {
 The simplest way to push a job to the queue is by using its `push()` method:
 
 ```php
-$job = new Job(['name' => 'Mariano']);
+$job = new \Disque\Queue\Job(['name' => 'Mariano']);
 $queue->push($job);
 ```
 
@@ -162,9 +162,12 @@ For example to push a job to the queue but automatically remove it from the
 queue if after 1 minute it wasn't processed, we'd do:
 
 ```php
-$job = new Job(['description' => 'To be handled within the minute!']);
+$job = new \Disque\Queue\Job(['description' => 'To be handled within the minute!']);
 $queue->push($job, ['ttl' => 60]);
 ```
+
+If you want to push a job to be processed at a specific time in the future,
+check out the [Scheduling jobs](#scheduling-jobs) section.
 
 ## Pulling jobs from the queue
 
@@ -214,6 +217,38 @@ while (true) {
 ```
 
 Make sure to always acknowledge a job once you are done with it.
+
+## Scheduling jobs
+
+If you want to push jobs to the queue but don't have them ready for processing
+until a certain time, you can take advantage of the `schedule()` method. This
+method takes the job as its first argument, and a `DateTime` (which should be
+set to the future) for when it should be ready.
+
+For example to push a job and have it ready for processing in 15 seconds, you
+can do:
+
+```php
+$job = new \Disque\Queue\Job(['name' => 'Mariano']);
+$queue->schedule($job, new \DateTime('+15 seconds'));
+```
+
+While testing this feature, you can wait for jobs every second to see it working
+as expected:
+
+```php
+while (true) {
+    try {
+        $job = $queue->pull(1000);
+    } catch (\Disque\Queue\JobNotAvailableException $e) {
+        echo "[" . date('Y-m-d H:i:s') . "] Waiting...\n";
+        continue;
+    }
+
+    echo "[" . date('Y-m-d H:i:s') . "] GOT JOB!";
+    var_dump($job->getBody());
+}
+```
 
 #### Acknowledging jobs
 
