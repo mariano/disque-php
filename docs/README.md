@@ -58,11 +58,11 @@ $queue = $disque->queue('emails');
 ```
 
 Once you have obtained the queue, you can either push jobs to it, or pull jobs
-from it. Jobs are instances of `Disque\Queue\JobInterface`, which offers the
-following methods (among others used by the Queue API):
+from it. Jobs are instances of `Disque\Queue\Job`, which offers the following 
+methods (among others used by the Queue API):
 
-* `getBody(): mixed`: gets the body of the job.
-* `setBody(mixed $body)`: sets the body of the job.
+* `getBody(): array`: gets the body of the job.
+* `setBody(array $body)`: sets the body of the job.
 
 By default the Queue API uses an implementation (`Disque\Queue\Job`) that 
 forces job bodies to be arrays, and serializes the body to JSON when sending it
@@ -109,7 +109,7 @@ $queue->processed($job);
 Make sure to always acknowledge a job once you are done processing it, as
 explained in the [Acknowledging jobs](#acknowledging-jobs) section.
 
-You can obviously process as many jobs as there are already, or become 
+You can obviously process as many jobs as there are already, and as they become
 available:
 
 ```php
@@ -191,44 +191,54 @@ $disque->queue('my_queue')->processed($job);
 
 If you want to change the class used to represent a job, you can specify the 
 new class implementation (which should implement `Disque\Queue\JobInterface`)
-via the queue's `setJobClass()` method. If you are comfortable with the job 
-body being an array, and serialization on Disque being in JSON format, then you 
-can easily extend the default job implementation, and add your logic on top of 
-it:
+via the queue's `setJobClass()` method. For example:
 
 ```php
-class EmailJob extends \Disque\Queue\Job implements \Disque\Queue\JobInterface
+class EmailJob implements \Disque\Queue\JobInterface
 {
+    private $id;
     private $email;
     private $subject;
     private $message;
 
-    public static function getInstance($email, $subject, $message)
+    public static function load($source)
     {
-        $job = new static();
-        $job->setBody(compact('email', 'subject', 'message'));
+        $body = @json_decode($source, true);
+        if (is_null($body)) {
+            throw new \Disque\Queue\MarshalException("Could not deserialize {$source}");
+        } elseif (!is_array($body) || empty($body['email']) || empty($body['subject'])) {
+            throw new \Disque\Queue\MarshalException("This doesn't look like an email");
+        }
+
+        $body += ['message' => null];
+        $job = new static($body['email'], $body['subject'], $body['message']);
         return $job;
     }
 
-    public function getBody()
+    public function __construct($email, $subject, $message)
     {
-        return [
+        $this->email = $email;
+        $this->subject = $subject;
+        $this->message = $message ?: 'No message';
+    }
+
+    public function dump()
+    {
+        return json_encode([
             'email' => $this->email,
             'subject' => $this->subject,
             'message' => $this->message
-        ];
+        ]);
     }
 
-    public function setBody($body)
+    public function getId()
     {
-        if (!is_array($body)) {
-            throw new InvalidArgumentException("This doesn't look like an email!");
-        }
+        return $this->id;
+    }
 
-        $body += array_fill_keys(['email', 'subject', 'message'], null);
-        $this->email = $body['email'];
-        $this->subject = $body['subject'];
-        $this->message = $body['message'];
+    public function setId($id)
+    {
+        $this->id = $id;
     }
 
     public function send()
@@ -246,8 +256,9 @@ You can now push your email jobs to a queue:
 $queue = $disque->queue('emails');
 $queue->setJobClass(EmailJob::class);
 
-$job = EmailJob::getInstance('john@example.com', 'Hello world!', 'Hello from Disque :)');
+$job = new EmailJob('jane@example.com', 'Hello world!', 'Hello from Disque :)');
 $queue->push($job);
+echo "JOB #{$job->getId()} pushed!\n";
 ```
 
 When pulling jobs from the queue, you can take advantage of your custom job
@@ -258,6 +269,7 @@ $queue = $disque->queue('emails');
 $queue->setJobClass(EmailJob::class);
 
 while ($job = $queue->pull()) {
+    echo "Got JOB #{$job->getId()}!\n";
     $job->send();
     $queue->processed($job);
 }

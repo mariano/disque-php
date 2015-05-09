@@ -128,9 +128,8 @@ class Queue
         }
         $jobData = $jobs[0];
         $class = $this->jobClass;
-        $job = new $class();
+        $job = $class::load($jobData['body']);
         $job->setId($jobData['id']);
-        $job->load($jobData['body']);
         return $job;
     }
 

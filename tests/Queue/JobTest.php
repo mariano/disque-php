@@ -22,61 +22,46 @@ class JobTest extends PHPUnit_Framework_TestCase
         $this->assertSame('MY_ID', $j->getId());
     }
 
-    public function testSetBodyInvalidNotArray()
+    public function testBodyEmpty()
     {
-        $this->setExpectedException(InvalidArgumentException::class, 'Job body should be an array');
         $j = new Job();
-        $j->setBody('test');
+        $this->assertSame([], $j->getBody());
+        $this->assertSame('[]', $j->dump());
+    }
+
+    public function testBodyNotEmpty()
+    {
+        $j = new Job(['test' => 'stuff']);
+        $this->assertSame(['test' => 'stuff'], $j->getBody());
+        $this->assertSame('{"test":"stuff"}', $j->dump());
     }
 
     public function testSetBodyEmpty()
     {
         $j = new Job();
+        $j->setBody([]);
         $this->assertSame([], $j->getBody());
+        $this->assertSame('[]', $j->dump());
     }
 
-    public function testSetBody()
+    public function testSetBodyNotEmpty()
     {
         $j = new Job();
         $j->setBody(['test' => 'stuff']);
         $this->assertSame(['test' => 'stuff'], $j->getBody());
-    }
-
-    public function testSetBodyViaConstruct()
-    {
-        $j = new Job(['test' => 'stuff']);
-        $this->assertSame(['test' => 'stuff'], $j->getBody());
-    }
-
-    public function testDumpEmpty()
-    {
-        $j = new Job();
-        $result = $j->dump();
-        $this->assertEquals('[]', $result);
-    }
-
-    public function testDump()
-    {
-        $payload = ['test' => 'stuff'];
-        $j = new Job();
-        $j->setBody($payload);
-        $result = $j->dump();
-        $this->assertEquals(json_encode($payload), $result);
+        $this->assertSame('{"test":"stuff"}', $j->dump());
     }
 
     public function testLoadInvalid()
     {
         $this->setExpectedException(MarshalException::class, 'Could not deserialize {"wrong"!');
-        $j = new Job();
-        $j->load('{"wrong"!');
+        Job::load('{"wrong"!');
     }
 
-    public function testLoad()
+    public function testLoadEmpty()
     {
-        $payload = ['test' => 'stuff'];
-        $j = new Job();
-        $this->assertSame([], $j->getBody());
-        $j->load(json_encode($payload));
-        $this->assertSame($payload, $j->getBody());
+        $j = Job::load('{"test":"stuff"}');
+        $this->assertInstanceOf(Job::class, $j);
+        $this->assertSame(['test' => 'stuff'], $j->getBody());
     }
 }
