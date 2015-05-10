@@ -41,10 +41,5 @@
         "psr-4": {
             "Disque\\Test\\": "tests/"
         }
-    },
-    "extra": {
-        "branch-alias": {
-            "dev-master": "1.0-dev"
-        }
     }
 }
