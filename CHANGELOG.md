@@ -3,7 +3,7 @@
 All Notable changes will be documented in this file. This project adheres to 
 [Semantic Versioning](http://semver.org/).
 
-## [1.1.0]
+## [1.1.0] - 2015-05-10
 
 ### Added
 - Refactoring of response parsing for greater flexibility.

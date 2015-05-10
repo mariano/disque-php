@@ -103,6 +103,7 @@ instead of using the issue tracker.
 - [x] Higher level API for queueing and retrieving jobs
 - [x] Method in `Queue` to schedule future jobs based on DateTime
 - [ ] `QSTAT`, `SCAN` when they are implemented upstream
+- [ ] `WORKING` and `QSCAN` when they are merged to master in upstream
 
 ## Acknowledgments
 
