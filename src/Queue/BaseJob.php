@@ -1,7 +1,7 @@
 <?php
 namespace Disque\Queue;
 
-abstract class Job implements JobInterface
+abstract class BaseJob implements JobInterface
 {
     /**
      * Job ID
@@ -9,23 +9,6 @@ abstract class Job implements JobInterface
      * @var string
      */
     private $id;
-
-    /**
-     * Job body
-     *
-     * @var array
-     */
-    private $body = [];
-
-    /**
-     * Build a job with the given body
-     *
-     * @param array $body Body
-     */
-    public function __construct(array $body = [])
-    {
-        $this->setBody($body);
-    }
 
     /**
      * Get job ID
