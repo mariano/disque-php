@@ -4,6 +4,8 @@ namespace Disque\Queue;
 use DateTime;
 use DateTimeZone;
 use Disque\Client;
+use Disque\Queue\Marshal\JobMarshaler;
+use Disque\Queue\Marshal\MarshalerInterface;
 use InvalidArgumentException;
 
 class Queue
@@ -25,11 +27,11 @@ class Queue
     protected $name;
 
     /**
-     * Job class
+     * Job marshaler
      *
-     * @var string
+     * @var MarshalerInterface
      */
-    private $jobClass;
+    private $marshaler;
 
     /**
      * Default time zone
@@ -48,21 +50,18 @@ class Queue
     {
         $this->client = $client;
         $this->name = $name;
-        $this->jobClass = Job::class;
+        $this->setMarshaler(new JobMarshaler());
     }
 
     /**
-     * Set Job implementation class
+     * Set Job marshaler
      *
-     * @param string $class Job class which must implement `JobInterface`
+     * @param MarshalerInterface Marshaler
      * @return void
      */
-    public function setJobClass($class)
+    public function setMarshaler(MarshalerInterface $marshaler)
     {
-        if (!in_array(JobInterface::class, class_implements($class))) {
-            throw new InvalidArgumentException("Class {$class} does not implement JobInterface");
-        }
-        $this->jobClass = $class;
+        $this->marshaler = $marshaler;
     }
 
     /**
@@ -97,12 +96,12 @@ class Queue
      *
      * @param JobInterface $job Job
      * @param array $options ADDJOB options sent to the client
-     * @return JobInterface Job pushed (has ID set)
+     * @return JobInterface Job pushed
      */
     public function push(JobInterface $job, array $options = [])
     {
         $this->checkConnected();
-        $id = $this->client->addJob($this->name, $job->dump(), $options);
+        $id = $this->client->addJob($this->name, $this->marshaler->marshal($job), $options);
         $job->setId($id);
         return $job;
     }
@@ -127,8 +126,7 @@ class Queue
             throw new JobNotAvailableException();
         }
         $jobData = $jobs[0];
-        $class = $this->jobClass;
-        $job = $class::load($jobData['body']);
+        $job = $this->marshaler->unmarshal($jobData['body']);
         $job->setId($jobData['id']);
         return $job;
     }

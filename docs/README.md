@@ -188,45 +188,23 @@ $disque->queue('my_queue')->processed($job);
 
 ## Changing the Job class
 
-If you want to change the class used to represent a job, you can specify the 
-new class implementation (which should implement `Disque\Queue\JobInterface`)
-via the queue's `setJobClass()` method. For example:
+You can choose to have your own Job classes when using the Queue API. To do
+so you start by implementing `Disque\Queue\JobInterface`, and make the class 
+take whatever shape you deem necessary. For example:
 
 ```php
 class EmailJob implements \Disque\Queue\JobInterface
 {
     private $id;
-    private $email;
-    private $subject;
-    private $message;
+    public $email;
+    public $subject;
+    public $message;
 
     public function __construct($email, $subject, $message)
     {
         $this->email = $email;
         $this->subject = $subject;
         $this->message = $message ?: 'No message';
-    }
-
-    public static function load($source)
-    {
-        $body = @json_decode($source, true);
-        if (is_null($body)) {
-            throw new \Disque\Queue\MarshalException("Could not deserialize {$source}");
-        } elseif (!is_array($body) || empty($body['email']) || empty($body['subject'])) {
-            throw new \Disque\Queue\MarshalException("This doesn't look like an email");
-        }
-
-        $body += ['message' => null];
-        return new static($body['email'], $body['subject'], $body['message']);
-    }
-
-    public function dump()
-    {
-        return json_encode([
-            'email' => $this->email,
-            'subject' => $this->subject,
-            'message' => $this->message
-        ]);
     }
 
     public function getId()
@@ -248,12 +226,59 @@ class EmailJob implements \Disque\Queue\JobInterface
 }
 ```
 
-You can now push your email jobs to a queue:
+You then have to create a Marshaler: a way for this job class to be serialized,
+and deserialized. Marshalers should implement 
+`Disque\Queue\Marshal\MarshalerInterface`. You would normally use JSON, but
+you are not required to. For example to create a marshaler for the above
+`EmailJob` class we could do:
+
+```php
+class EmailJobMarshaler implements \Disque\Queue\Marshal\MarshalerInterface
+{
+    public function unmarshal($source)
+    {
+        $body = @json_decode($source, true);
+        if (is_null($body)) {
+            throw new \Disque\Queue\Marshal\MarshalException("Could not deserialize {$source}");
+        } elseif (!is_array($body) || empty($body['email']) || empty($body['subject'])) {
+            throw new \Disque\Queue\Marshal\MarshalException('Not an email job');
+        }
+        $body += ['message' => null];
+        return new EmailJob($body['email'], $body['subject'], $body['message']);
+    }
+
+    public function marshal(\Disque\Queue\JobInterface $job)
+    {
+        if (!($job instanceof EmailJob)) {
+            throw new \Disque\Queue\Marshal\MarshalException('Not an email job');
+        }
+        return json_encode([
+            'email' => $job->email,
+            'subject' => $job->subject,
+            'message' => $job->message
+        ]);
+    }
+}
+```
+
+So as you can see `unmarshal()` will take a string, and should return an 
+instance of `Disque\Queue\JobInterface`, or throw a 
+`Disque\Queue\Marshal\MarshalException` if something went wrong. Similarly
+`marshal()` takes a `Disque\Queue\JobInterface` and returns its string
+representation, throwing a `Disque\Queue\Marshal\MarshalException` if something
+went wrong.
+
+To use this marshaler you create an instance of it, and set it via the Queue
+`setMarshaler()` method:
 
 ```php
 $queue = $disque->queue('emails');
-$queue->setJobClass(EmailJob::class);
+$queue->setMarshaler(new EmailJobMarshaler());
+```
 
+You can now push jobs to the queue:
+
+```php
 $job = new EmailJob('claudia@example.com', 'Hello world!', 'Hello from Disque :)');
 $queue->push($job);
 echo "JOB #{$job->getId()} pushed!\n";
@@ -263,9 +288,6 @@ When pulling jobs from the queue, you can take advantage of your custom job
 implementation:
 
 ```php
-$queue = $disque->queue('emails');
-$queue->setJobClass(EmailJob::class);
-
 while ($job = $queue->pull()) {
     echo "Got JOB #{$job->getId()}!\n";
     $job->send();

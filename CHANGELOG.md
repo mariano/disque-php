@@ -3,6 +3,18 @@
 All Notable changes will be documented in this file. This project adheres to 
 [Semantic Versioning](http://semver.org/).
 
+## [1.2.0] - 2015-05-12
+
+### Changed
+- `JobInterface` is now a simpler interface. Its `load()` and `dump()` methods 
+have been moved to a `MarshalInterface`, effectively changing how custom Job 
+classes work.
+- `Disque\Queue\MarshalException` has been moved to 
+`Disque\Queue\Marshal\MarshalException`.
+- The `setJobClass()` method in `Queue` has been removed. Instead use 
+`setMarshaler()`, which should be given an instance of
+`Disque\Queue\Marshaler\MarshalerInterface`.
+
 ## [1.1.0] - 2015-05-10
 
 ### Added
@@ -16,7 +28,7 @@ itself).
 - Added `Disque\Queue\Queue` and `Disque\Queue\Job` class to offer a higher
 level API that simplifies queueing and fetching jobs
 - Added method `queue()` to `Disque\Client` to create / fetch a queue which
-is an instance of `Disque\Queue\Queue`
+is an instance of `Disque\Queue\Queue`.
 - Added `schedule()` method to `Disque\Queue` that allows to easily schedule
 jobs to be processed at a certain time.
 
@@ -58,5 +70,7 @@ parameters were specified, an `InvalidCommandArgumentException` was thrown.
 - Added support for Predis connections, and allowing adding new connection
 methods via `ConnectionInterface`.
 
-[1.1.0]: https://github.com/mariano/disque-php/compare/1.0.0...HEAD
+[unreleased]: https://github.com/mariano/disque-php/compare/1.2.0...HEAD
+[1.2.0]: https://github.com/mariano/disque-php/releases/tag/1.2.0
+[1.1.0]: https://github.com/mariano/disque-php/releases/tag/1.1.0
 [1.0.0]: https://github.com/mariano/disque-php/releases/tag/1.0.0

@@ -8,6 +8,7 @@ use Disque\Queue\Job;
 use Disque\Queue\JobInterface;
 use Disque\Queue\JobNotAvailableException;
 use Disque\Queue\Queue;
+use Disque\Queue\Marshal\MarshalerInterface;
 use InvalidArgumentException;
 use Mockery as m;
 use PHPUnit_Framework_TestCase;
@@ -30,31 +31,21 @@ class QueueTest extends PHPUnit_Framework_TestCase
         $this->assertInstanceOf(Queue::class, $q);
     }
 
-    public function testSetJobClassInvalidClass()
-    {
-        $this->setExpectedException(InvalidArgumentException::class, 'Class DateTime does not implement JobInterface');
-        $q = new Queue(new Client(), 'queue');
-        $q->setJobClass(DateTime::class);
-    }
-
-    public function testSetJobClass()
+    public function testMarshaler()
     {
         $q = new Queue(new Client(), 'queue');
-        $q->setJobClass(m::mock(JobInterface::class));
+        $q->setMarshaler(m::mock(MarshalerInterface::class));
     }
 
     public function testPushConnected()
     {
         $payload = ['test' => 'stuff'];
-        $job = m::mock(JobInterface::class)
-            ->shouldReceive('dump')
-            ->with()
-            ->andReturn(json_encode($payload))
-            ->once()
+        $job = m::mock(Job::class.'[setId]')
             ->shouldReceive('setId')
             ->with('JOB_ID')
             ->once()
             ->mock();
+        $job->setBody($payload);
 
         $client = m::mock(Client::class)
             ->shouldReceive('isConnected')
@@ -74,15 +65,12 @@ class QueueTest extends PHPUnit_Framework_TestCase
     public function testPushNotConnected()
     {
         $payload = ['test' => 'stuff'];
-        $job = m::mock(JobInterface::class)
-            ->shouldReceive('dump')
-            ->with()
-            ->andReturn(json_encode($payload))
-            ->once()
+        $job = m::mock(Job::class.'[setId]')
             ->shouldReceive('setId')
             ->with('JOB_ID')
             ->once()
             ->mock();
+        $job->setBody($payload);
 
         $client = m::mock(Client::class)
             ->shouldReceive('isConnected')
@@ -105,15 +93,12 @@ class QueueTest extends PHPUnit_Framework_TestCase
     public function testPushWithOptions()
     {
         $payload = ['test' => 'stuff'];
-        $job = m::mock(JobInterface::class)
-            ->shouldReceive('dump')
-            ->with()
-            ->andReturn(json_encode($payload))
-            ->once()
+        $job = m::mock(Job::class.'[setId]')
             ->shouldReceive('setId')
             ->with('JOB_ID')
             ->once()
             ->mock();
+        $job->setBody($payload);
 
         $client = m::mock(Client::class)
             ->shouldReceive('isConnected')
@@ -127,6 +112,39 @@ class QueueTest extends PHPUnit_Framework_TestCase
 
         $q = new Queue($client, 'queue');
         $result = $q->push($job, ['delay' => 3000]);
+        $this->assertSame($job, $result);
+    }
+
+    public function testPushCustomMarshaler()
+    {
+        $payload = ['test' => 'stuff'];
+        $job = m::mock(Job::class.'[setId]')
+            ->shouldReceive('setId')
+            ->with('JOB_ID')
+            ->once()
+            ->mock();
+        $job->setBody($payload);
+
+        $client = m::mock(Client::class)
+            ->shouldReceive('isConnected')
+            ->with()
+            ->andReturn(true)
+            ->once()
+            ->shouldReceive('addJob')
+            ->with('queue', json_encode($payload), [])
+            ->andReturn('JOB_ID')
+            ->mock();
+
+        $marshaler = m::mock(MarshalerInterface::class)
+            ->shouldReceive('marshal')
+            ->with($job)
+            ->andReturn(json_encode($payload))
+            ->once()
+            ->mock();
+
+        $q = new Queue($client, 'queue');
+        $q->setMarshaler($marshaler);
+        $result = $q->push($job);
         $this->assertSame($job, $result);
     }
 
@@ -225,7 +243,7 @@ class QueueTest extends PHPUnit_Framework_TestCase
         $this->assertSame($payload, $job->getBody());
     }
 
-    public function testPullCustomClass()
+    public function testPullCustomMarshaler()
     {
         $payload = ['test' => 'stuff'];
 
@@ -241,12 +259,18 @@ class QueueTest extends PHPUnit_Framework_TestCase
             ])
             ->mock();
 
+        $job = new Job();
+        $marshaler = m::mock(MarshalerInterface::class)
+            ->shouldReceive('unmarshal')
+            ->with(json_encode($payload))
+            ->andReturn($job)
+            ->once()
+            ->mock();
+
         $q = new Queue($client, 'queue');
-        $q->setJobClass(MockJob::class);
-        $job = $q->pull();
-        $this->assertInstanceOf(MockJob::class, $job);
-        $this->assertSame('JOB_ID', $job->getId());
-        $this->assertSame($payload, $job->getBody());
+        $q->setMarshaler($marshaler);
+        $result = $q->pull();
+        $this->assertSame($job, $result);
     }
 
     public function testPullSeveralJobs()

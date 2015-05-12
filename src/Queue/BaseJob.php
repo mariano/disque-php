@@ -1,8 +1,15 @@
 <?php
 namespace Disque\Queue;
 
-class Job extends BaseJob implements JobInterface
+abstract class Job implements JobInterface
 {
+    /**
+     * Job ID
+     *
+     * @var string
+     */
+    private $id;
+
     /**
      * Job body
      *
@@ -21,22 +28,23 @@ class Job extends BaseJob implements JobInterface
     }
 
     /**
-     * Get job body
+     * Get job ID
      *
-     * @return array Job body
+     * @return string
      */
-    public function getBody()
+    public function getId()
     {
-        return $this->body;
+        return $this->id;
     }
 
     /**
-     * Set the job body
+     * Set job ID
      *
-     * @param array $body Body
+     * @param string $id Id
+     * @return void
      */
-    public function setBody(array $body)
+    public function setId($id)
     {
-        $this->body = $body;
+        $this->id = $id;
     }
 }
