@@ -709,6 +709,7 @@ Arguments:
 Return value:
 
 * `array`: A set of jobs, where each job is an indexed array with:
+  * `queue`: a `string`, that indicates from which queue this job came from.
   * `id`: a `string`, which is the job ID.
   * `body`: a `string`, which is the payload of the job.
 

@@ -1,7 +1,7 @@
 <?php
 namespace Disque\Command;
 
-use Disque\Exception;
+use Disque\Command\Response\JobsWithQueueResponse;
 
 class QPeek extends BaseCommand implements CommandInterface
 {
@@ -17,7 +17,7 @@ class QPeek extends BaseCommand implements CommandInterface
      *
      * @var int
      */
-    protected $responseHandler = Response\JobsResponse::class;
+    protected $responseHandler = JobsWithQueueResponse::class;
 
     /**
      * Get command

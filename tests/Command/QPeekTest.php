@@ -86,47 +86,13 @@ class QPeekTest extends PHPUnit_Framework_TestCase
         $this->assertSame(['test', 78], $result);
     }
 
-    public function testParseInvalidString()
-    {
-        $this->setExpectedException(InvalidResponseException::class, 'Invalid command response. Command Disque\\Command\\QPeek got: "test"');
-        $c = new QPeek();
-        $c->parse('test');
-    }
-
-    public function testParseInvalidArrayElementsNonArray()
-    {
-        $this->setExpectedException(InvalidResponseException::class, 'Invalid command response. Command Disque\\Command\\QPeek got: ["test","stuff"]');
-        $c = new QPeek();
-        $c->parse(['test', 'stuff']);
-    }
-
-    public function testParseInvalidArrayElementsSomeNonArray()
-    {
-        $this->setExpectedException(InvalidResponseException::class, 'Invalid command response. Command Disque\\Command\\QPeek got: [["test","val"],"stuff"]');
-        $c = new QPeek();
-        $c->parse([['test', 'val'], 'stuff']);
-    }
-
-    public function testParseInvalidArrayElementsNon0()
-    {
-        $this->setExpectedException(InvalidResponseException::class, 'Invalid command response. Command Disque\\Command\\QPeek got: [{"1":"test","2":"stuff"}]');
-        $c = new QPeek();
-        $c->parse([[1=>'test', 2=>'stuff']]);
-    }
-
-    public function testParseInvalidArrayElementsNon1()
-    {
-        $this->setExpectedException(InvalidResponseException::class, 'Invalid command response. Command Disque\\Command\\QPeek got: [{"0":"test","2":"stuff"}]');
-        $c = new QPeek();
-        $c->parse([[0=>'test', 2=>'stuff']]);
-    }
-
     public function testParse()
     {
         $c = new QPeek();
-        $result = $c->parse([['DI0f0c644fd3ccb51c2cedbd47fcb6f312646c993c05a0SQ', 'stuff']]);
+        $result = $c->parse([['queue', 'DI0f0c644fd3ccb51c2cedbd47fcb6f312646c993c05a0SQ', 'stuff']]);
         $this->assertSame([
             [
+                'queue' => 'queue',
                 'id' => 'DI0f0c644fd3ccb51c2cedbd47fcb6f312646c993c05a0SQ',
                 'body' => 'stuff'
             ]

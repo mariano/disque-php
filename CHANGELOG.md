@@ -6,9 +6,12 @@ All Notable changes will be documented in this file. This project adheres to
 
 ## [1.2.1]
 
-### Added
+### Changed
+- `QPEEK` changed in upstream and now returns the job queue. Client API has
+been modified to reflect this.
 
-- Added support for `QSCAN`
+### Added
+- Added support for `QSCAN`.
 
 ## [1.2.0] - 2015-05-12
 
