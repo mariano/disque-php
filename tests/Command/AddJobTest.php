@@ -116,70 +116,70 @@ class AddJobTest extends PHPUnit_Framework_TestCase
 
     public function testBuildInvalidOptionReplicateNonNumeric()
     {
-        $this->setExpectedException(InvalidOptionException::class, 'Invalid command options. Options for command Disque\\Command\\AddJob: {"replicate":"stuff"}');
+        $this->setExpectedException(InvalidOptionException::class, 'Invalid command options. Options for command Disque\\Command\\AddJob: {"replicate":"stuff","timeout":0}');
         $c = new AddJob();
         $c->setArguments(['q', 'j', ['replicate' => 'stuff']]);
     }
 
     public function testBuildInvalidOptionReplicateNonInt()
     {
-        $this->setExpectedException(InvalidOptionException::class, 'Invalid command options. Options for command Disque\\Command\\AddJob: {"replicate":3.14}');
+        $this->setExpectedException(InvalidOptionException::class, 'Invalid command options. Options for command Disque\\Command\\AddJob: {"replicate":3.14,"timeout":0}');
         $c = new AddJob();
         $c->setArguments(['q', 'j', ['replicate' => 3.14]]);
     }
 
     public function testBuildInvalidOptionDelayNonNumeric()
     {
-        $this->setExpectedException(InvalidOptionException::class, 'Invalid command options. Options for command Disque\\Command\\AddJob: {"delay":"stuff"}');
+        $this->setExpectedException(InvalidOptionException::class, 'Invalid command options. Options for command Disque\\Command\\AddJob: {"delay":"stuff","timeout":0}');
         $c = new AddJob();
         $c->setArguments(['q', 'j', ['delay' => 'stuff']]);
     }
 
     public function testBuildInvalidOptionDelayNonInt()
     {
-        $this->setExpectedException(InvalidOptionException::class, 'Invalid command options. Options for command Disque\\Command\\AddJob: {"delay":3.14}');
+        $this->setExpectedException(InvalidOptionException::class, 'Invalid command options. Options for command Disque\\Command\\AddJob: {"delay":3.14,"timeout":0}');
         $c = new AddJob();
         $c->setArguments(['q', 'j', ['delay' => 3.14]]);
     }
 
     public function testBuildInvalidOptionRetryNonNumeric()
     {
-        $this->setExpectedException(InvalidOptionException::class, 'Invalid command options. Options for command Disque\\Command\\AddJob: {"retry":"stuff"}');
+        $this->setExpectedException(InvalidOptionException::class, 'Invalid command options. Options for command Disque\\Command\\AddJob: {"retry":"stuff","timeout":0}');
         $c = new AddJob();
         $c->setArguments(['q', 'j', ['retry' => 'stuff']]);
     }
 
     public function testBuildInvalidOptionRetryNonInt()
     {
-        $this->setExpectedException(InvalidOptionException::class, 'Invalid command options. Options for command Disque\\Command\\AddJob: {"retry":3.14}');
+        $this->setExpectedException(InvalidOptionException::class, 'Invalid command options. Options for command Disque\\Command\\AddJob: {"retry":3.14,"timeout":0}');
         $c = new AddJob();
         $c->setArguments(['q', 'j', ['retry' => 3.14]]);
     }
 
     public function testBuildInvalidOptionTtlNonNumeric()
     {
-        $this->setExpectedException(InvalidOptionException::class, 'Invalid command options. Options for command Disque\\Command\\AddJob: {"ttl":"stuff"}');
+        $this->setExpectedException(InvalidOptionException::class, 'Invalid command options. Options for command Disque\\Command\\AddJob: {"ttl":"stuff","timeout":0}');
         $c = new AddJob();
         $c->setArguments(['q', 'j', ['ttl' => 'stuff']]);
     }
 
     public function testBuildInvalidOptionTtlNonInt()
     {
-        $this->setExpectedException(InvalidOptionException::class, 'Invalid command options. Options for command Disque\\Command\\AddJob: {"ttl":3.14}');
+        $this->setExpectedException(InvalidOptionException::class, 'Invalid command options. Options for command Disque\\Command\\AddJob: {"ttl":3.14,"timeout":0}');
         $c = new AddJob();
         $c->setArguments(['q', 'j', ['ttl' => 3.14]]);
     }
 
     public function testBuildInvalidOptionMaxlenNonNumeric()
     {
-        $this->setExpectedException(InvalidOptionException::class, 'Invalid command options. Options for command Disque\\Command\\AddJob: {"maxlen":"stuff"}');
+        $this->setExpectedException(InvalidOptionException::class, 'Invalid command options. Options for command Disque\\Command\\AddJob: {"maxlen":"stuff","timeout":0}');
         $c = new AddJob();
         $c->setArguments(['q', 'j', ['maxlen' => 'stuff']]);
     }
 
     public function testBuildInvalidOptionMaxlenNonInt()
     {
-        $this->setExpectedException(InvalidOptionException::class, 'Invalid command options. Options for command Disque\\Command\\AddJob: {"maxlen":3.14}');
+        $this->setExpectedException(InvalidOptionException::class, 'Invalid command options. Options for command Disque\\Command\\AddJob: {"maxlen":3.14,"timeout":0}');
         $c = new AddJob();
         $c->setArguments(['q', 'j', ['maxlen' => 3.14]]);
     }

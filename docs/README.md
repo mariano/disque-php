@@ -725,6 +725,54 @@ echo "ID: {$job['id']}\n";
 var_dump(json_decode($job['body'], true));
 ```
 
+### qscan
+
+Iterate all existing queues on the node that the client is connected to,
+allowing navigation with a cursor. As specified by Disque this command may
+return duplicated elements.
+
+```php
+qscan(int $cursor = 0, array $options = [])
+```
+
+Arguments:
+
+* `$cursor`: an `int`, which is the cursor we are navigating. On first call 
+    this should be `0`, when following an already established cursor this 
+    should be the cursor returned by the previous call (see `nextCursor`).
+* `$options`: an array, containing the set of options to influence the scan.
+    Available options:
+  * `count`: an `int`, a hint about how much work to do per iteration.
+  * `busyloop`: a `bool`. If set to `true` the call will block and will return
+    all elements in a single iteration.
+  * `minlen`: an `int`. Do not include any queues with less than the given
+    number of jobs queued.
+  * `maxlen`: an `int`. Do not include any queues with more than the given
+    number of jobs queued.
+  * `importrate`: an `int`. Only include queues with a job import rate (from
+    other nodes) higher than or equal to the given number.
+
+Return value:
+
+* `array`: An indexed array with:
+  * `finished`: a `bool`, which tells if this is the last iteration.
+  * `nextCursor`: an `int`, which tells the cursor to use to get the next
+    iteration. If `0` then this is the last iteration (which also guarantees
+    that `finished` is set to `true`).
+  * `queues`: an `array`, where each element is a queue name.
+
+Example call:
+
+```php
+// Get all queues, one queue at a time
+$cursor = 0;
+do {
+    $result = $client->qscan($cursor, ['count' => 1]);
+    var_dump($result['queues']);
+    $cursor = $result['nextCursor'];
+} while (!$result['finished']);
+```
+
 ### show
 
 Get information about the given job. Signature:

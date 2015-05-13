@@ -2,12 +2,13 @@
 namespace Disque\Command;
 
 use Disque\Command\Argument\ArrayChecker;
+use Disque\Command\Argument\OptionChecker;
 use Disque\Command\Argument\InvalidCommandArgumentException;
-use Disque\Command\Argument\InvalidOptionException;
 
 class AddJob extends BaseCommand implements CommandInterface
 {
     use ArrayChecker;
+    use OptionChecker;
 
     /**
      * Available command options
@@ -53,7 +54,6 @@ class AddJob extends BaseCommand implements CommandInterface
      *
      * @param array $arguments Arguments
      * @throws InvalidCommandArgumentException
-     * @throws InvalidOptionException
      */
     public function setArguments(array $arguments)
     {
@@ -67,11 +67,7 @@ class AddJob extends BaseCommand implements CommandInterface
         }
 
         $options = (!empty($arguments[2]) ? $arguments[2] : []) + ['timeout' => $this->options['timeout']];
-        foreach (['timeout', 'replicate', 'delay', 'retry', 'ttl', 'maxlen'] as $intOption) {
-            if (isset($options[$intOption]) && !is_int($options[$intOption])) {
-                throw new InvalidOptionException($this, (array) $arguments[2]);
-            }
-        }
+        $this->checkOptionsInt($options, ['timeout', 'replicate', 'delay', 'retry', 'ttl', 'maxlen']);
 
         $this->arguments = array_merge(
             [$arguments[0], $arguments[1], $options['timeout']],

@@ -20,6 +20,7 @@ use InvalidArgumentException;
  * @method string info()
  * @method int qlen(string $queue)
  * @method array qpeek(string $queue, int $count)
+ * @method array qscan(array $options = [])
  * @method array show(string $id)
  */
 class Client
@@ -71,6 +72,7 @@ class Client
             'INFO' => Command\Info::class,
             'QLEN' => Command\QLen::class,
             'QPEEK' => Command\QPeek::class,
+            'QSCAN' => Command\QScan::class,
             'SHOW' => Command\Show::class
         ] as $command => $handlerClass) {
             $this->registerCommand($command, $handlerClass);

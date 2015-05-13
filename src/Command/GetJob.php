@@ -2,8 +2,8 @@
 namespace Disque\Command;
 
 use Disque\Command\Argument\StringChecker;
-use Disque\Command\Response\JobsWithQueueResponse;
 use Disque\Command\Argument\InvalidOptionException;
+use Disque\Command\Response\JobsWithQueueResponse;
 
 class GetJob extends BaseCommand implements CommandInterface
 {

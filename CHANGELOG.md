@@ -3,6 +3,13 @@
 All Notable changes will be documented in this file. This project adheres to 
 [Semantic Versioning](http://semver.org/).
 
+
+## [1.2.1]
+
+### Added
+
+- Added support for `QSCAN`
+
 ## [1.2.0] - 2015-05-12
 
 ### Changed
@@ -70,7 +77,7 @@ parameters were specified, an `InvalidCommandArgumentException` was thrown.
 - Added support for Predis connections, and allowing adding new connection
 methods via `ConnectionInterface`.
 
-[unreleased]: https://github.com/mariano/disque-php/compare/1.2.0...HEAD
+[1.2.1]: https://github.com/mariano/disque-php/compare/1.2.0...HEAD
 [1.2.0]: https://github.com/mariano/disque-php/releases/tag/1.2.0
 [1.1.0]: https://github.com/mariano/disque-php/releases/tag/1.1.0
 [1.0.0]: https://github.com/mariano/disque-php/releases/tag/1.0.0

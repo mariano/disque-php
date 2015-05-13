@@ -102,8 +102,9 @@ instead of using the issue tracker.
 - [x] Allow GETJOB to influence what node the Client should be connected to
 - [x] Higher level API for queueing and retrieving jobs
 - [x] Method in `Queue` to schedule future jobs based on DateTime
-- [ ] `QSTAT`, `SCAN` when they are implemented upstream
-- [ ] `WORKING` and `QSCAN` when they are merged to master in upstream
+- [x] `QSCAN`
+- [ ] Add support for AUTH based connections
+- [ ] `QSTAT`, `WORKING` when they are implemented upstream
 
 ## Acknowledgments
 
