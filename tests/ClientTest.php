@@ -104,6 +104,7 @@ class ClientTest extends PHPUnit_Framework_TestCase
             'INFO' => Command\Info::class,
             'QLEN' => Command\QLen::class,
             'QPEEK' => Command\QPeek::class,
+            'QSCAN' => Command\QScan::class,
             'SHOW' => Command\Show::class
         ];
 
