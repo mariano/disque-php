@@ -54,7 +54,7 @@ class Socket extends BaseConnection implements ConnectionInterface
         if (!$this->isConnected()) {
             return;
         }
-        stream_socket_shutdown($this->socket, STREAM_SHUT_RDWR);
+        fclose($this->socket);
         $this->socket = null;
     }
 
