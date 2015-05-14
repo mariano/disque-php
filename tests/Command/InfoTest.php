@@ -22,6 +22,13 @@ class InfoTest extends PHPUnit_Framework_TestCase
         $this->assertSame('INFO', $result);
     }
 
+    public function testIsBlocking()
+    {
+        $c = new Info();
+        $result = $c->isBlocking();
+        $this->assertFalse($result);
+    }
+
     public function testBuildInvalidArguments()
     {
         $this->setExpectedException(InvalidCommandArgumentException::class, 'Invalid command arguments. Arguments for command Disque\\Command\\Info: ["test"]');

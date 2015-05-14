@@ -3,15 +3,23 @@
 All Notable changes will be documented in this file. This project adheres to 
 [Semantic Versioning](http://semver.org/).
 
-
-## [1.2.1]
+## [1.2.1] - 2015-05-14
 
 ### Changed
 - `QPEEK` changed in upstream and now returns the job queue. Client API has
 been modified to reflect this.
+- `CommandInterface` has a new method: `isBlocking()`, which tells if the
+given command should block while waiting for a response to not be affected
+by timeouts.
 
 ### Added
 - Added support for `QSCAN`.
+
+### Fixed
+- Fixed bug where if the connection would timeout while waiting for a response
+a `ConnectionException` would be thrown. This affected `getJob()` which should
+not be interrupted by a timeout. This required a change in the definition
+of `CommandInterface` by adding the method `isBlocking()`
 
 ## [1.2.0] - 2015-05-12
 
@@ -80,7 +88,8 @@ parameters were specified, an `InvalidCommandArgumentException` was thrown.
 - Added support for Predis connections, and allowing adding new connection
 methods via `ConnectionInterface`.
 
-[1.2.1]: https://github.com/mariano/disque-php/compare/1.2.0...HEAD
+[unreleased]: https://github.com/mariano/disque-php/compare/1.2.1...HEAD
+[1.2.1]: https://github.com/mariano/disque-php/releases/tag/1.2.1
 [1.2.0]: https://github.com/mariano/disque-php/releases/tag/1.2.0
 [1.1.0]: https://github.com/mariano/disque-php/releases/tag/1.1.0
 [1.0.0]: https://github.com/mariano/disque-php/releases/tag/1.0.0

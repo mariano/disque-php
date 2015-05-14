@@ -23,6 +23,13 @@ class GetJobTest extends PHPUnit_Framework_TestCase
         $this->assertSame('GETJOB', $result);
     }
 
+    public function testIsBlocking()
+    {
+        $c = new GetJob();
+        $result = $c->isBlocking();
+        $this->assertTrue($result);
+    }
+
     public function testBuildInvalidArgumentsEmpty()
     {
         $this->setExpectedException(InvalidCommandArgumentException::class, 'Invalid command arguments. Arguments for command Disque\\Command\\GetJob: []');

@@ -40,6 +40,7 @@ class Socket extends BaseConnection implements ConnectionInterface
             throw new ConnectionException("Could not connect to {$this->host}:{$this->port}");
         }
 
+        stream_set_blocking($this->socket, 1);
         if (!is_null($options['streamTimeout'])) {
             stream_set_timeout($this->socket, $options['streamTimeout']);
         }
@@ -53,7 +54,7 @@ class Socket extends BaseConnection implements ConnectionInterface
         if (!$this->isConnected()) {
             return;
         }
-        fclose($this->socket);
+        stream_socket_shutdown($this->socket, STREAM_SHUT_RDWR);
         $this->socket = null;
     }
 
@@ -93,7 +94,7 @@ class Socket extends BaseConnection implements ConnectionInterface
         }
 
         $this->send(implode("\r\n", $parts)."\r\n");
-        return $this->receive();
+        return $this->receive($command->isBlocking());
     }
 
     /**
@@ -130,28 +131,19 @@ class Socket extends BaseConnection implements ConnectionInterface
     /**
      * Read data from connection
      *
+     * @param bool $keepWaiting If `true`, timeouts on stream read will be ignored
      * @return mixed Data received
      * @throws ConnectionException
      * @throws ResponseException
      */
-    public function receive()
+    public function receive($keepWaiting = false)
     {
         if (!$this->isConnected()) {
             throw new ConnectionException('No connection established');
         }
 
-        $type = fgetc($this->socket);
-        if ($type === false || $type === '') {
-            throw new ConnectionException('Nothing received while reading from client');
-        }
-
-        $data = fgets($this->socket);
-        if ($data === false || $data === '') {
-            throw new ConnectionException('Nothing received while reading from client');
-        }
-
-        $data = substr($data, 0, -2); // Get rid of last CRLF
-
+        $type = $this->getType($keepWaiting);
+        $data = $this->getData();
         switch ($type) {
             case '+':
                 return (string) $data;
@@ -187,7 +179,7 @@ class Socket extends BaseConnection implements ConnectionInterface
 
                 $elements = [];
                 for ($i=0; $i < $count; $i++) {
-                    $elements[$i] = $this->receive();
+                    $elements[$i] = $this->receive($keepWaiting);
                 }
                 return $elements;
         }
@@ -206,5 +198,50 @@ class Socket extends BaseConnection implements ConnectionInterface
     protected function getSocket($host, $port, $timeout)
     {
         return stream_socket_client("tcp://{$host}:{$port}", $error, $message, $timeout, STREAM_CLIENT_CONNECT | STREAM_CLIENT_PERSISTENT);
+    }
+
+    /**
+     * Get the first byte from Disque, which contains the data type
+     *
+     * @param bool $keepWaiting If `true`, timeouts on stream read will be ignored
+     * @return string A single char
+     * @throws ConnectionException
+     */
+    private function getType($keepWaiting = false)
+    {
+        $type = null;
+        while (!feof($this->socket)) {
+            $type = fgetc($this->socket);
+            if ($type !== false && $type !== '') {
+                break;
+            }
+
+            $info = stream_get_meta_data($this->socket);
+            if (!$keepWaiting || !$info['timed_out']) {
+                break;
+            }
+        }
+
+        if ($type === false || $type === '') {
+            throw new ConnectionException('Nothing received while reading from client');
+        }
+
+        return $type;
+    }
+
+    /**
+     * Get a line of data
+     *
+     * @return string Line of data
+     * @throws ConnectionException
+     */
+    private function getData()
+    {
+        $data = fgets($this->socket);
+        if ($data === false || $data === '') {
+            throw new ConnectionException('Nothing received while reading from client');
+        }
+
+        return substr($data, 0, -2); // Get rid of last CRLF
     }
 }

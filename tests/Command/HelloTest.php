@@ -22,6 +22,13 @@ class HelloTest extends PHPUnit_Framework_TestCase
         $this->assertSame('HELLO', $result);
     }
 
+    public function testIsBlocking()
+    {
+        $c = new Hello();
+        $result = $c->isBlocking();
+        $this->assertFalse($result);
+    }
+
     public function testBuildInvalidArguments()
     {
         $this->setExpectedException(InvalidCommandArgumentException::class, 'Invalid command arguments. Arguments for command Disque\\Command\\Hello: ["test"]');

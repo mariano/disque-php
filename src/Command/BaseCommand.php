@@ -60,6 +60,17 @@ abstract class BaseCommand implements CommandInterface
     abstract public function getCommand();
 
     /**
+     * Tells if this command blocks while waiting for a response, to avoid
+     * being affected by connection timeouts.
+     *
+     * @return bool If true, this command blocks
+     */
+    public function isBlocking()
+    {
+        return false;
+    }
+
+    /**
      * Get processed arguments for command
      *
      * @return array Arguments

@@ -47,6 +47,17 @@ class GetJob extends BaseCommand implements CommandInterface
     }
 
     /**
+     * Tells if this command blocks while waiting for a response, to avoid
+     * being affected by connection timeouts.
+     *
+     * @return bool If true, this command blocks
+     */
+    public function isBlocking()
+    {
+        return true;
+    }
+
+    /**
      * Set arguments for the command
      *
      * @param array $arguments Arguments

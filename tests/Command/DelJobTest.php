@@ -22,6 +22,13 @@ class DelJobTest extends PHPUnit_Framework_TestCase
         $this->assertSame('DELJOB', $result);
     }
 
+    public function testIsBlocking()
+    {
+        $c = new DelJob();
+        $result = $c->isBlocking();
+        $this->assertFalse($result);
+    }
+
     public function testBuildInvalidArgumentsEmpty()
     {
         $this->setExpectedException(InvalidCommandArgumentException::class, 'Invalid command arguments. Arguments for command Disque\\Command\\DelJob: []');

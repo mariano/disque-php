@@ -22,6 +22,13 @@ class QLenTest extends PHPUnit_Framework_TestCase
         $this->assertSame('QLEN', $result);
     }
 
+    public function testIsBlocking()
+    {
+        $c = new QLen();
+        $result = $c->isBlocking();
+        $this->assertFalse($result);
+    }
+
     public function testBuildInvalidArgumentsEmpty()
     {
         $this->setExpectedException(InvalidCommandArgumentException::class, 'Invalid command arguments. Arguments for command Disque\\Command\\QLen: []');

@@ -23,6 +23,13 @@ class QScanTest extends PHPUnit_Framework_TestCase
         $this->assertSame('QSCAN', $result);
     }
 
+    public function testIsBlocking()
+    {
+        $c = new QScan();
+        $result = $c->isBlocking();
+        $this->assertFalse($result);
+    }
+
     public function testBuildInvalidArgumentTooMany()
     {
         $this->setExpectedException(InvalidCommandArgumentException::class, 'Invalid command arguments. Arguments for command Disque\\Command\\QScan: [0,{"count":10},["stuff"]]');

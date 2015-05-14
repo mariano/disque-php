@@ -22,6 +22,13 @@ class ShowTest extends PHPUnit_Framework_TestCase
         $this->assertSame('SHOW', $result);
     }
 
+    public function testIsBlocking()
+    {
+        $c = new Show();
+        $result = $c->isBlocking();
+        $this->assertFalse($result);
+    }
+
     public function testBuildInvalidArgumentsEmpty()
     {
         $this->setExpectedException(InvalidCommandArgumentException::class, 'Invalid command arguments. Arguments for command Disque\\Command\\Show: []');
