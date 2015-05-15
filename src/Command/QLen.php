@@ -1,7 +1,7 @@
 <?php
 namespace Disque\Command;
 
-use Disque\Command\Response;
+use Disque\Command\Response\IntResponse;
 
 class QLen extends BaseCommand implements CommandInterface
 {
@@ -17,7 +17,7 @@ class QLen extends BaseCommand implements CommandInterface
      *
      * @var int
      */
-    protected $responseHandler = Response\IntResponse::class;
+    protected $responseHandler = IntResponse::class;
 
     /**
      * Get command

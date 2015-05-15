@@ -105,7 +105,8 @@ class ClientTest extends PHPUnit_Framework_TestCase
             'QLEN' => Command\QLen::class,
             'QPEEK' => Command\QPeek::class,
             'QSCAN' => Command\QScan::class,
-            'SHOW' => Command\Show::class
+            'SHOW' => Command\Show::class,
+            'WORKING' => Command\Working::class
         ];
 
         $c = new MockClient();

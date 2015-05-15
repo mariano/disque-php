@@ -93,18 +93,18 @@ instead of using the issue tracker.
 
 ## TODO
 
-- [x] HELLO, INFO, SHOW, ADDJOB, DELJOB, GETJOB, ACKJOB, FASTACK
-- [x] ENQUEUE, DEQUEUE, QLEN, QPEEK
+- [x] `HELLO`, `INFO`, `SHOW`, `ADDJOB`, `DELJOB`, `GETJOB`, `ACKJOB`, `FASTACK`
+- [x] `ENQUEUE`, `DEQUEUE`, `QLEN`, `QPEEK`
 - [x] Add support for several connections
 - [x] Implement direct protocol to Disque to avoid depending on Predis
 - [x] Turn Predis integration into a ConnectionInterface
 - [x] Allow user to specify their own ConnectionInterface implementation
-- [x] Allow GETJOB to influence what node the Client should be connected to
+- [x] Allow `GETJOB` to influence what node the Client should be connected to
 - [x] Higher level API for queueing and retrieving jobs
 - [x] Method in `Queue` to schedule future jobs based on DateTime
-- [x] `QSCAN`
+- [x] `QSCAN`, `WORKING`
 - [ ] Add support for AUTH based connections
-- [ ] `QSTAT`, `WORKING` when they are implemented upstream
+- [ ] `QSTAT` when they are implemented upstream
 
 ## Acknowledgments
 

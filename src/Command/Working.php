@@ -3,14 +3,14 @@ namespace Disque\Command;
 
 use Disque\Command\Response\IntResponse;
 
-class AckJob extends BaseCommand implements CommandInterface
+class Working extends BaseCommand implements CommandInterface
 {
     /**
      * Tells the argument types for this command
      *
      * @var int
      */
-    protected $argumentsType = self::ARGUMENTS_TYPE_STRINGS;
+    protected $argumentsType = self::ARGUMENTS_TYPE_STRING;
 
     /**
      * Tells which class handles the response
@@ -26,6 +26,6 @@ class AckJob extends BaseCommand implements CommandInterface
      */
     public function getCommand()
     {
-        return 'ACKJOB';
+        return 'WORKING';
     }
 }
