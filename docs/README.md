@@ -798,3 +798,28 @@ Example call:
 $details = $client->show('jobid1');
 var_dump($details);
 ```
+
+### working
+
+Claims to be still working with the specified job, and asks Disque to postpone 
+the next time it will deliver again the job. Signature:
+
+```php
+working(string $id): int
+```
+
+Arguments:
+
+* `string $id`: job ID
+
+Return value:
+
+* `int`: Number of seconds you (likely) postponed the message visibility for
+    other workers. See [Disque's API](https://github.com/antirez/disque#api).
+
+Example call:
+
+```php
+$seconds = $client->working('jobid1');
+var_dump($seconds);
+```
