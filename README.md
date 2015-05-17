@@ -104,6 +104,7 @@ instead of using the issue tracker.
 - [x] Method in `Queue` to schedule future jobs based on DateTime
 - [x] `QSCAN`, `WORKING`
 - [ ] Add support for AUTH based connections
+- [x] Add support to `WORKING` command on Queue API
 - [ ] `QSTAT` when they are implemented upstream
 
 ## Acknowledgments

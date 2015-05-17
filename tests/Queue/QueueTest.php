@@ -389,4 +389,55 @@ class QueueTest extends PHPUnit_Framework_TestCase
         $result = $queue->schedule($job, new DateTime('+25 days', new DateTimeZone(Queue::DEFAULT_JOB_TIMEZONE)));
         $this->assertSame($job, $result);
     }
+
+    public function testProcessingConnected()
+    {
+        $job = m::mock(JobInterface::class)
+            ->shouldReceive('getId')
+            ->with()
+            ->andReturn('JOB_ID')
+            ->once()
+            ->mock();
+
+        $client = m::mock(Client::class)
+            ->shouldReceive('isConnected')
+            ->with()
+            ->andReturn(true)
+            ->once()
+            ->shouldReceive('working')
+            ->with('JOB_ID')
+            ->andReturn(3)
+            ->mock();
+
+        $q = new Queue($client, 'queue');
+        $result = $q->processing($job);
+        $this->assertSame(3, $result);
+    }
+
+    public function testWorkingNotConnected()
+    {
+        $job = m::mock(JobInterface::class)
+            ->shouldReceive('getId')
+            ->with()
+            ->andReturn('JOB_ID')
+            ->once()
+            ->mock();
+
+        $client = m::mock(Client::class)
+            ->shouldReceive('isConnected')
+            ->with()
+            ->andReturn(false)
+            ->once()
+            ->shouldReceive('connect')
+            ->with()
+            ->once()
+            ->shouldReceive('working')
+            ->with('JOB_ID')
+            ->andReturn(3)
+            ->mock();
+
+        $q = new Queue($client, 'queue');
+        $result = $q->processing($job);
+        $this->assertSame(3, $result);
+    }
 }

@@ -132,6 +132,18 @@ class Queue
     }
 
     /**
+     * Marks that a Job is still being processed
+     *
+     * @param JobInterface $job Job
+     * @return int Number of seconds that the job visibility was postponed
+     */
+    public function processing(JobInterface $job)
+    {
+        $this->checkConnected();
+        return $this->client->working($job->getId());
+    }
+
+    /**
      * Acknowledges a Job as properly handled
      *
      * @param JobInterface $job Job

@@ -7,6 +7,7 @@ All Notable changes will be documented in this file. This project adheres to
 
 ### Added
 - Added support for `WORKING`.
+- Added `processing()` method to Queue API.
 
 ## [1.2.1] - 2015-05-14
 

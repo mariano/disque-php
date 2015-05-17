@@ -186,6 +186,24 @@ You do so via the `processed()` method, like so:
 $disque->queue('my_queue')->processed($job);
 ```
 
+### Jobs that consume a long time to process
+
+If you are processing a job that requires a long time to be done, it is good
+practice to call `processing()`, that way Disque is informed that we are still
+working on the job, and avoids it from being requeued under the assumption
+that the job could not be processed correctly. For example:
+
+```php
+$queue = $disque->queue('my_queue');
+$job = $queue->pull();
+for ($i=0; $i < 10; $i++) {
+    // Every 2 seconds inform that we are working on the job
+    $queue->processing($job);
+}
+// We are done with the job
+$queue->processed($job);
+```
+
 ## Changing the Job class
 
 You can choose to have your own Job classes when using the Queue API. To do
