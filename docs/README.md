@@ -20,11 +20,12 @@ $client = new \Disque\Client([
 ]);
 ```
 
-If no host is specified, `127.0.0.1:7711` is assumed. Hosts can also be added
-via the `addServer($host, $port)` method:
+If no host is specified, no server is initialized. Hosts can also be added
+via the `addServer($host, $port, $password)` method:
 
 ```php
 $client = new \Disque\Client();
+$client->addServer('127.0.0.1', 7711, 'my_password');
 $client->addServer('127.0.0.1', 7712);
 ```
 
@@ -337,6 +338,17 @@ $client = new \Disque\Client([
     '127.0.0.1:7711',
     '127.0.0.1:7712'
 ]);
+$result = $client->connect();
+var_dump($result);
+```
+
+You can also specify servers that require a password for connection. To do so,
+use the `addServer()` method, like so:
+
+```php
+$client = new \Disque\Client();
+$client->addServer('127.0.0.1', 7711, 'my_password');
+$client->addServer('127.0.0.1, 7712, 'my_password2');
 $result = $client->connect();
 var_dump($result);
 ```

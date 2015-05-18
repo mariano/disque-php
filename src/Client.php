@@ -59,7 +59,7 @@ class Client
      *
      * @param array $servers Servers (`host`:`port`)
      */
-    public function __construct(array $servers = ['127.0.0.1:7711'])
+    public function __construct(array $servers = [])
     {
         foreach ([
             'ACKJOB' => Command\AckJob::class,
@@ -115,12 +115,13 @@ class Client
      *
      * @param string $host Host
      * @param int $port Port
+     * @param string $password Password to use when connecting to this server
      * @return void
      * @throws InvalidArgumentException
      */
-    public function addServer($host, $port = 7711)
+    public function addServer($host, $port = 7711, $password = null)
     {
-        $this->connectionManager->addServer($host, $port);
+        $this->connectionManager->addServer($host, $port, $password);
     }
 
     /**

@@ -2,6 +2,7 @@
 namespace Disque\Connection;
 
 use InvalidArgumentException;
+use Disque\Command\Auth;
 use Disque\Command\CommandInterface;
 use Disque\Command\GetJob;
 use Disque\Command\Hello;
@@ -102,17 +103,18 @@ class Manager implements ManagerInterface
      *
      * @param string $host Host
      * @param int $port Port
+     * @param string $password Password to use when connecting to this server
      * @return void
      * @throws InvalidArgumentException
      */
-    public function addServer($host, $port = 7711)
+    public function addServer($host, $port = 7711, $password = null)
     {
         if (!is_string($host) || !is_int($port)) {
             throw new InvalidArgumentException('Invalid server specified');
         }
 
         $port = (int) $port;
-        $this->servers[] = compact('host', 'port');
+        $this->servers[] = compact('host', 'port', 'password');
     }
 
     /**
@@ -155,6 +157,7 @@ class Manager implements ManagerInterface
      * Connect to Disque
      *
      * @return array Connected node information
+     * @throws AuthenticationException
      * @throws ConnectionException
      */
     public function connect()
@@ -215,6 +218,7 @@ class Manager implements ManagerInterface
      *
      * @return array Indexed array with `connection` and `hello`. `connection`
      * could end up being null
+     * @throws AuthenticationException
      * @throws ConnectionException
      */
     protected function findAvailableConnection()
@@ -246,9 +250,10 @@ class Manager implements ManagerInterface
     /**
      * Get a node connection and its HELLO result
      *
-     * @param array $server Server (with `host`, and `port`)
+     * @param array $server Server (with `host`, `port`, and `password`)
      * @return array Indexed array with `connection` and `hello`. `connection`
      * could end up being null
+     * @throws AuthenticationException
      */
     protected function getNodeConnection(array $server)
     {
@@ -256,13 +261,37 @@ class Manager implements ManagerInterface
         $connection = $this->buildConnection($server['host'], $server['port']);
         $hello = [];
         try {
-            $connection->connect($this->options);
+            $this->doConnect($connection, $server, $this->options);
             $hello = $helloCommand->parse($connection->execute($helloCommand));
         } catch (ConnectionException $e) {
+            $message = $e->getMessage();
+            if (stripos($message, 'NOAUTH') === 0) {
+                throw new AuthenticationException($message);
+            }
             $connection = null;
             $hello = [];
         }
         return compact('connection', 'hello');
+    }
+
+    /**
+     * Actually perform the connection
+     *
+     * @param ConnectionInterface $connection Connection
+     * @param array $server Server (with `host`, `port`, and `password`)
+     * @param array $options Connection options
+     */
+    private function doConnect(ConnectionInterface $connection, array $server, array $options)
+    {
+        $connection->connect($options);
+        if (!empty($server['password'])) {
+            $authCommand = new Auth();
+            $authCommand->setArguments([$server['password']]);
+            $response = $authCommand->parse($connection->execute($authCommand));
+            if ($response !== 'OK') {
+                throw new AuthenticationException();
+            }
+        }
     }
 
     /**

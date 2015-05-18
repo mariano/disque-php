@@ -149,7 +149,7 @@ class Socket extends BaseConnection implements ConnectionInterface
                 return (string) $data;
             case '-':
                 $data = (string) $data;
-                throw new ResponseException("Error received from client: {$data}");
+                throw new ResponseException($data);
             case ':':
                 return (int) $data;
             case '$':

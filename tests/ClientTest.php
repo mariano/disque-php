@@ -49,9 +49,7 @@ class ClientTest extends PHPUnit_Framework_TestCase
     public function testConstruct()
     {
         $c = new MockClient();
-        $this->assertSame([
-            ['host' => '127.0.0.1', 'port' => 7711]
-        ], $c->getConnectionManager()->getServers());
+        $this->assertSame([], $c->getConnectionManager()->getServers());
     }
 
     public function testConstructNoServers()
@@ -73,8 +71,8 @@ class ClientTest extends PHPUnit_Framework_TestCase
             '127.0.0.1:7712',
         ]);
         $this->assertSame([
-            ['host' => '127.0.0.1', 'port' => 7711],
-            ['host' => '127.0.0.1', 'port' => 7712],
+            ['host' => '127.0.0.1', 'port' => 7711, 'password' => null],
+            ['host' => '127.0.0.1', 'port' => 7712, 'password' => null],
         ], $c->getConnectionManager()->getServers());
     }
 
@@ -85,8 +83,8 @@ class ClientTest extends PHPUnit_Framework_TestCase
             '127.0.0.1:7712',
         ]);
         $this->assertSame([
-            ['host' => '127.0.0.1', 'port' => 7711],
-            ['host' => '127.0.0.1', 'port' => 7712],
+            ['host' => '127.0.0.1', 'port' => 7711, 'password' => null],
+            ['host' => '127.0.0.1', 'port' => 7712, 'password' => null],
         ], $c->getConnectionManager()->getServers());
     }
 

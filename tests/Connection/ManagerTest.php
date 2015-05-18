@@ -6,13 +6,16 @@ use DateTime;
 use InvalidArgumentException;
 use Mockery as m;
 use PHPUnit_Framework_TestCase;
+use Disque\Command\Auth;
 use Disque\Command\CommandInterface;
 use Disque\Command\GetJob;
 use Disque\Command\Hello;
+use Disque\Connection\AuthenticationException;
 use Disque\Connection\BaseConnection;
 use Disque\Connection\ConnectionException;
 use Disque\Connection\ConnectionInterface;
 use Disque\Connection\Manager;
+use Disque\Connection\ResponseException;
 use Disque\Connection\Socket;
 
 class MockManager extends Manager
@@ -123,7 +126,7 @@ class ManagerTest extends PHPUnit_Framework_TestCase
         $m = new Manager();
         $m->addServer('127.0.0.1', 7712);
         $this->assertSame([
-            ['host' => '127.0.0.1', 'port' => 7712],
+            ['host' => '127.0.0.1', 'port' => 7712, 'password' => null],
         ], $m->getServers());
     }
 
@@ -132,18 +135,29 @@ class ManagerTest extends PHPUnit_Framework_TestCase
         $m = new Manager();
         $m->addServer('other.host');
         $this->assertEquals([
-            ['host' => 'other.host', 'port' => 7711],
+            ['host' => 'other.host', 'port' => 7711, 'password' => null],
+        ], $m->getServers());
+    }
+
+    public function testAddServerPassword()
+    {
+        $m = new Manager();
+        $m->addServer('127.0.0.1', 7712, 'my_password');
+        $this->assertSame([
+            ['host' => '127.0.0.1', 'port' => 7712, 'password' => 'my_password'],
         ], $m->getServers());
     }
 
     public function testAddServers()
     {
         $m = new Manager();
-        $m->addServer('127.0.0.1', 7711);
+        $m->addServer('127.0.0.1', 7711, 'my_password1');
         $m->addServer('127.0.0.1', 7712);
+        $m->addServer('127.0.0.1', 7713, 'my_password3');
         $this->assertSame([
-            ['host' => '127.0.0.1', 'port' => 7711],
-            ['host' => '127.0.0.1', 'port' => 7712],
+            ['host' => '127.0.0.1', 'port' => 7711, 'password' => 'my_password1'],
+            ['host' => '127.0.0.1', 'port' => 7712, 'password' => null],
+            ['host' => '127.0.0.1', 'port' => 7713, 'password' => 'my_password3'],
         ], $m->getServers());
     }
 
@@ -281,6 +295,100 @@ class ManagerTest extends PHPUnit_Framework_TestCase
         $connection = m::mock(ConnectionInterface::class)
             ->shouldReceive('connect')
             ->with(['test' => 'stuff'])
+            ->once()
+            ->shouldReceive('execute')
+            ->with(m::type(Hello::class))
+            ->andReturn([
+                'v1',
+                'id1',
+                ['id1', '127.0.0.1', 7711, 'v1'],
+                ['id2', '127.0.0.1', 7712, 'v1']
+            ])
+            ->mock();
+
+        $m->setBuildConnection($connection);
+        $m->connect([]);
+    }
+
+    public function testConnectWithPasswordMissingPassword()
+    {
+        $m = new MockManager();
+        $m->addServer('127.0.0.1', 7711);
+        $m->setAvailableConnection(false); // Passthru
+
+        $connection = m::mock(ConnectionInterface::class)
+            ->shouldReceive('connect')
+            ->with([])
+            ->once()
+            ->shouldReceive('execute')
+            ->with(m::type(Hello::class))
+            ->andThrow(new ResponseException('NOAUTH Authentication Required'))
+            ->once()
+            ->mock();
+
+        $m->setBuildConnection($connection);
+
+        $this->setExpectedException(AuthenticationException::class, 'NOAUTH Authentication Required');
+        $m->connect([]);
+    }
+
+    public function testConnectWithPasswordWrongPassword()
+    {
+        $m = new MockManager();
+        $m->addServer('127.0.0.1', 7711, 'wrong_password');
+        $m->setAvailableConnection(false); // Passthru
+
+        $connection = m::mock(ConnectionInterface::class)
+            ->shouldReceive('connect')
+            ->with([])
+            ->once()
+            ->shouldReceive('execute')
+            ->with(m::type(Auth::class))
+            ->andThrow(new ResponseException('ERR invalid password'))
+            ->once()
+            ->mock();
+
+        $m->setBuildConnection($connection);
+
+        $this->setExpectedException(ConnectionException::class, 'No servers available');
+        $m->connect([]);
+    }
+
+    public function testConnectWithPasswordWrongResponse()
+    {
+        $m = new MockManager();
+        $m->addServer('127.0.0.1', 7711, 'right_password');
+        $m->setAvailableConnection(false); // Passthru
+
+        $connection = m::mock(ConnectionInterface::class)
+            ->shouldReceive('connect')
+            ->with([])
+            ->once()
+            ->shouldReceive('execute')
+            ->with(m::type(Auth::class))
+            ->andReturn('WHATEVER')
+            ->once()
+            ->mock();
+
+        $m->setBuildConnection($connection);
+
+        $this->setExpectedException(ConnectionException::class, 'No servers available');
+        $m->connect([]);
+    }
+
+    public function testConnectWithPasswordRightPassword()
+    {
+        $m = new MockManager();
+        $m->addServer('127.0.0.1', 7711, 'right_password');
+        $m->setAvailableConnection(false); // Passthru
+
+        $connection = m::mock(ConnectionInterface::class)
+            ->shouldReceive('connect')
+            ->with([])
+            ->once()
+            ->shouldReceive('execute')
+            ->with(m::type(Auth::class))
+            ->andReturn('OK')
             ->once()
             ->shouldReceive('execute')
             ->with(m::type(Hello::class))

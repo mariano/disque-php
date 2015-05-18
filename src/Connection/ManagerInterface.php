@@ -65,6 +65,7 @@ interface ManagerInterface
      * Connect to Disque
      *
      * @return array Connected node information
+     * @throws AuthenticationException
      * @throws ConnectionException
      */
     public function connect();

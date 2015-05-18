@@ -163,7 +163,7 @@ class SocketTest extends PHPUnit_Framework_TestCase
 
     public function testReceiveErrorFromClient()
     {
-        $this->setExpectedException(ResponseException::class, 'Error received from client: Error from Disque');
+        $this->setExpectedException(ResponseException::class, 'Error from Disque');
 
         $socket = fopen('php://memory','rw');
         fwrite($socket, "-Error from Disque\r\n");
