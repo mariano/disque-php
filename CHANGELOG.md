@@ -8,6 +8,7 @@ All Notable changes will be documented in this file. This project adheres to
 ### Changed
 - Exception `Disque\Connection\ResponseException` has been moved to 
 `Disque\Connection\Response\ResponseException`
+- Added `$options` option to addServer()` in `Disque\Client`
 
 ## [1.3.0] - 2015-05-18
 

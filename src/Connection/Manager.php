@@ -18,13 +18,6 @@ class Manager implements ManagerInterface
     protected $servers = [];
 
     /**
-     * Connection options
-     *
-     * @var array
-     */
-    protected $options = [];
-
-    /**
      * If a node has produced at least these number of jobs, switch there
      *
      * @var int
@@ -104,28 +97,18 @@ class Manager implements ManagerInterface
      * @param string $host Host
      * @param int $port Port
      * @param string $password Password to use when connecting to this server
+     * @param array $options Connection options
      * @return void
      * @throws InvalidArgumentException
      */
-    public function addServer($host, $port = 7711, $password = null)
+    public function addServer($host, $port = 7711, $password = null, array $options = [])
     {
         if (!is_string($host) || !is_int($port)) {
             throw new InvalidArgumentException('Invalid server specified');
         }
 
         $port = (int) $port;
-        $this->servers[] = compact('host', 'port', 'password');
-    }
-
-    /**
-     * Set connection options sent to the connector's `connect` method
-     *
-     * @param array $options Connection options
-     * @return void
-     */
-    public function setOptions(array $options)
-    {
-        $this->options = $options;
+        $this->servers[] = compact('host', 'options', 'port', 'password');
     }
 
     /**
@@ -229,7 +212,7 @@ class Manager implements ManagerInterface
     /**
      * Get a node connection and its HELLO result
      *
-     * @param array $server Server (with `host`, `port`, and `password`)
+     * @param array $server Server (with `host`, `options`, `port`, and `password`)
      * @return array Indexed array with `connection` and `hello`. `connection`
      * could end up being null
      * @throws AuthenticationException
@@ -240,7 +223,7 @@ class Manager implements ManagerInterface
         $connection = $this->buildConnection($server['host'], $server['port']);
         $hello = [];
         try {
-            $this->doConnect($connection, $server, $this->options);
+            $this->doConnect($connection, $server);
             $hello = $helloCommand->parse($connection->execute($helloCommand));
         } catch (ConnectionException $e) {
             $message = $e->getMessage();
@@ -257,12 +240,13 @@ class Manager implements ManagerInterface
      * Actually perform the connection
      *
      * @param ConnectionInterface $connection Connection
-     * @param array $server Server (with `host`, `port`, and `password`)
+     * @param array $server Server (with `host`, `options', `port`, and `password`)
      * @param array $options Connection options
      */
-    private function doConnect(ConnectionInterface $connection, array $server, array $options)
+    private function doConnect(ConnectionInterface $connection, array $server)
     {
-        $connection->connect($options);
+        $server += ['options' => []];
+        $connection->connect($server['options']);
         if (!empty($server['password'])) {
             $authCommand = new Auth();
             $authCommand->setArguments([$server['password']]);

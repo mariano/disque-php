@@ -33,10 +33,12 @@ interface ManagerInterface
      *
      * @param string $host Host
      * @param int $port Port
+     * @param string $password Password to use when connecting to this server
+     * @param array $options Connection options
      * @return void
      * @throws InvalidArgumentException
      */
-    public function addServer($host, $port = 7711);
+    public function addServer($host, $port = 7711, $password = null, array $options = []);
 
     /**
      * If a node has produced at least these number of jobs, switch there
@@ -45,14 +47,6 @@ interface ManagerInterface
      * @return void
      */
     public function setMinimumJobsToChangeNode($minimumJobsToChangeNode);
-
-    /**
-     * Set connection options sent to the connector's `connect` method
-     *
-     * @param array $options Connection options
-     * @return void
-     */
-    public function setOptions(array $options);
 
     /**
      * Tells if connection is established

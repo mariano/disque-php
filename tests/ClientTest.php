@@ -70,9 +70,9 @@ class ClientTest extends PHPUnit_Framework_TestCase
             '127.0.0.1:7711',
             '127.0.0.1:7712',
         ]);
-        $this->assertSame([
-            ['host' => '127.0.0.1', 'port' => 7711, 'password' => null],
-            ['host' => '127.0.0.1', 'port' => 7712, 'password' => null],
+        $this->assertEquals([
+            ['host' => '127.0.0.1', 'port' => 7711, 'password' => null, 'options' => []],
+            ['host' => '127.0.0.1', 'port' => 7712, 'password' => null, 'options' => []],
         ], $c->getConnectionManager()->getServers());
     }
 
@@ -82,9 +82,9 @@ class ClientTest extends PHPUnit_Framework_TestCase
             '127.0.0.1',
             '127.0.0.1:7712',
         ]);
-        $this->assertSame([
-            ['host' => '127.0.0.1', 'port' => 7711, 'password' => null],
-            ['host' => '127.0.0.1', 'port' => 7712, 'password' => null],
+        $this->assertEquals([
+            ['host' => '127.0.0.1', 'port' => 7711, 'password' => null, 'options' => []],
+            ['host' => '127.0.0.1', 'port' => 7712, 'password' => null, 'options' => []],
         ], $c->getConnectionManager()->getServers());
     }
 

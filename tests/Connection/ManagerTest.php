@@ -125,8 +125,8 @@ class ManagerTest extends PHPUnit_Framework_TestCase
     {
         $m = new Manager();
         $m->addServer('127.0.0.1', 7712);
-        $this->assertSame([
-            ['host' => '127.0.0.1', 'port' => 7712, 'password' => null],
+        $this->assertEquals([
+            ['host' => '127.0.0.1', 'port' => 7712, 'password' => null, 'options' => []],
         ], $m->getServers());
     }
 
@@ -135,7 +135,7 @@ class ManagerTest extends PHPUnit_Framework_TestCase
         $m = new Manager();
         $m->addServer('other.host');
         $this->assertEquals([
-            ['host' => 'other.host', 'port' => 7711, 'password' => null],
+            ['host' => 'other.host', 'port' => 7711, 'password' => null, 'options' => []],
         ], $m->getServers());
     }
 
@@ -143,8 +143,8 @@ class ManagerTest extends PHPUnit_Framework_TestCase
     {
         $m = new Manager();
         $m->addServer('127.0.0.1', 7712, 'my_password');
-        $this->assertSame([
-            ['host' => '127.0.0.1', 'port' => 7712, 'password' => 'my_password'],
+        $this->assertEquals([
+            ['host' => '127.0.0.1', 'port' => 7712, 'password' => 'my_password', 'options' => []],
         ], $m->getServers());
     }
 
@@ -154,10 +154,10 @@ class ManagerTest extends PHPUnit_Framework_TestCase
         $m->addServer('127.0.0.1', 7711, 'my_password1');
         $m->addServer('127.0.0.1', 7712);
         $m->addServer('127.0.0.1', 7713, 'my_password3');
-        $this->assertSame([
-            ['host' => '127.0.0.1', 'port' => 7711, 'password' => 'my_password1'],
-            ['host' => '127.0.0.1', 'port' => 7712, 'password' => null],
-            ['host' => '127.0.0.1', 'port' => 7713, 'password' => 'my_password3'],
+        $this->assertEquals([
+            ['host' => '127.0.0.1', 'port' => 7711, 'password' => 'my_password1', 'options' => []],
+            ['host' => '127.0.0.1', 'port' => 7712, 'password' => null, 'options' => []],
+            ['host' => '127.0.0.1', 'port' => 7713, 'password' => 'my_password3', 'options' => []],
         ], $m->getServers());
     }
 
@@ -222,8 +222,7 @@ class ManagerTest extends PHPUnit_Framework_TestCase
     public function testConnectWithOptions()
     {
         $m = new MockManager();
-        $m->addServer('127.0.0.1', 7711);
-        $m->setOptions(['test' => 'stuff']);
+        $m->addServer('127.0.0.1', 7711, null, ['test' => 'stuff']);
         $m->setAvailableConnection(false); // Passthru
 
         $connection = m::mock(ConnectionInterface::class)
