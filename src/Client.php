@@ -138,7 +138,6 @@ class Client
     /**
      * Connect to Disque
      *
-     * @param array $options Connection options
      * @return array Connected node information
      * @throws Disque\Connection\ConnectionException
      */
