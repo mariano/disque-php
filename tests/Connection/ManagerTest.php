@@ -342,7 +342,7 @@ class ManagerTest extends PHPUnit_Framework_TestCase
     {
         $m = new MockManager();
         $m->setAvailableConnection(false); // Passthru
-        $this->setExpectedException(ConnectionException::class, 'No servers specified');
+        $this->setExpectedException(ConnectionException::class, 'No servers available');
         $m->connect([]);
     }
 

@@ -1,12 +1,12 @@
 <?php
 namespace Disque\Connection;
 
-use InvalidArgumentException;
 use Disque\Command\Auth;
 use Disque\Command\CommandInterface;
 use Disque\Command\GetJob;
 use Disque\Command\Hello;
 use Disque\Connection\ConnectionException;
+use InvalidArgumentException;
 
 class Manager implements ManagerInterface
 {
@@ -187,13 +187,11 @@ class Manager implements ManagerInterface
      *
      * @param CommandInterface $command Command
      * @return mixed Command response
+     * @throws ConnectionException
      */
     public function execute(CommandInterface $command)
     {
-        if (!$this->isConnected()) {
-            throw new ConnectionException('Not connected');
-        }
-
+        $this->shouldBeConnected();
         $response = $this->nodes[$this->nodeId]['connection']->execute($command);
         if ($command instanceof GetJob && $this->minimumJobsToChangeNode > 0) {
             try {
@@ -215,28 +213,17 @@ class Manager implements ManagerInterface
      */
     protected function findAvailableConnection()
     {
-        if (empty($this->servers)) {
-            throw new ConnectionException('No servers specified');
-        }
-
-        $node = [];
         $servers = $this->servers;
         while (!empty($servers)) {
             $key = array_rand($servers, 1);
             $server = $servers[$key];
             $node = $this->getNodeConnection($server);
             if (isset($node['connection'])) {
-                break;
+                return array_intersect_key($node, ['connection'=>null, 'hello'=>null]);
             }
             unset($servers[$key]);
         }
-        if (!isset($node['connection'])) {
-            throw new ConnectionException('No servers available');
-        }
-        return [
-            'connection' => $node['connection'],
-            'hello' => $node['hello']
-        ];
+        throw new ConnectionException('No servers available');
     }
 
     /**
@@ -336,19 +323,27 @@ class Manager implements ManagerInterface
             return;
         }
 
-        if (!isset($this->nodes[$id]['connection'])) {
-            $node = $this->getNodeConnection($this->nodes[$id]);
-            if (!isset($node['connection'])) {
-                throw new ConnectionException("Could not connect to node {$id}");
-            }
-            $this->nodes[$id]['connection'] = $node['connection'];
-        }
-
+        $this->loadNodeConnection($id);
+        $this->nodeId = $id;
         foreach ($this->nodes as $id => $node) {
             $this->nodes[$id]['jobs'] = 0;
         }
+    }
 
-        $this->nodeId = $id;
+    /**
+     * Ensure a connection is made to the given node ID
+     *
+     * @param string $id Node ID
+     * @return void
+     * @throws ConnectionException
+     */
+    private function loadNodeConnection($id)
+    {
+        $node = $this->getNodeConnection($this->nodes[$id]);
+        if (!isset($node['connection'])) {
+            throw new ConnectionException("Could not connect to node {$id}");
+        }
+        $this->nodes[$id]['connection'] = $node['connection'];
     }
 
     /**
@@ -368,5 +363,18 @@ class Manager implements ManagerInterface
         }
 
         return $this->nodePrefixes[$nodePrefix];
+    }
+
+    /**
+     * We should be connected
+     *
+     * @return void
+     * @throws ConnectionException
+     */
+    private function shouldBeConnected()
+    {
+        if (!$this->isConnected()) {
+            throw new ConnectionException('Not connected');
+        }
     }
 }
