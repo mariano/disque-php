@@ -15,7 +15,7 @@ use Disque\Connection\BaseConnection;
 use Disque\Connection\ConnectionException;
 use Disque\Connection\ConnectionInterface;
 use Disque\Connection\Manager;
-use Disque\Connection\ResponseException;
+use Disque\Connection\Response\ResponseException;
 use Disque\Connection\Socket;
 
 class MockManager extends Manager

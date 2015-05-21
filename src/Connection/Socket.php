@@ -1,7 +1,10 @@
 <?php
 namespace Disque\Connection;
 
+use Exception;
 use Disque\Command\CommandInterface;
+use Disque\Connection\Response\ResponseException;
+use Disque\Connection\Response;
 
 /**
  * This class is greatly inspired by `Predis\Connection\StreamConnection`,
@@ -11,14 +14,25 @@ use Disque\Command\CommandInterface;
  */
 class Socket extends BaseConnection implements ConnectionInterface
 {
-    const READ_BUFFER_LENGTH = 8192;
-
     /**
      * Socket handle
      *
      * @var resource
      */
     protected $socket;
+
+    /**
+     * Response handlers
+     *
+     * @var array
+     */
+    private $responseHandlers = [
+        '+' => Response\StringResponse::class,
+        '-' => Response\ErrorResponse::class,
+        ':' => Response\IntResponse::class,
+        '$' => Response\TextResponse::class,
+        '*' => Response\ArrayResponse::class
+    ];
 
     /**
      * Connect
@@ -143,48 +157,24 @@ class Socket extends BaseConnection implements ConnectionInterface
         }
 
         $type = $this->getType($keepWaiting);
-        $data = $this->getData();
-        switch ($type) {
-            case '+':
-                return (string) $data;
-            case '-':
-                $data = (string) $data;
-                throw new ResponseException($data);
-            case ':':
-                return (int) $data;
-            case '$':
-                $bytes = (int) $data;
-                if ($bytes < 0) {
-                    return null;
-                }
-
-                $bytes += 2; // CRLF
-                $string = '';
-
-                do {
-                    $buffer = fread($this->socket, min($bytes, self::READ_BUFFER_LENGTH));
-                    if ($buffer === false || $buffer === '') {
-                        throw new ConnectionException('Error while reading buffered string from client');
-                    }
-                    $string .= $buffer;
-                    $bytes -= strlen($buffer);
-                } while ($bytes > 0);
-
-                return substr($string, 0, -2); // Remove last CRLF
-            case '*':
-                $count = (int) $data;
-                if ($count < 0) {
-                    return null;
-                }
-
-                $elements = [];
-                for ($i=0; $i < $count; $i++) {
-                    $elements[$i] = $this->receive($keepWaiting);
-                }
-                return $elements;
+        if (!array_key_exists($type, $this->responseHandlers)) {
+            throw new ResponseException("Don't know how to handle a response of type {$type}");
         }
 
-        throw new ResponseException("Don't know how to handle a response of type {$type}");
+        $responseHandlerClass = $this->responseHandlers[$type];
+        $responseHandler = new $responseHandlerClass($this->getData());
+        $responseHandler->setReader(function ($bytes) {
+            return fread($this->socket, $bytes);
+        });
+        $responseHandler->setReceiver(function () use ($keepWaiting) {
+            return $this->receive($keepWaiting);
+        });
+        $response = $responseHandler->parse();
+        if ($response instanceof Exception) {
+            throw $response;
+        }
+
+        return $response;
     }
 
     /**
@@ -241,7 +231,6 @@ class Socket extends BaseConnection implements ConnectionInterface
         if ($data === false || $data === '') {
             throw new ConnectionException('Nothing received while reading from client');
         }
-
-        return substr($data, 0, -2); // Get rid of last CRLF
+        return $data;
     }
 }

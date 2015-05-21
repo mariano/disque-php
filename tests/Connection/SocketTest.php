@@ -6,7 +6,8 @@ use PHPUnit_Framework_TestCase;
 use Disque\Command;
 use Disque\Connection\ConnectionException;
 use Disque\Connection\ConnectionInterface;
-use Disque\Connection\ResponseException;
+use Disque\Connection\Response\ResponseException;
+use Disque\Connection\Response\TextResponse;
 use Disque\Connection\Socket;
 
 class MockSocket extends Socket
@@ -249,7 +250,7 @@ class SocketTest extends PHPUnit_Framework_TestCase
 
     public static function dataProviderForTestReceive()
     {
-        $longString = str_repeat('ABC', Socket::READ_BUFFER_LENGTH * 10);
+        $longString = str_repeat('ABC', TextResponse::READ_BUFFER_LENGTH * 10);
         return [
             [
                 'data' => '+',
