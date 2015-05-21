@@ -122,7 +122,7 @@ class Client
      */
     public function addServer($host, $port = 7711, $password = null, array $options = [])
     {
-        $this->connectionManager->addServer($host, $port, $password);
+        $this->connectionManager->addServer($host, $port, $password, $options);
     }
 
     /**
