@@ -2,9 +2,9 @@
 namespace Disque;
 
 use Disque\Command;
-use Disque\Connection\Manager;
 use Disque\Command\CommandInterface;
 use Disque\Command\InvalidCommandException;
+use Disque\Connection\Manager;
 use Disque\Queue\Queue;
 use InvalidArgumentException;
 
@@ -116,10 +116,11 @@ class Client
      * @param string $host Host
      * @param int $port Port
      * @param string $password Password to use when connecting to this server
+     * @param array $options Connection otptions
      * @return void
      * @throws InvalidArgumentException
      */
-    public function addServer($host, $port = 7711, $password = null)
+    public function addServer($host, $port = 7711, $password = null, array $options = [])
     {
         $this->connectionManager->addServer($host, $port, $password);
     }
@@ -141,9 +142,8 @@ class Client
      * @return array Connected node information
      * @throws Disque\Connection\ConnectionException
      */
-    public function connect(array $options = [])
+    public function connect()
     {
-        $this->connectionManager->setOptions($options);
         return $this->connectionManager->connect();
     }
 

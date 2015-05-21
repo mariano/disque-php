@@ -241,7 +241,6 @@ class Manager implements ManagerInterface
      *
      * @param ConnectionInterface $connection Connection
      * @param array $server Server (with `host`, `options', `port`, and `password`)
-     * @param array $options Connection options
      */
     private function doConnect(ConnectionInterface $connection, array $server)
     {
