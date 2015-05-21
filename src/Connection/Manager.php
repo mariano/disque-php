@@ -165,26 +165,18 @@ class Manager implements ManagerInterface
         $result = $this->findAvailableConnection();
         if (!isset($result['connection'])) {
             throw new ConnectionException('No servers available');
-        } elseif (empty($result['hello']) || empty($result['hello']['nodes']) || empty($result['hello']['id'])) {
-            throw new ConnectionException('Invalid HELLO response when connecting');
         }
 
         $hello = $result['hello'];
-        $connection = $result['connection'];
-
         $this->nodes = [];
         $this->nodeId = $hello['id'];
         foreach ($hello['nodes'] as $node) {
             $this->nodePrefixes[substr($node['id'], 2, 8)] = $node['id'];
             $this->nodes[$node['id']] = [
-                'connection' => ($node['id'] === $this->nodeId ? $connection : null),
+                'connection' => ($node['id'] === $this->nodeId ? $result['connection'] : null),
                 'port' => (int) $node['port'],
                 'jobs' => 0
             ] + array_intersect_key($node, ['id'=>null, 'host'=>null, 'version'=>null]);
-        }
-
-        if (!array_key_exists($hello['id'], $this->nodes)) {
-            throw new ConnectionException("Connected node #{$hello['id']} could not be found in list of nodes");
         }
 
         return $hello;
@@ -320,29 +312,15 @@ class Manager implements ManagerInterface
     private function changeNodeIfNeeded(array $jobs)
     {
         foreach ($jobs as $job) {
-            $nodePrefix = substr($job['id'], 2, 8);
-            if (
-                !isset($this->nodePrefixes[$nodePrefix]) ||
-                !array_key_exists($this->nodePrefixes[$nodePrefix], $this->nodes)
-            ) {
+            $nodeId = $this->getNodeIdFromJobId($job['id']);
+            if (!isset($nodeId)) {
                 continue;
             }
-
-            $nodeId = $this->nodePrefixes[$nodePrefix];
             $this->nodes[$nodeId]['jobs']++;
             if ($this->nodes[$nodeId]['jobs'] >= $this->minimumJobsToChangeNode) {
-                $newNodeId = $nodeId;
-                break;
+                $this->setNode($nodeId);
+                return;
             }
-        }
-
-        if (!isset($newNodeId) || $newNodeId === $this->nodeId) {
-            return;
-        }
-
-        $this->setNode($newNodeId);
-        foreach ($this->nodes as $id => $node) {
-            $this->nodes[$id]['jobs'] = 0;
         }
     }
 
@@ -354,6 +332,10 @@ class Manager implements ManagerInterface
      */
     private function setNode($id)
     {
+        if ($id === $this->nodeId) {
+            return;
+        }
+
         if (!isset($this->nodes[$id]['connection'])) {
             $node = $this->getNodeConnection($this->nodes[$id]);
             if (!isset($node['connection'])) {
@@ -362,6 +344,29 @@ class Manager implements ManagerInterface
             $this->nodes[$id]['connection'] = $node['connection'];
         }
 
+        foreach ($this->nodes as $id => $node) {
+            $this->nodes[$id]['jobs'] = 0;
+        }
+
         $this->nodeId = $id;
+    }
+
+    /**
+     * Get node ID based off a Job ID
+     *
+     * @param string $jobId Job ID
+     * @return string|null Node ID
+     */
+    private function getNodeIdFromJobId($jobId)
+    {
+        $nodePrefix = substr($jobId, 2, 8);
+        if (
+            !isset($this->nodePrefixes[$nodePrefix]) ||
+            !array_key_exists($this->nodePrefixes[$nodePrefix], $this->nodes)
+        ) {
+            return null;
+        }
+
+        return $this->nodePrefixes[$nodePrefix];
     }
 }

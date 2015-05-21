@@ -135,16 +135,6 @@ class SocketTest extends PHPUnit_Framework_TestCase
         $connection->send("stuff");
     }
 
-    public function testSendErrorInvalidData()
-    {
-        $this->setExpectedException(ConnectionException::class, 'Invalid data to be sent to client');
-
-        $socket = fopen('php://memory','rw');
-        $connection = new MockSocket();
-        $connection->setSocket($socket);
-        $connection->send(['test' => 'stuff']);
-    }
-
     public function testSend()
     {
         $socket = fopen('php://memory','rw');

@@ -119,15 +119,7 @@ class Socket extends BaseConnection implements ConnectionInterface
      */
     public function send($data)
     {
-        if (!$this->isConnected()) {
-            throw new ConnectionException('No connection established');
-        }
-
-        if (!is_string($data)) {
-            throw new ConnectionException('Invalid data to be sent to client');
-        } elseif ($data === '') {
-            return;
-        }
+        $this->shouldBeConnected();
 
         do {
             $length = strlen($data);
@@ -152,9 +144,7 @@ class Socket extends BaseConnection implements ConnectionInterface
      */
     public function receive($keepWaiting = false)
     {
-        if (!$this->isConnected()) {
-            throw new ConnectionException('No connection established');
-        }
+        $this->shouldBeConnected();
 
         $type = $this->getType($keepWaiting);
         if (!array_key_exists($type, $this->responseHandlers)) {
@@ -232,5 +222,18 @@ class Socket extends BaseConnection implements ConnectionInterface
             throw new ConnectionException('Nothing received while reading from client');
         }
         return $data;
+    }
+
+    /**
+     * We should be connected
+     *
+     * @return void
+     * @throws ConnectionException
+     */
+    private function shouldBeConnected()
+    {
+        if (!$this->isConnected()) {
+            throw new ConnectionException('No connection established');
+        }
     }
 }
