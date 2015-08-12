@@ -7,29 +7,23 @@ class JobsResponse extends BaseResponse implements ResponseInterface
 {
     use ArrayChecker;
 
+    const KEY_ID = 'id';
+    const KEY_BODY = 'body';
+
     /**
      * Job details for each job
      *
      * @var array
      */
-    private $jobDetails = [];
+    protected $jobDetails = [];
 
-    /**
-     * Create
-     *
-     * @param bool $withQueue Tells wether response has queue specified for each job
-     */
-    public function __construct($withQueue = false)
+    public function __construct()
     {
-        $this->jobDetails = ($withQueue ? ['queue', 'id', 'body'] : ['id', 'body']);
+        $this->jobDetails = [self::KEY_ID, self::KEY_BODY];
     }
 
     /**
-     * Set response body
-     *
-     * @param mixed $body Response body
-     * @return void
-     * @throws InvalidResponseException
+     * @inheritdoc
      */
     public function setBody($body)
     {
@@ -39,12 +33,15 @@ class JobsResponse extends BaseResponse implements ResponseInterface
         if (!is_array($body)) {
             throw new InvalidResponseException($this->command, $body);
         }
-        $totalJobDetails = count($this->jobDetails);
+
+        $jobDetailCount = count($this->jobDetails);
         foreach ($body as $job) {
-            if (!$this->checkFixedArray($job, $totalJobDetails)) {
+            if (!$this->checkFixedArray($job, $jobDetailCount)) {
                 throw new InvalidResponseException($this->command, $body);
             }
-            $id = ($totalJobDetails > 2 ? $job[1] : $job[0]);
+
+            $idPosition = array_search(self::KEY_ID, $this->jobDetails);
+            $id = $job[$idPosition];
             if (strpos($id, 'DI') !== 0 || strlen($id) < 10) {
                 throw new InvalidResponseException($this->command, $body);
             }
@@ -54,9 +51,7 @@ class JobsResponse extends BaseResponse implements ResponseInterface
     }
 
     /**
-     * Parse response
-     *
-     * @return array Parsed response
+     * @inheritdoc
      */
     public function parse()
     {
