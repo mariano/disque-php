@@ -23,20 +23,12 @@ class JobMarshalerTest extends PHPUnit_Framework_TestCase
         $this->assertInstanceOf(MarshalerInterface::class, $m);
     }
 
-    public function testMarshalInvalid()
-    {
-        $job = m::mock(JobInterface::class);
-        $this->setExpectedException(MarshalException::class, get_class($job) . ' is not a ' . Job::class);
-        $m = new JobMarshaler();
-        $m->marshal($job);
-    }
-
     public function testMarshalEmpty()
     {
         $m = new JobMarshaler();
         $j = new Job();
         $result = $m->marshal($j);
-        $this->assertSame('[]', $result);
+        $this->assertSame('null', $result);
     }
 
     public function testMarshalNotEmpty()

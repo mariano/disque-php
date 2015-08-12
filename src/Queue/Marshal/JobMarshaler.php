@@ -30,9 +30,6 @@ class JobMarshaler implements MarshalerInterface
      */
     public function marshal(JobInterface $job)
     {
-        if (!($job instanceof Job)) {
-            throw new MarshalException(get_class($job) . ' is not a ' . Job::class);
-        }
         return json_encode($job->getBody());
     }
 }

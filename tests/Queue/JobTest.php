@@ -16,26 +16,55 @@ class JobTest extends PHPUnit_Framework_TestCase
     public function testBodyEmpty()
     {
         $j = new Job();
-        $this->assertSame([], $j->getBody());
+        $this->assertNull($j->getBody());
     }
 
     public function testBodyNotEmpty()
     {
-        $j = new Job(['test' => 'stuff']);
-        $this->assertSame(['test' => 'stuff'], $j->getBody());
+        $body = ['test' => 'stuff'];
+        $j = new Job($body);
+        $this->assertSame($body, $j->getBody());
     }
 
-    public function testSetBodyEmpty()
+    public function nullId()
     {
         $j = new Job();
-        $j->setBody([]);
-        $this->assertSame([], $j->getBody());
+        $this->assertNull($j->getId());
     }
 
-    public function testSetBodyNotEmpty()
+    public function idNotNull()
+    {
+        $body = '';
+        $id = 'id';
+        $j = new Job($body, $id);
+        $this->assertSame($id, $j->getId());
+    }
+
+    public function zeroNacks()
     {
         $j = new Job();
-        $j->setBody(['test' => 'stuff']);
-        $this->assertSame(['test' => 'stuff'], $j->getBody());
+        $this->assertSame(0, $j->getNacks());
+    }
+
+    public function nacksSet()
+    {
+        $j = new Job();
+        $nacks = 10;
+        $j->setNacks($nacks);
+        $this->assertSame($nacks, $j->getNacks());
+    }
+
+    public function zeroAdditionalDeliveries()
+    {
+        $j = new Job();
+        $this->assertSame(0, $j->getAdditionalDeliveries());
+    }
+
+    public function additionalDeliveriesSet()
+    {
+        $j = new Job();
+        $deliveries = 10;
+        $j->setAdditionalDeliveries($deliveries);
+        $this->assertSame($deliveries, $j->getAdditionalDeliveries());
     }
 }
