@@ -12,20 +12,55 @@ abstract class BaseCommand implements CommandInterface
 {
     use StringChecker;
 
+    /**
+     * The following constants define the default behavior in case the command
+     * uses the base method setArguments()
+     *
+     * If you override the method completely, then this has no effect.
+     * @see GetJob
+     */
+
+     /**
+     * The command doesn't accept any arguments
+     * Eg. INFO
+     */
     const ARGUMENTS_TYPE_EMPTY = 0;
+
+    /**
+     * The command accepts a single argument, a string
+     * Eg. ACKJOB job_id
+     */
     const ARGUMENTS_TYPE_STRING = 1;
+
+    /**
+     * The command accepts a single string argument followed by an integer
+     * Eg. QPEEK queue_name 1
+     */
     const ARGUMENTS_TYPE_STRING_INT = 2;
+
+    /**
+     * The command accepts only string arguments and there must be at least one
+     * Eg. FASTACK job_id1 job_id2 ... job_idN
+     */
     const ARGUMENTS_TYPE_STRINGS = 3;
 
     /**
      * Available command options
+     *
+     * Provide default argument values.
+     * If the value for the argument is not provided, is null, or is false,
+     * the option will not be used.
      *
      * @var array
      */
     protected $options = [];
 
     /**
-     * Available command arguments, and their mapping to options
+     * Available optional command arguments, and their mapping to options
+     *
+     * All available optional arguments must be defined here. If they are
+     * processed by the method toArguments(), the $this->options variable
+     * will automatically provide the default values.
      *
      * @var array
      */
@@ -110,6 +145,11 @@ abstract class BaseCommand implements CommandInterface
             case self::ARGUMENTS_TYPE_STRINGS:
                 $this->checkStringArguments($arguments);
                 break;
+            // A fallback in case a non-existing argument type is defined.
+            // This could be prevented by using an Enum as the argument type
+            default:
+                throw new InvalidCommandArgumentException($this, $arguments);
+                break;
         }
         $this->arguments = $arguments;
     }
@@ -133,6 +173,10 @@ abstract class BaseCommand implements CommandInterface
     /**
      * Build command arguments out of options
      *
+     * Client-supplied options are amended with the default options defined
+     * in $this->options. Options whose value is set to null or false are
+     * ignored
+     *
      * @param array $options Command options
      * @return array Command arguments
      * @throws InvalidOptionException
@@ -145,19 +189,17 @@ abstract class BaseCommand implements CommandInterface
             throw new InvalidOptionException($this, $options);
         }
 
+        // Pad, don't overwrite, the client provided options with the default ones
         $options += $this->options;
         $arguments = [];
         foreach ($this->availableArguments as $option => $argument) {
-            if (!isset($options[$option])) {
-                continue;
-            }
-
-            $value = $options[$option];
-            if (is_null($value) || $value === false) {
+            if (!isset($options[$option]) || $options[$option] === false) {
                 continue;
             }
 
             $arguments[] = $argument;
+
+            $value = $options[$option];
             if (!is_bool($value)) {
                 $arguments[] = $value;
             }
