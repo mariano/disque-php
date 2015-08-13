@@ -19,6 +19,7 @@ interface MarshalerInterface
      *
      * @param JobInterface $job Job to put in the queue
      * @return string Source data to be put in the queue
+     * @throws MarshalException
      */
     public function marshal(JobInterface $job);
 }

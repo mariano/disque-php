@@ -52,6 +52,11 @@ class AddJob extends BaseCommand implements CommandInterface
     /**
      * Set arguments for the command
      *
+     * The first two values in the $arguments array must be the queue name and
+     * the job body. The third value is optional and if present, must be
+     * an array with further arguments.
+     * @see $availableArguments
+     *
      * @param array $arguments Arguments
      * @throws InvalidCommandArgumentException
      */

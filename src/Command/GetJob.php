@@ -60,6 +60,11 @@ class GetJob extends BaseCommand implements CommandInterface
     /**
      * Set arguments for the command
      *
+     * The $arguments must contain at least one, possibly more queue names
+     * to read from. If the last value in the $arguments array is an array,
+     * it can contain further optional arguments.
+     * @see $availableArguments
+     *
      * @param array $arguments Arguments
      * @throws InvalidOptionException
      */
