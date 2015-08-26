@@ -697,6 +697,35 @@ $info = $client->info();
 echo $info;
 ```
 
+### nack
+
+Put the job(s) back to the queue immediately and increment the nack counter.
+
+The command should be used when the worker was not able to process a job and
+wants the job to be put back into the queue in order to be processed again.
+
+It is very similar to ENQUEUE but it increments the job nacks counter
+instead of the additional-deliveries counter.
+
+```php
+nack(string... $ids): int
+```
+
+Arguments:
+
+* `string... $ids`: Each job ID as an argument
+
+Return value:
+
+* `int`: The number of jobs nacked
+
+Example call:
+
+```php
+$jobCount = $client->nack('jobid1', 'jobid2');
+```
+
+
 ### qlen
 
 The length of the queue, that is, the number of jobs available in the given

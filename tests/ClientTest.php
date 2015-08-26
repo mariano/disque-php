@@ -100,6 +100,7 @@ class ClientTest extends PHPUnit_Framework_TestCase
             'GETJOB' => Command\GetJob::class,
             'HELLO' => Command\Hello::class,
             'INFO' => Command\Info::class,
+            'NACK' => Command\Nack::class,
             'QLEN' => Command\QLen::class,
             'QPEEK' => Command\QPeek::class,
             'QSCAN' => Command\QScan::class,

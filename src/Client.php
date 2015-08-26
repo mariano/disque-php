@@ -18,6 +18,7 @@ use InvalidArgumentException;
  * @method array getJob(string... $queues, array $options = [)
  * @method array hello()
  * @method string info()
+ * @method int nack(string... $ids)
  * @method int qlen(string $queue)
  * @method array qpeek(string $queue, int $count)
  * @method array qscan(array $options = [])
@@ -71,6 +72,7 @@ class Client
             'GETJOB' => Command\GetJob::class,
             'HELLO' => Command\Hello::class,
             'INFO' => Command\Info::class,
+            'NACK' => Command\Nack::class,
             'QLEN' => Command\QLen::class,
             'QPEEK' => Command\QPeek::class,
             'QSCAN' => Command\QScan::class,
