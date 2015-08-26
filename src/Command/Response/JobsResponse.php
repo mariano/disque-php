@@ -13,6 +13,16 @@ class JobsResponse extends BaseResponse implements ResponseInterface
     /**
      * Job details for each job
      *
+     * The values in this array must follow these rules:
+     * - The number of the values must be the same as the number of rows
+     *   returned from the respective Disque command
+     * - The order of the values must follow the rows returned by Disque
+     *
+     * The values in $jobDetails will be used as keys in the final response
+     * the command returns.
+     *
+     * @see self::parse()
+     *
      * @var array
      */
     protected $jobDetails = [];
@@ -57,6 +67,12 @@ class JobsResponse extends BaseResponse implements ResponseInterface
     {
         $jobs = [];
         foreach ($this->body as $job) {
+            // To describe this crucial moment in detail: $jobDetails as well as
+            // the $job are numeric arrays with the same number of values.
+            // array_combine() combines them in a new array so that values
+            // from $jobDetails become the keys and values from $job the values.
+            // It's very important that $jobDetails are present in the same
+            // order as the response from Disque.
             $jobs[] = array_combine($this->jobDetails, $job);
         }
         return $jobs;

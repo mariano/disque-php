@@ -34,6 +34,10 @@ interface JobInterface
     /**
      * Get the number of NACKs
      *
+     * The `nacks` counter is incremented every time a worker uses the `NACK`
+     * command to tell the queue the job was not processed correctly and should
+     * be put back on the queue.
+     *
      * @return int
      */
     public function getNacks();
@@ -47,6 +51,12 @@ interface JobInterface
 
     /**
      * Get the number of additional deliveries
+     *
+     * The `additional-deliveries` counter is incremented for every other
+     * condition (different than `NACK` call) that requires a job to be put
+     * back on the queue again. This includes jobs that get lost and are
+     * enqueued again or jobs that are delivered multiple times because they
+     * time out.
      *
      * @return int
      */
