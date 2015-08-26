@@ -4,14 +4,19 @@ namespace Disque\Queue\Marshal;
 use Disque\Queue\Job;
 use Disque\Queue\JobInterface;
 
+/**
+ * Serialize and deserialize the job body
+ *
+ * Serialize the job body when adding the job to the queue,
+ * deserialize it and instantiate a new Job object when reading the job
+ * from the queue.
+ *
+ * This marshaler uses JSON serialization for the whole Job body.
+ */
 class JobMarshaler implements MarshalerInterface
 {
     /**
-     * Creates a JobInterface instance based on data obtained from queue
-     *
-     * @param string $source Source data
-     * @return JobInterface
-     * @throws MarshalException
+     * @inheritdoc
      */
     public function unmarshal($source)
     {
@@ -23,10 +28,7 @@ class JobMarshaler implements MarshalerInterface
     }
 
     /**
-     * Marshals the body of the job ready to be put into the queue
-     *
-     * @param JobInterface $job Job to put in the queue
-     * @return string Source data to be put in the queue
+     * @inheritdoc
      */
     public function marshal(JobInterface $job)
     {
