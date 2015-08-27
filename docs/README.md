@@ -187,6 +187,18 @@ You do so via the `processed()` method, like so:
 $disque->queue('my_queue')->processed($job);
 ```
 
+If the job failed and you want to retry it, send a negative acknowledgment
+(or `NACK`) with the `failed()` method:
+
+```php
+$disque->queue('my_queue')->failed($job);
+```
+
+This will increase the NACK counter of the job. You can watch the counter and
+if it crosses a threshold, ie. if the job has been retried too many times, you
+can do something else than return it to the queue - move the job to a dead
+letter queue, log it, notify someone etc.
+
 ### Jobs that consume a long time to process
 
 If you are processing a job that requires a long time to be done, it is good

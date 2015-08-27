@@ -156,6 +156,19 @@ class Queue
     }
 
     /**
+     * Marks the job as failed and returns it to the queue
+     *
+     * This increases the NACK counter of the job
+     *
+     * @param JobInterface $job
+     */
+    public function failed(JobInterface $job)
+    {
+        $this->checkConnected();
+        $this->client->nack($job->getId());
+    }
+
+    /**
      * Check that we are connected to a node, and if not connect
      *
      * @throws Disque\Connection\ConnectionException
