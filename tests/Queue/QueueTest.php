@@ -12,6 +12,9 @@ use Disque\Queue\Marshal\MarshalerInterface;
 use InvalidArgumentException;
 use Mockery as m;
 use PHPUnit_Framework_TestCase;
+use Disque\Command\Response\JobsResponse AS Response;
+use Disque\Command\Response\JobsWithCountersResponse AS Counters;
+
 
 class MockJob extends Job
 {
@@ -197,7 +200,11 @@ class QueueTest extends PHPUnit_Framework_TestCase
 
     public function testPullConnected()
     {
+        $options = ['timeout' => 0, 'count' => 1, 'withcounters' => true];
         $payload = ['test' => 'stuff'];
+        $jobId = 'JOB_ID';
+        $nacks = 1;
+        $ad = 2;
 
         $client = m::mock(Client::class)
             ->shouldReceive('isConnected')
@@ -205,21 +212,32 @@ class QueueTest extends PHPUnit_Framework_TestCase
             ->andReturn(true)
             ->once()
             ->shouldReceive('getJob')
-            ->with('queue', ['timeout' => 0, 'count' => 1])
+            ->with('queue', $options)
             ->andReturn([
-                ['id' => 'JOB_ID', 'body' => json_encode($payload)]
+                [
+                    Response::KEY_ID => $jobId,
+                    Response::KEY_BODY => json_encode($payload),
+                    Counters::KEY_NACKS => $nacks,
+                    Counters::KEY_ADDITIONAL_DELIVERIES => $ad
+                ]
             ])
             ->mock();
 
         $q = new Queue($client, 'queue');
         $job = $q->pull();
-        $this->assertSame('JOB_ID', $job->getId());
+        $this->assertSame($jobId, $job->getId());
         $this->assertSame($payload, $job->getBody());
+        $this->assertSame($nacks, $job->getNacks());
+        $this->assertSame($ad, $job->getAdditionalDeliveries());
     }
 
     public function testPullNotConnected()
     {
+        $options = ['timeout' => 0, 'count' => 1, 'withcounters' => true];
         $payload = ['test' => 'stuff'];
+        $jobId = 'JOB_ID';
+        $nacks = 1;
+        $ad = 2;
 
         $client = m::mock(Client::class)
             ->shouldReceive('isConnected')
@@ -230,22 +248,33 @@ class QueueTest extends PHPUnit_Framework_TestCase
             ->with()
             ->once()
             ->shouldReceive('getJob')
-            ->with('queue', ['timeout' => 0, 'count' => 1])
+            ->with('queue', $options)
             ->andReturn([
-                ['id' => 'JOB_ID', 'body' => json_encode($payload)]
+                [
+                    Response::KEY_ID => $jobId,
+                    Response::KEY_BODY => json_encode($payload),
+                    Counters::KEY_NACKS => $nacks,
+                    Counters::KEY_ADDITIONAL_DELIVERIES => $ad
+                ]
             ])
             ->mock();
 
         $q = new Queue($client, 'queue');
         $job = $q->pull();
         $this->assertInstanceOf(Job::class, $job);
-        $this->assertSame('JOB_ID', $job->getId());
+        $this->assertSame($jobId, $job->getId());
         $this->assertSame($payload, $job->getBody());
+        $this->assertSame($nacks, $job->getNacks());
+        $this->assertSame($ad, $job->getAdditionalDeliveries());
     }
 
     public function testPullCustomMarshaler()
     {
+        $options = ['timeout' => 0, 'count' => 1, 'withcounters' => true];
         $payload = ['test' => 'stuff'];
+        $jobId = 'JOB_ID';
+        $nacks = 1;
+        $ad = 2;
 
         $client = m::mock(Client::class)
             ->shouldReceive('isConnected')
@@ -253,9 +282,14 @@ class QueueTest extends PHPUnit_Framework_TestCase
             ->andReturn(true)
             ->once()
             ->shouldReceive('getJob')
-            ->with('queue', ['timeout' => 0, 'count' => 1])
+            ->with('queue', $options)
             ->andReturn([
-                ['id' => 'JOB_ID', 'body' => json_encode($payload)]
+                [
+                    Response::KEY_ID => $jobId,
+                    Response::KEY_BODY => json_encode($payload),
+                    Counters::KEY_NACKS => $nacks,
+                    Counters::KEY_ADDITIONAL_DELIVERIES => $ad
+                ]
             ])
             ->mock();
 
@@ -275,7 +309,12 @@ class QueueTest extends PHPUnit_Framework_TestCase
 
     public function testPullSeveralJobs()
     {
+        $options = ['timeout' => 0, 'count' => 1, 'withcounters' => true];
         $payload = ['test' => 'stuff'];
+        $jobId = 'JOB_ID';
+        $nacks = 1;
+        $ad = 2;
+        $jobId2 = 'JOB_ID2';
 
         $client = m::mock(Client::class)
             ->shouldReceive('isConnected')
@@ -283,22 +322,34 @@ class QueueTest extends PHPUnit_Framework_TestCase
             ->andReturn(true)
             ->once()
             ->shouldReceive('getJob')
-            ->with('queue', ['timeout' => 0, 'count' => 1])
+            ->with('queue', $options)
             ->andReturn([
-                ['id' => 'JOB_ID', 'body' => json_encode($payload)],
-                ['id' => 'JOB_ID_2', 'body' => json_encode([])],
+                [
+                    Response::KEY_ID => $jobId,
+                    Response::KEY_BODY => json_encode($payload),
+                    Counters::KEY_NACKS => $nacks,
+                    Counters::KEY_ADDITIONAL_DELIVERIES => $ad
+                ],
+                [
+                    Response::KEY_ID => $jobId2,
+                    Response::KEY_BODY => json_encode([]),
+                    Counters::KEY_NACKS => $nacks,
+                    Counters::KEY_ADDITIONAL_DELIVERIES => $ad
+                ],
             ])
             ->mock();
 
         $q = new Queue($client, 'queue');
         $job = $q->pull();
-        $this->assertSame('JOB_ID', $job->getId());
+        $this->assertSame($jobId, $job->getId());
         $this->assertSame($payload, $job->getBody());
+        $this->assertSame($nacks, $job->getNacks());
+        $this->assertSame($ad, $job->getAdditionalDeliveries());
     }
 
     public function testPullNoJobs()
     {
-        $payload = ['test' => 'stuff'];
+        $options = ['timeout' => 0, 'count' => 1, 'withcounters' => true];
 
         $client = m::mock(Client::class)
             ->shouldReceive('isConnected')
@@ -306,7 +357,7 @@ class QueueTest extends PHPUnit_Framework_TestCase
             ->andReturn(true)
             ->once()
             ->shouldReceive('getJob')
-            ->with('queue', ['timeout' => 0, 'count' => 1])
+            ->with('queue', $options)
             ->andReturn([])
             ->mock();
 
@@ -319,7 +370,8 @@ class QueueTest extends PHPUnit_Framework_TestCase
 
     public function testPullNoJobsWithTimeout()
     {
-        $payload = ['test' => 'stuff'];
+        $timeout = 3000;
+        $options = ['timeout' => $timeout, 'count' => 1, 'withcounters' => true];
 
         $client = m::mock(Client::class)
             ->shouldReceive('isConnected')
@@ -327,7 +379,7 @@ class QueueTest extends PHPUnit_Framework_TestCase
             ->andReturn(true)
             ->once()
             ->shouldReceive('getJob')
-            ->with('queue', ['timeout' => 3000, 'count' => 1])
+            ->with('queue', $options)
             ->andReturn([])
             ->mock();
 
@@ -335,7 +387,7 @@ class QueueTest extends PHPUnit_Framework_TestCase
 
         $this->setExpectedException(JobNotAvailableException::class);
 
-        $q->pull(3000);
+        $q->pull($timeout);
     }
 
     public function testScheduleInvalidDateInPast()
