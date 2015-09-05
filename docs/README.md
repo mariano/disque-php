@@ -59,16 +59,23 @@ $queue = $disque->queue('emails');
 ```
 
 Once you have obtained the queue, you can either push jobs to it, or pull jobs
-from it. Jobs are instances of `Disque\Queue\Job`, which offers the following 
-methods (among others used by the Queue API):
+from it. Jobs must implement the interface `Disque\Queue\JobInterface`, which
+offers the following methods (among others used by the Queue API):
 
-* `getBody(): array`: gets the body of the job.
-* `setBody(array $body)`: sets the body of the job.
+* `getId(): string`: gets the Disque job ID
+* `setId(string $id)`: sets the job ID
+* `getBody(): mixed`: gets the body of the job
+* `setBody(mixed $body)`: sets the body of the job
+* `getNacks(): int`: gets the number of NACKs the job has received
+* `setNacks(int $nacks)`: sets the number of NACKs
+* `getAdditionalDeliveries(): int`: gets the number of additional deliveries
+* `setAdditionalDeliveries(int $ad)`: sets the number of additional deliveries
 
-These methods show that by default job bodies are arrays, and they get 
-serialized into JSON when sending them to Disque. If you want to change the 
-default job implementation used in a queue, you can do so as shown in the 
-[Changing the Job class](#changing-the-job-class) section.
+Job bodies can be of a mixed type and they can contain anything - an integer,
+a string, an array. They get serialized into JSON by the JobMarshaler when
+sending them to Disque.
+If you want to change the default job implementation used in a queue, you can
+do so as shown in the [Changing the Job class](#changing-the-job-class) section.
 
 ## Pushing jobs to the queue
 
@@ -209,12 +216,16 @@ $queue->processed($job);
 
 You can choose to have your own Job classes when using the Queue API. To do
 so you start by implementing `Disque\Queue\JobInterface`, and make the class 
-take whatever shape you deem necessary. For example:
+take whatever shape you deem necessary. You can also inherit the class
+`Disque\Queue\BaseJob` which takes care of the basic setters and getters for
+you. For example:
 
 ```php
-class EmailJob implements \Disque\Queue\JobInterface
+use Disque\Queue\BaseJob;
+use Disque\Queue\JobInterface;
+
+class EmailJob extends BaseJob implements JobInterface
 {
-    private $id;
     public $email;
     public $subject;
     public $message;
@@ -224,16 +235,6 @@ class EmailJob implements \Disque\Queue\JobInterface
         $this->email = $email;
         $this->subject = $subject;
         $this->message = $message ?: 'No message';
-    }
-
-    public function getId()
-    {
-        return $this->id;
-    }
-
-    public function setId($id)
-    {
-        $this->id = $id;
     }
 
     public function send()
@@ -252,7 +253,9 @@ you are not required to. For example to create a marshaler for the above
 `EmailJob` class we could do:
 
 ```php
-class EmailJobMarshaler implements \Disque\Queue\Marshal\MarshalerInterface
+use Disque\Queue\Marshal\MarshalerInterface;
+
+class EmailJobMarshaler implements MarshalerInterface
 {
     public function unmarshal($source)
     {
@@ -280,7 +283,7 @@ class EmailJobMarshaler implements \Disque\Queue\Marshal\MarshalerInterface
 }
 ```
 
-So as you can see `unmarshal()` will take a string, and should return an 
+As you can see `unmarshal()` will take a string, and should return an
 instance of `Disque\Queue\JobInterface`, or throw a 
 `Disque\Queue\Marshal\MarshalException` if something went wrong. Similarly
 `marshal()` takes a `Disque\Queue\JobInterface` and returns its string
@@ -313,6 +316,10 @@ while ($job = $queue->pull()) {
     $queue->processed($job);
 }
 ```
+
+This is just an example. For more complicated tasks consider following
+the single responsibility principle, using the Job object only to transport
+the job data and doing the actual work in a dedicated worker class.
 
 # Client API
 
