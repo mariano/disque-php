@@ -6,7 +6,6 @@ use DateTimeZone;
 use Disque\Client;
 use Disque\Queue\Job;
 use Disque\Queue\JobInterface;
-use Disque\Queue\JobNotAvailableException;
 use Disque\Queue\Queue;
 use Disque\Queue\Marshal\MarshalerInterface;
 use InvalidArgumentException;
@@ -410,9 +409,8 @@ class QueueTest extends PHPUnit_Framework_TestCase
 
         $q = new Queue($client, 'queue');
 
-        $this->setExpectedException(JobNotAvailableException::class);
-
-        $q->pull();
+        $job = $q->pull();
+        $this->assertNull($job);
     }
 
     public function testPullNoJobsWithTimeout()
@@ -432,9 +430,8 @@ class QueueTest extends PHPUnit_Framework_TestCase
 
         $q = new Queue($client, 'queue');
 
-        $this->setExpectedException(JobNotAvailableException::class);
-
-        $q->pull($timeout);
+        $job = $q->pull($timeout);
+        $this->assertNull($job);
     }
 
     public function testScheduleInvalidDateInPast()
