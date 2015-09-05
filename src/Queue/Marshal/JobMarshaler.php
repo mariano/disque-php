@@ -20,7 +20,7 @@ class JobMarshaler implements MarshalerInterface
      */
     public function unmarshal($source)
     {
-        $body = @json_decode($source, true);
+        $body = json_decode($source, true);
         if (is_null($body)) {
             throw new MarshalException("Could not deserialize {$source}");
         }
