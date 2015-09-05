@@ -7,6 +7,8 @@ use Disque\Client;
 use Disque\Queue\Marshal\JobMarshaler;
 use Disque\Queue\Marshal\MarshalerInterface;
 use InvalidArgumentException;
+use Disque\Command\Response\JobsResponse AS Response;
+use Disque\Command\Response\JobsWithCountersResponse AS Counters;
 
 class Queue
 {
@@ -120,14 +122,21 @@ class Queue
         $this->checkConnected();
         $jobs = $this->client->getJob($this->name, [
             'timeout' => $timeout,
-            'count' => 1
+            'count' => 1,
+            'withcounters' => true
         ]);
         if (empty($jobs)) {
             throw new JobNotAvailableException();
         }
         $jobData = $jobs[0];
-        $job = $this->marshaler->unmarshal($jobData['body']);
-        $job->setId($jobData['id']);
+        $job = $this->marshaler->unmarshal($jobData[Response::KEY_BODY]);
+
+        $job->setId($jobData[Response::KEY_ID]);
+        $job->setNacks($jobData[Counters::KEY_NACKS]);
+        $job->setAdditionalDeliveries(
+            $jobData[Counters::KEY_ADDITIONAL_DELIVERIES]
+        );
+
         return $job;
     }
 

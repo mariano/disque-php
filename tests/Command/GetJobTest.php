@@ -7,6 +7,9 @@ use Disque\Command\Argument\InvalidOptionException;
 use Disque\Command\CommandInterface;
 use Disque\Command\GetJob;
 use Disque\Command\Response\InvalidResponseException;
+use Disque\Command\Response\JobsResponse AS Response;
+use Disque\Command\Response\JobsWithQueueResponse AS Queue;
+use Disque\Command\Response\JobsWithCountersResponse AS Counters;
 
 class GetJobTest extends PHPUnit_Framework_TestCase
 {
@@ -125,6 +128,14 @@ class GetJobTest extends PHPUnit_Framework_TestCase
         $this->assertSame(['TIMEOUT', 3000, 'COUNT', 10, 'FROM', 'q1', 'q2'], $result);
     }
 
+    public function testBuildOptionWithCounters()
+    {
+        $c = new GetJob();
+        $c->setArguments(['q1', 'q2', ['withcounters' => true]]);
+        $result = $c->getArguments();
+        $this->assertSame(['WITHCOUNTERS', 'FROM', 'q1', 'q2'], $result);
+    }
+
     public function testParseInvalidString()
     {
         $this->setExpectedException(InvalidResponseException::class, 'Invalid command response. Command Disque\\Command\\GetJob got: "test"');
@@ -170,26 +181,62 @@ class GetJobTest extends PHPUnit_Framework_TestCase
     public function testParse()
     {
         $c = new GetJob();
-        $result = $c->parse([['q', 'DI0f0c644fd3ccb51c2cedbd47fcb6f312646c993c05a0SQ', 'stuff']]);
+        $queue = 'q';
+        $id = 'DI0f0c644fd3ccb51c2cedbd47fcb6f312646c993c05a0SQ';
+        $body = 'lorem ipsum';
+        $response = [$queue, $id, $body];
+        $parsedResponse = $c->parse([$response]);
+
         $this->assertSame([
             [
-                'queue' => 'q',
-                'id' => 'DI0f0c644fd3ccb51c2cedbd47fcb6f312646c993c05a0SQ',
-                'body' => 'stuff'
+                Queue::KEY_QUEUE => $queue,
+                Response::KEY_ID  => $id,
+                Response::KEY_BODY => $body,
             ]
-        ], $result);
+        ], $parsedResponse);
     }
 
     public function testParseUnicode()
     {
         $c = new GetJob();
-        $result = $c->parse([['queue', 'DI0f0c644fd3ccb51c2cedbd47fcb6f312646c993c05a0SQ', '大']]);
+
+        $queue = 'q';
+        $id = 'DI0f0c644fd3ccb51c2cedbd47fcb6f312646c993c05a0SQ';
+        $body = '大';
+        $response = [$queue, $id, $body];
+        $parsedResponse = $c->parse([$response]);
+
         $this->assertSame([
             [
-                'queue' => 'queue',
-                'id' => 'DI0f0c644fd3ccb51c2cedbd47fcb6f312646c993c05a0SQ',
-                'body' => '大'
+                Queue::KEY_QUEUE => $queue,
+                Response::KEY_ID  => $id,
+                Response::KEY_BODY => $body,
             ]
-        ], $result);
+        ], $parsedResponse);
+    }
+
+    public function testParseWithCounters()
+    {
+        $c = new GetJob();
+        // Set the responseHandler to JobsWithCountersResponse
+        $c->setArguments(['q1', ['withcounters' => true]]);
+
+        $queue = 'q';
+        $id = 'DI0f0c644fd3ccb51c2cedbd47fcb6f312646c993c05a0SQ';
+        $body = 'lorem ipsum';
+        $nacks = 1;
+        $ad = 2;
+        $response = [$queue, $id, $body, 'nacks', $nacks, 'additional-deliveries', $ad];
+        $parsedResponse = $c->parse([$response]);
+
+        $this->assertSame([
+            [
+                Queue::KEY_QUEUE => $queue,
+                Response::KEY_ID  => $id,
+                Response::KEY_BODY => $body,
+                Counters::KEY_NACKS => $nacks,
+                Counters::KEY_ADDITIONAL_DELIVERIES => $ad
+            ]
+        ], $parsedResponse);
     }
 }

@@ -4,6 +4,7 @@ namespace Disque\Command;
 use Disque\Command\Argument\StringChecker;
 use Disque\Command\Argument\InvalidOptionException;
 use Disque\Command\Response\JobsWithQueueResponse;
+use Disque\Command\Response\JobsWithCountersResponse;
 
 class GetJob extends BaseCommand implements CommandInterface
 {
@@ -23,7 +24,8 @@ class GetJob extends BaseCommand implements CommandInterface
      */
     protected $options = [
         'count' => null,
-        'timeout' => null
+        'timeout' => null,
+        'withcounters' => false
     ];
 
     /**
@@ -34,6 +36,7 @@ class GetJob extends BaseCommand implements CommandInterface
     protected $availableArguments = [
         'timeout' => 'TIMEOUT',
         'count' => 'COUNT',
+        'withcounters' => 'WITHCOUNTERS'
     ];
 
     /**
@@ -81,6 +84,11 @@ class GetJob extends BaseCommand implements CommandInterface
                 (isset($options['timeout']) && !is_int($options['timeout']))
             ) {
                 throw new InvalidOptionException($this, $last);
+            }
+
+            if (!empty($options['withcounters'])) {
+                // The response will contain NACKs and additional-deliveries
+                $this->responseHandler = JobsWithCountersResponse::class;
             }
 
             $options = $this->toArguments($options);

@@ -624,6 +624,10 @@ Arguments:
     for jobs. If no jobs are available and this `timeout` expired, then no
     jobs are returned.
   * `count`: an `int`, to specify the number of jobs you wish to obtain.
+  * `withcounters`: a `bool`, if `true`, will fetch the jobs
+     with the `WITHCOUNTERS` argument. The jobs will then contain two
+     additional fields, the counters `nacks` and `additional-deliveries`
+     for failure handling.
 
 Return value:
 
@@ -631,6 +635,24 @@ Return value:
   * `queue`: a `string`, that indicates from which queue this job came from.
   * `id`: a `string`, which is the job ID.
   * `body`: a `string`, which is the payload of the job.
+  * `nacks`: an `int`, the number of `NACKs` received by the job
+  * `additional-deliveries`: an `int`, the number of additional deliveries
+     performed for this job
+  
+The last two fields, `nacks` and `additional-deliveries`, will only be present
+if you call the command with the `withcounters` argument.
+
+What do these two counters mean?
+
+The `nacks` counter is incremented every time a worker uses the `NACK` command
+to tell the queue the job was not processed correctly and should be put back
+on the queue.
+
+The `additional-deliveries` counter is incremented for every other condition
+(different than `NACK` call) that requires a job to be put back on the
+queue again. This includes jobs that get lost and are enqueued again or
+jobs that are delivered multiple times because they time out.
+
 
 Example call:
 

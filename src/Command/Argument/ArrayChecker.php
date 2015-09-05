@@ -5,7 +5,8 @@ trait ArrayChecker
 {
     /**
      * Check that the exact specified $count arguments are defined,
-     * in a numeric array
+     * in a numeric array and that the array is dense, ie. doesn't contain
+     * any holes in the numeric indexes.
      *
      * @param mixed $elements Elements (should be an array)
      * @param int $count Number of elements expected
