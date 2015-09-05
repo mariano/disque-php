@@ -198,6 +198,53 @@ class QueueTest extends PHPUnit_Framework_TestCase
         $q->processed($job);
     }
 
+    public function testFailedConnected()
+    {
+        $job = m::mock(JobInterface::class)
+            ->shouldReceive('getId')
+            ->with()
+            ->andReturn('JOB_ID')
+            ->once()
+            ->mock();
+
+        $client = m::mock(Client::class)
+            ->shouldReceive('isConnected')
+            ->with()
+            ->andReturn(true)
+            ->once()
+            ->shouldReceive('nack')
+            ->with('JOB_ID')
+            ->mock();
+
+        $q = new Queue($client, 'queue');
+        $q->failed($job);
+    }
+
+    public function testFailedNotConnected()
+    {
+        $job = m::mock(JobInterface::class)
+            ->shouldReceive('getId')
+            ->with()
+            ->andReturn('JOB_ID')
+            ->once()
+            ->mock();
+
+        $client = m::mock(Client::class)
+            ->shouldReceive('isConnected')
+            ->with()
+            ->andReturn(false)
+            ->once()
+            ->shouldReceive('connect')
+            ->with()
+            ->once()
+            ->shouldReceive('nack')
+            ->with('JOB_ID')
+            ->mock();
+
+        $q = new Queue($client, 'queue');
+        $q->failed($job);
+    }
+
     public function testPullConnected()
     {
         $options = ['timeout' => 0, 'count' => 1, 'withcounters' => true];
