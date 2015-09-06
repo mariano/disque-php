@@ -131,17 +131,15 @@ while ($job = $queue->pull()) {
 The call to `pull()` is blocking, so you may find yourself in the need to do 
 something with the time you spend while waiting for jobs. Fortunately `pull()` 
 receives an optional argument: the number of milliseconds to wait for a job. 
-If this time passed and no job was available, a 
-`Disque\Queue\JobNotAvailableException` is thrown. For example if we want to
-wait for jobs, but do something else if after 1 second passed without jobs
-becoming available, and then keep waiting for jobs, we would do:
+If this time passed and no job was available, `null` is returned. For example
+if we want to wait for jobs, but do something else if after 1 second passed
+without jobs becoming available, and then keep waiting for jobs, we would do:
 
 ```php
 $queue = $disque->queue('my_queue');
 while (true) {
-    try {
-        $job = $queue->pull(1000);
-    } catch (\Disque\Queue\JobNotAvailableException $e) {
+    $job = $queue->pull(1000);
+    if (is_null($job)) {
         // Do something else while waiting!
         echo "Still waiting...\n";
         continue;

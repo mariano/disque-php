@@ -110,12 +110,11 @@ class Queue
 
     /**
      * Pulls a single job from the queue (if none available, and if $timeout
-     * specified, then wait only this much time for a job, otherwise throw a
-     * `JobNotAvailableException`)
+     * specified, then wait only this much time for a job, otherwise return
+     * `null`)
      *
      * @param int $timeout If specified, wait these many seconds
-     * @return Job
-     * @throws JobNotAvailableException
+     * @return Job|null A job, or null if no job was found before timeout
      */
     public function pull($timeout = 0)
     {
@@ -126,7 +125,7 @@ class Queue
             'withcounters' => true
         ]);
         if (empty($jobs)) {
-            throw new JobNotAvailableException();
+            return null;
         }
         $jobData = $jobs[0];
         $job = $this->marshaler->unmarshal($jobData[Response::KEY_BODY]);
