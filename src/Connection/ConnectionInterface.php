@@ -24,11 +24,13 @@ interface ConnectionInterface
     /**
      * Connect
      *
-     * @param array $options Connection options
+     * @param int|null $connectionTimeout Max time to connect, in seconds
+     * @param int|null $responseTimeout   Max time to wait for a response, in s
+     *
      * @return void
      * @throws ConnectionException
      */
-    public function connect(array $options = []);
+    public function connect($connectionTimeout = null, $responseTimeout = null);
 
     /**
      * Disconnect

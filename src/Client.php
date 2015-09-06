@@ -1,6 +1,7 @@
 <?php
 namespace Disque;
 
+use Disque\Connection\Credentials;
 use Disque\Command;
 use Disque\Command\CommandInterface;
 use Disque\Command\InvalidCommandException;
@@ -15,7 +16,7 @@ use InvalidArgumentException;
  * @method int dequeue(string... $ids)
  * @method int enqueue(string... $ids)
  * @method int fastAck(string... $ids)
- * @method array getJob(string... $queues, array $options = [)
+ * @method array getJob(string... $queues, array $options = [])
  * @method array hello()
  * @method string info()
  * @method int nack(string... $ids)
@@ -51,7 +52,7 @@ class Client
     /**
      * Create a new Client
      *
-     * @param array $servers Servers (`host`:`port`)
+     * @param Credentials[] $servers
      */
     public function __construct(array $servers = [])
     {
@@ -76,22 +77,9 @@ class Client
         }
 
         $this->connectionManager = new Manager();
-        foreach ($servers as $uri) {
-            $port = 7711;
-            if (strpos($uri, ':') !== false) {
-                $server = parse_url($uri);
-                if ($server === false || empty($server['host'])) {
-                    continue;
-                }
-                $host = $server['host'];
-                if (!empty($server['port'])) {
-                    $port = $server['port'];
-                }
-            } else {
-                $host = $uri;
-            }
 
-            $this->addServer($host, $port);
+        foreach ($servers as $server) {
+            $this->connectionManager->addServer($server);
         }
     }
 
@@ -103,21 +91,6 @@ class Client
     public function getConnectionManager()
     {
         return $this->connectionManager;
-    }
-
-    /**
-     * Add a new server
-     *
-     * @param string $host Host
-     * @param int $port Port
-     * @param string $password Password to use when connecting to this server
-     * @param array $options Connection otptions
-     * @return void
-     * @throws InvalidArgumentException
-     */
-    public function addServer($host, $port = 7711, $password = null, array $options = [])
-    {
-        $this->connectionManager->addServer($host, $port, $password, $options);
     }
 
     /**
