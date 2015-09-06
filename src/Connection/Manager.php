@@ -11,7 +11,10 @@ use InvalidArgumentException;
 class Manager implements ManagerInterface
 {
     /**
-     * List of servers
+     * List of servers (or initial nodes) that we can connect to
+     *
+     * After connecting to one, the server returns a list of other nodes
+     * in the cluster.
      *
      * @var array
      */
@@ -25,7 +28,9 @@ class Manager implements ManagerInterface
     protected $minimumJobsToChangeNode = 0;
 
     /**
-     * List of nodes. Indexed by node ID, and as value an array with:
+     * List of nodes, ie Disque instances available in the cluster
+     *
+     * Indexed by node ID, and as value an array with:
      * - ConnectionInterface|null `connection`
      * - string `host`
      * - int `port`
@@ -37,6 +42,10 @@ class Manager implements ManagerInterface
 
     /**
      * Node prefixes, and their corresponding node ID
+     *
+     * Node prefix consists of the first 8 bytes from the node ID. Because job
+     * IDs contain the node prefix, it can be used to identify on which node
+     * a job lives.
      *
      * @var array
      */
@@ -57,9 +66,7 @@ class Manager implements ManagerInterface
     protected $connectionClass = Socket::class;
 
     /**
-     * Get the connection implementation class
-     *
-     * @return string A fully classified class name that implements `ConnectionInterface`
+     * @inheritdoc
      */
     public function getConnectionClass()
     {
@@ -67,11 +74,7 @@ class Manager implements ManagerInterface
     }
 
     /**
-     * Set the connection implementation class
-     *
-     * @param string $class A fully classified class name that must implement `ConnectionInterface`
-     * @return void
-     * @throws InvalidArgumentException
+     * @inheritdoc
      */
     public function setConnectionClass($class)
     {
@@ -82,9 +85,7 @@ class Manager implements ManagerInterface
     }
 
     /**
-     * Get available servers
-     *
-     * @return array Each server is an indexed array with `host` and `port`
+     * @inheritdoc
      */
     public function getServers()
     {
@@ -92,14 +93,7 @@ class Manager implements ManagerInterface
     }
 
     /**
-     * Add a new server
-     *
-     * @param string $host Host
-     * @param int $port Port
-     * @param string $password Password to use when connecting to this server
-     * @param array $options Connection options
-     * @return void
-     * @throws InvalidArgumentException
+     * @inheritdoc
      */
     public function addServer($host, $port = 7711, $password = null, array $options = [])
     {
@@ -112,10 +106,7 @@ class Manager implements ManagerInterface
     }
 
     /**
-     * If a node has produced at least these number of jobs, switch there
-     *
-     * @param int $minimumJobsToChangeNode Set to 0 to never change
-     * @return void
+     * @inheritdoc
      */
     public function setMinimumJobsToChangeNode($minimumJobsToChangeNode)
     {
@@ -123,9 +114,7 @@ class Manager implements ManagerInterface
     }
 
     /**
-     * Tells if connection is established
-     *
-     * @return bool Success
+     * @inheritdoc
      */
     public function isConnected()
     {
@@ -137,11 +126,7 @@ class Manager implements ManagerInterface
     }
 
     /**
-     * Connect to Disque
-     *
-     * @return array Connected node information
-     * @throws AuthenticationException
-     * @throws ConnectionException
+     * @inheritdoc
      */
     public function connect()
     {
@@ -166,11 +151,7 @@ class Manager implements ManagerInterface
     }
 
     /**
-     * Execute the given command on the given connection
-     *
-     * @param CommandInterface $command Command
-     * @return mixed Command response
-     * @throws ConnectionException
+     * @inheritdoc
      */
     public function execute(CommandInterface $command)
     {
@@ -241,6 +222,8 @@ class Manager implements ManagerInterface
      *
      * @param ConnectionInterface $connection Connection
      * @param array $server Server (with `host`, `options', `port`, and `password`)
+     *
+     * @throws AuthenticationException
      */
     private function doConnect(ConnectionInterface $connection, array $server)
     {

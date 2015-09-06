@@ -61,7 +61,7 @@ abstract class BaseConnection implements ConnectionInterface
      * Connect
      *
      * @param array $options Connection options
-     * @throws Disque\Connection\Exception\ConnectionException
+     * @throws ConnectionException
      */
     public function connect(array $options = [])
     {
