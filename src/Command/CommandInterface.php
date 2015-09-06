@@ -4,7 +4,11 @@ namespace Disque\Command;
 interface CommandInterface
 {
     /**
-     * Get command
+     * Get the command name
+     *
+     * The command name determines how the command will be called on Client.
+     * If this method returns "foo", the command must be invoked by calling
+     * the Client::foo() method (the method name is case insensitive)
      *
      * @return string Command
      */
