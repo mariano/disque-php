@@ -42,13 +42,6 @@ class Client
     protected $commandHandlers = [];
 
     /**
-     * Command handlers (instantiated for reutilization)
-     *
-     * @var array
-     */
-    protected $commands = [];
-
-    /**
      * List of built queues
      *
      * @var array
@@ -63,23 +56,23 @@ class Client
     public function __construct(array $servers = [])
     {
         foreach ([
-            'ACKJOB' => Command\AckJob::class,
-            'ADDJOB' => Command\AddJob::class,
-            'DELJOB' => Command\DelJob::class,
-            'DEQUEUE' => Command\Dequeue::class,
-            'ENQUEUE' => Command\Enqueue::class,
-            'FASTACK' => Command\FastAck::class,
-            'GETJOB' => Command\GetJob::class,
-            'HELLO' => Command\Hello::class,
-            'INFO' => Command\Info::class,
-            'NACK' => Command\Nack::class,
-            'QLEN' => Command\QLen::class,
-            'QPEEK' => Command\QPeek::class,
-            'QSCAN' => Command\QScan::class,
-            'SHOW' => Command\Show::class,
-            'WORKING' => Command\Working::class
-        ] as $command => $handlerClass) {
-            $this->registerCommand($command, $handlerClass);
+            new Command\AckJob(),
+            new Command\AddJob(),
+            new Command\DelJob(),
+            new Command\Dequeue(),
+            new Command\Enqueue(),
+            new Command\FastAck(),
+            new Command\GetJob(),
+            new Command\Hello(),
+            new Command\Info(),
+            new Command\Nack(),
+            new Command\QLen(),
+            new Command\QPeek(),
+            new Command\QScan(),
+            new Command\Show(),
+            new Command\Working()
+        ] as $command) {
+            $this->registerCommand($command);
         }
 
         $this->connectionManager = new Manager();
@@ -158,12 +151,7 @@ class Client
             throw new InvalidCommandException($command);
         }
 
-        if (!isset($this->commands[$command])) {
-            $class = $this->commandHandlers[$command];
-            $this->commands[$command] = new $class();
-        }
-
-        $command = $this->commands[$command];
+        $command = $this->commandHandlers[$command];
         $command->setArguments($arguments);
         $result = $this->connectionManager->execute($command);
         return $command->parse($result);
@@ -172,16 +160,13 @@ class Client
     /**
      * Register a command handler
      *
-     * @param string $command Command
-     * @param string $class Class that should implement `CommandInterface`
+     * @param CommandInterface $commandHandler Command
      * @return void
      */
-    public function registerCommand($command, $class)
+    public function registerCommand(CommandInterface $commandHandler)
     {
-        if (!in_array(CommandInterface::class, class_implements($class))) {
-            throw new InvalidArgumentException("Class {$class} does not implement CommandInterface");
-        }
-        $this->commandHandlers[strtoupper($command)] = $class;
+        $command = strtoupper($commandHandler->getCommand());
+        $this->commandHandlers[$command] = $commandHandler;
     }
 
     /**

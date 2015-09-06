@@ -20,12 +20,6 @@ class MockClient extends Client
         return $this->commandHandlers;
     }
 
-    public function setCommand($commandName, CommandInterface $command)
-    {
-        $this->commandHandlers[$commandName] = get_class($command);
-        $this->commands[$commandName] = $command;
-    }
-
     public function setConnectionManager(ManagerInterface $manager)
     {
         $this->connectionManager = $manager;
@@ -91,36 +85,31 @@ class ClientTest extends PHPUnit_Framework_TestCase
     public function testCommandsRegistered()
     {
         $expectedCommands = [
-            'ACKJOB' => Command\AckJob::class,
-            'ADDJOB' => Command\AddJob::class,
-            'DELJOB' => Command\DelJob::class,
-            'DEQUEUE' => Command\Dequeue::class,
-            'ENQUEUE' => Command\Enqueue::class,
-            'FASTACK' => Command\FastAck::class,
-            'GETJOB' => Command\GetJob::class,
-            'HELLO' => Command\Hello::class,
-            'INFO' => Command\Info::class,
-            'NACK' => Command\Nack::class,
-            'QLEN' => Command\QLen::class,
-            'QPEEK' => Command\QPeek::class,
-            'QSCAN' => Command\QScan::class,
-            'SHOW' => Command\Show::class,
-            'WORKING' => Command\Working::class
+            new Command\AckJob(),
+            new Command\AddJob(),
+            new Command\DelJob(),
+            new Command\Dequeue(),
+            new Command\Enqueue(),
+            new Command\FastAck(),
+            new Command\GetJob(),
+            new Command\Hello(),
+            new Command\Info(),
+            new Command\Nack(),
+            new Command\QLen(),
+            new Command\QPeek(),
+            new Command\QScan(),
+            new Command\Show(),
+            new Command\Working()
         ];
 
         $c = new MockClient();
         $commands = $c->getCommandHandlers();
-        foreach ($commands as $command => $class) {
-            $this->assertTrue(array_key_exists($command, $expectedCommands));
-            $this->assertSame($expectedCommands[$command], $class);
+        $this->assertCount(count($commands), $expectedCommands);
+        foreach ($commands as $command) {
+            $strictComparison = false;
+            $commandFound = in_array($command, $expectedCommands, $strictComparison);
+            $this->assertTrue($commandFound);
         }
-    }
-
-    public function testRegisterCommandInvalidClass()
-    {
-        $this->setExpectedException(InvalidArgumentException::class, 'Class DateTime does not implement CommandInterface');
-        $c = new Client();
-        $c->registerCommand('MYCOMMAND', DateTime::class);
     }
 
     public function testCallCommandInvalid()
@@ -196,29 +185,37 @@ class ClientTest extends PHPUnit_Framework_TestCase
 
     public function testCallCommandCustom()
     {
+        $commandName = 'MYCOMMAND';
+        $commandArgument = 'id';
+        $commandResponse = 'RESPONSE';
+        $parsedResponse = 'PARSED RESPONSE';
+
         $command = m::mock(CommandInterface::class)
+            ->shouldReceive('getCommand')
+            ->andReturn($commandName)
+            ->zeroOrMoreTimes()
             ->shouldReceive('setArguments')
-            ->with(['id'])
+            ->with([$commandArgument])
             ->once()
             ->shouldReceive('parse')
-            ->with('RESPONSE')
-            ->andReturn('PARSED_RESPONSE')
+            ->with($commandResponse)
+            ->andReturn($parsedResponse)
             ->once()
             ->mock();
 
         $manager = m::mock(ManagerInterface::class)
             ->shouldReceive('execute')
             ->with($command)
-            ->andReturn('RESPONSE')
+            ->andReturn($commandResponse)
             ->once()
             ->mock();
 
         $c = new MockClient();
         $c->setConnectionManager($manager);
-        $c->setCommand('MYCOMMAND', $command);
+        $c->registerCommand($command);
 
-        $result = $c->MyCommand('id');
-        $this->assertSame('PARSED_RESPONSE', $result);
+        $result = $c->$commandName($commandArgument);
+        $this->assertSame($parsedResponse, $result);
     }
 
     public function testQueue()
