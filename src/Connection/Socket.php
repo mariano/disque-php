@@ -24,6 +24,10 @@ class Socket extends BaseConnection implements ConnectionInterface
     /**
      * Response handlers
      *
+     * The characters used as keys are part of the Redis/Disque protocol.
+     * Disque uses the same response protocol as Redis, therefore
+     * @see http://redis.io/topics/protocol
+     *
      * @var array
      */
     private $responseHandlers = [
@@ -35,33 +39,29 @@ class Socket extends BaseConnection implements ConnectionInterface
     ];
 
     /**
-     * Connect
-     *
-     * @param array $options Connection options
-     * @throws ConnectionException
+     * @inheritdoc
      */
-    public function connect(array $options = [])
+    public function connect($connectionTimeout = 0, $responseTimeout = null)
     {
-        parent::connect($options);
+        parent::connect($connectionTimeout, $responseTimeout);
 
-        $options += [
-            'timeout' => null,
-            'streamTimeout' => null
-        ];
-
-        $this->socket = $this->getSocket($this->host, $this->port, (float) $options['timeout']);
+        $this->socket = $this->getSocket(
+            $this->host,
+            $this->port,
+            (float) $connectionTimeout
+        );
         if (!is_resource($this->socket)) {
             throw new ConnectionException("Could not connect to {$this->host}:{$this->port}");
         }
 
         stream_set_blocking($this->socket, 1);
-        if (!is_null($options['streamTimeout'])) {
-            stream_set_timeout($this->socket, $options['streamTimeout']);
+        if (!is_null($responseTimeout)) {
+            stream_set_timeout($this->socket, $responseTimeout);
         }
     }
 
     /**
-     * Disconnect
+     * @inheritdoc
      */
     public function disconnect()
     {
@@ -73,9 +73,7 @@ class Socket extends BaseConnection implements ConnectionInterface
     }
 
     /**
-     * Tells if connection is established
-     *
-     * @return bool Success
+     * @inheritdoc
      */
     public function isConnected()
     {
@@ -83,11 +81,7 @@ class Socket extends BaseConnection implements ConnectionInterface
     }
 
     /**
-     * Execute command, and get response
-     *
-     * @param CommandInterface $command
-     * @return mixed Response
-     * @throws ConnectionException
+     * @inheritdoc
      */
     public function execute(CommandInterface $command)
     {
@@ -139,6 +133,7 @@ class Socket extends BaseConnection implements ConnectionInterface
      *
      * @param bool $keepWaiting If `true`, timeouts on stream read will be ignored
      * @return mixed Data received
+     *
      * @throws ConnectionException
      * @throws ResponseException
      */
@@ -160,7 +155,12 @@ class Socket extends BaseConnection implements ConnectionInterface
             return $this->receive($keepWaiting);
         });
         $response = $responseHandler->parse();
-        if ($response instanceof Exception) {
+
+        /**
+         * If Disque returned an error, raise it in form of an exception
+         * @see Disque\Connection\Response\ErrorResponse::parse()
+         */
+        if ($response instanceof ResponseException) {
             throw $response;
         }
 

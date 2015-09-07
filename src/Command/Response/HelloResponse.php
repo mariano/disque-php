@@ -5,6 +5,27 @@ use Disque\Command\Argument\ArrayChecker;
 
 class HelloResponse extends BaseResponse implements ResponseInterface
 {
+    /**
+     * Array keys
+     */
+    const NODE_ID = 'id';
+    const NODE_HOST = 'host';
+    const NODE_PORT = 'port';
+    const NODE_VERSION = 'version';
+    const NODES = 'nodes';
+
+    /**
+     * Position indexes in the Disque response
+     */
+    const POS_VERSION = 0;
+    const POS_ID = 1;
+    const POS_NODES_START = 2;
+
+    const POS_NODE_ID = 0;
+    const POS_NODE_HOST = 1;
+    const POS_NODE_PORT = 2;
+    const POS_NODE_VERSION = 3;
+
     use ArrayChecker;
 
     /**
@@ -35,19 +56,19 @@ class HelloResponse extends BaseResponse implements ResponseInterface
     public function parse()
     {
         $nodes = [];
-        foreach (array_slice($this->body, 2) as $node) {
+        foreach (array_slice($this->body, self::POS_NODES_START) as $node) {
             $nodes[] = [
-                'id' => $node[0],
-                'host' => $node[1],
-                'port' => $node[2],
-                'version' => $node[3]
+                self::NODE_ID => $node[self::POS_NODE_ID],
+                self::NODE_HOST => $node[self::POS_NODE_HOST],
+                self::NODE_PORT => $node[self::POS_NODE_PORT],
+                self::NODE_VERSION => $node[self::POS_NODE_VERSION]
             ];
         }
 
         return [
-            'version' => $this->body[0],
-            'id' => $this->body[1],
-            'nodes' => $nodes
+            self::NODE_VERSION => $this->body[self::POS_VERSION],
+            self::NODE_ID => $this->body[self::POS_ID],
+            self::NODES => $nodes
         ];
     }
 

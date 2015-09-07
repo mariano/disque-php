@@ -51,6 +51,7 @@ interface ConnectionInterface
      *
      * @param CommandInterface $command
      * @return mixed Response
+     *
      * @throws ConnectionException
      */
     public function execute(CommandInterface $command);

@@ -30,7 +30,7 @@ abstract class BaseConnection implements ConnectionInterface
     }
 
     /**
-     * Make sure connection is closed
+     * Make sure the connection is closed
      */
     public function __destruct()
     {
@@ -38,9 +38,7 @@ abstract class BaseConnection implements ConnectionInterface
     }
 
     /**
-     * Set host
-     *
-     * @param string $host Host
+     * @inheritdoc
      */
     public function setHost($host)
     {
@@ -48,9 +46,7 @@ abstract class BaseConnection implements ConnectionInterface
     }
 
     /**
-     * Set port
-     *
-     * @param int $port Port
+     * @inheritdoc
      */
     public function setPort($port)
     {
@@ -58,12 +54,9 @@ abstract class BaseConnection implements ConnectionInterface
     }
 
     /**
-     * Connect
-     *
-     * @param array $options Connection options
-     * @throws ConnectionException
+     * @inheritdoc
      */
-    public function connect(array $options = [])
+    public function connect($connectionTimeout = null, $responseTimeout = null)
     {
         if (!isset($this->host) || !is_string($this->host) || !isset($this->port) || !is_int($this->port)) {
             throw new ConnectionException('Invalid host or port specified');

@@ -11,6 +11,7 @@ use Disque\Command\CommandInterface;
 use Disque\Command\InvalidCommandException;
 use Disque\Connection\ManagerInterface;
 use Disque\Connection\ConnectionException;
+use Disque\Connection\Credentials;
 use Disque\Queue\Queue;
 
 class MockClient extends Client
@@ -43,43 +44,26 @@ class ClientTest extends PHPUnit_Framework_TestCase
     public function testConstruct()
     {
         $c = new MockClient();
-        $this->assertSame([], $c->getConnectionManager()->getServers());
+        $this->assertSame([], $c->getConnectionManager()->getCredentials());
     }
 
     public function testConstructNoServers()
     {
         $c = new MockClient([]);
-        $this->assertSame([], $c->getConnectionManager()->getServers());
-    }
-
-    public function testConstructInvalidServers()
-    {
-        $c = new MockClient([':7711']);
-        $this->assertSame([], $c->getConnectionManager()->getServers());
+        $this->assertSame([], $c->getConnectionManager()->getCredentials());
     }
 
     public function testConstructMultipleServers()
     {
-        $c = new MockClient([
-            '127.0.0.1:7711',
-            '127.0.0.1:7712',
-        ]);
-        $this->assertEquals([
-            ['host' => '127.0.0.1', 'port' => 7711, 'password' => null, 'options' => []],
-            ['host' => '127.0.0.1', 'port' => 7712, 'password' => null, 'options' => []],
-        ], $c->getConnectionManager()->getServers());
-    }
+        $nodes = [
+            new Credentials('127.0.0.1', '7711'),
+            new Credentials('127.0.0.1', '7712'),
+        ];
 
-    public function testConstructMultipleServersDefaultPort()
-    {
-        $c = new MockClient([
-            '127.0.0.1',
-            '127.0.0.1:7712',
-        ]);
-        $this->assertEquals([
-            ['host' => '127.0.0.1', 'port' => 7711, 'password' => null, 'options' => []],
-            ['host' => '127.0.0.1', 'port' => 7712, 'password' => null, 'options' => []],
-        ], $c->getConnectionManager()->getServers());
+        $c = new Client($nodes);
+        $this->assertEquals(
+            $nodes,
+            array_values($c->getConnectionManager()->getCredentials()));
     }
 
     public function testCommandsRegistered()

@@ -2,51 +2,54 @@
 namespace Disque\Connection;
 
 use Disque\Command\CommandInterface;
+use Disque\Connection\Factory\ConnectionFactoryInterface;
+use Disque\Connection\Node\NodePrioritizerInterface;
 
 interface ManagerInterface
 {
     /**
-     * Get the connection implementation class
+     * Get the connection factory
      *
-     * @return string A fully classified class name that implements `Disque\Connection\ConnectionInterface`
+     * @return ConnectionFactoryInterface
      */
-    public function getConnectionClass();
+    public function getConnectionFactory();
 
     /**
-     * Set the connection implementation class
+     * Set the connection factory
      *
-     * @param string $class A fully classified class name that must implement `Disque\Connection\ConnectionInterface`
-     * @return void
-     * @throws InvalidArgumentException
+     * @param ConnectionFactoryInterface $connectionFactory
      */
-    public function setConnectionClass($class);
+    public function setConnectionFactory(ConnectionFactoryInterface $connectionFactory);
 
     /**
-     * Get available servers
+     * Get credentials to all initially available nodes
      *
-     * @return array Each server is an indexed array with `host` and `port`
+     * @return Credentials[]
      */
-    public function getServers();
+    public function getCredentials();
 
     /**
-     * Add a new server
+     * Add new server credentials
      *
-     * @param string $host Host
-     * @param int $port Port
-     * @param string $password Password to use when connecting to this server
-     * @param array $options Connection options
-     * @return void
-     * @throws InvalidArgumentException
-     */
-    public function addServer($host, $port = 7711, $password = null, array $options = []);
-
-    /**
-     * If a node has produced at least these number of jobs, switch there
+     * @param Credentials $credentials
      *
-     * @param int $minimumJobsToChangeNode Set to 0 to never change
      * @return void
      */
-    public function setMinimumJobsToChangeNode($minimumJobsToChangeNode);
+    public function addServer(Credentials $credentials);
+
+    /**
+     * Get the current node prioritizer
+     *
+     * @return NodePrioritizerInterface
+     */
+    public function getPriorityStrategy();
+
+    /**
+     * Set the node priority strategy
+     *
+     * @param NodePrioritizerInterface $priorityStrategy
+     */
+    public function setPriorityStrategy($priorityStrategy);
 
     /**
      * Tells if connection is established
@@ -58,7 +61,8 @@ interface ManagerInterface
     /**
      * Connect to Disque
      *
-     * @return array Connected node information
+     * @return Node The current node
+     *
      * @throws AuthenticationException
      * @throws ConnectionException
      */

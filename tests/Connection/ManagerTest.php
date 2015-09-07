@@ -3,7 +3,13 @@ namespace Disque\Test\Connection;
 
 use Closure;
 use DateTime;
+use Disque\Command\Response\HelloResponse;
+use Disque\Connection\Factory\ConnectionFactoryInterface;
+use Disque\Connection\Factory\SocketFactory;
+use Disque\Connection\Node\ConservativeJobCountPrioritizer;
+use Disque\Connection\Node\NodePrioritizerInterface;
 use InvalidArgumentException;
+use Metadata\Tests\Driver\Fixture\C\SubDir\C;
 use Mockery as m;
 use PHPUnit_Framework_TestCase;
 use Disque\Command\Auth;
@@ -17,87 +23,7 @@ use Disque\Connection\ConnectionInterface;
 use Disque\Connection\Manager;
 use Disque\Connection\Response\ResponseException;
 use Disque\Connection\Socket;
-
-class MockManager extends Manager
-{
-    public function setConnection(ConnectionInterface $connection)
-    {
-        $this->connection = $connection;
-    }
-
-    protected function getConnection()
-    {
-        return $this->connection;
-    }
-
-    public function setAvailableConnection($availableConnection)
-    {
-        $this->availableConnection = $availableConnection;
-    }
-
-    protected function findAvailableConnection()
-    {
-        if (!isset($this->availableConnection) || $this->availableConnection === false) {
-            return parent::findAvailableConnection();
-        }
-        return $this->availableConnection;
-    }
-
-    public function setBuildConnection($connection)
-    {
-        $this->buildConnection = $connection;
-    }
-
-    protected function buildConnection($host, $port)
-    {
-        if (isset($this->buildConnection)) {
-            if ($this->buildConnection instanceof Closure) {
-                return call_user_func($this->buildConnection, $host, $port);
-            }
-            return $this->buildConnection;
-        }
-        return parent::buildConnection($host, $port);
-    }
-
-    public function getNodes()
-    {
-        return $this->nodes;
-    }
-
-    public function getNodeId()
-    {
-        return $this->nodeId;
-    }
-}
-
-class MockConnection extends BaseConnection
-{
-    public static $mockHost;
-    public static $mockPort;
-
-    public function disconnect()
-    {
-    }
-
-    public function isConnected()
-    {
-        return false;
-    }
-
-    public function execute(CommandInterface $mommand)
-    {
-    }
-
-    public function setHost($host)
-    {
-        static::$mockHost = $host;
-    }
-
-    public function setPort($port)
-    {
-        static::$mockPort = $port;
-    }
-}
+use Disque\Connection\Credentials;
 
 class ManagerTest extends PHPUnit_Framework_TestCase
 {
@@ -107,173 +33,148 @@ class ManagerTest extends PHPUnit_Framework_TestCase
         m::close();
     }
 
-    public function testAddServerInvalidHost()
-    {
-        $this->setExpectedException(InvalidArgumentException::class, 'Invalid server specified');
-        $m = new Manager();
-        $m->addServer(128);
-    }
-
-    public function testAddServerInvalidPort()
-    {
-        $this->setExpectedException(InvalidArgumentException::class, 'Invalid server specified');
-        $m = new Manager();
-        $m->addServer('127.0.0.1', false);
-    }
-
     public function testAddServer()
     {
         $m = new Manager();
-        $m->addServer('127.0.0.1', 7712);
-        $this->assertEquals([
-            ['host' => '127.0.0.1', 'port' => 7712, 'password' => null, 'options' => []],
-        ], $m->getServers());
-    }
-
-    public function testAddServerDefaultPort()
-    {
-        $m = new Manager();
-        $m->addServer('other.host');
-        $this->assertEquals([
-            ['host' => 'other.host', 'port' => 7711, 'password' => null, 'options' => []],
-        ], $m->getServers());
-    }
-
-    public function testAddServerPassword()
-    {
-        $m = new Manager();
-        $m->addServer('127.0.0.1', 7712, 'my_password');
-        $this->assertEquals([
-            ['host' => '127.0.0.1', 'port' => 7712, 'password' => 'my_password', 'options' => []],
-        ], $m->getServers());
+        $s = new Credentials('127.0.0.1', 7712);
+        $m->addServer($s);
+        $this->assertEquals([$s], array_values($m->getCredentials()));
     }
 
     public function testAddServers()
     {
         $m = new Manager();
-        $m->addServer('127.0.0.1', 7711, 'my_password1');
-        $m->addServer('127.0.0.1', 7712);
-        $m->addServer('127.0.0.1', 7713, 'my_password3');
-        $this->assertEquals([
-            ['host' => '127.0.0.1', 'port' => 7711, 'password' => 'my_password1', 'options' => []],
-            ['host' => '127.0.0.1', 'port' => 7712, 'password' => null, 'options' => []],
-            ['host' => '127.0.0.1', 'port' => 7713, 'password' => 'my_password3', 'options' => []],
-        ], $m->getServers());
+        $s1 = new Credentials('127.0.0.1', 7711, 'my_password1');
+        $m->addServer($s1);
+        $s2 = new Credentials('127.0.0.1', 7712);
+        $m->addServer($s2);
+        $s3 = new Credentials('127.0.0.1', 7713, 'my_password3');
+        $m->addServer($s3);
+        $this->assertEquals([$s1, $s2, $s3], array_values($m->getCredentials()));
     }
 
-    public function testDefaultConnectionClass()
+    public function testDefaultConnectionFactory()
     {
         $m = new Manager();
-        $this->assertSame(Socket::class, $m->getConnectionClass());
+        $this->assertSame(SocketFactory::class, get_class($m->getConnectionFactory()));
     }
 
-    public function testSetConnectionClassInvalidClass()
+    public function testSetConnectionFactory()
     {
-        $this->setExpectedException(InvalidArgumentException::class, 'Class DateTime does not implement ConnectionInterface');
+        $connectionFactory = m::mock(ConnectionFactoryInterface::class);
         $m = new Manager();
-        $m->setConnectionClass(DateTime::class);
+        $m->setConnectionFactory($connectionFactory);
+        $this->assertSame($connectionFactory, $m->getConnectionFactory());
     }
 
-    public function testSetConnectionClass()
+    public function testSetPriorityStrategy()
     {
-        $connection = m::mock(ConnectionInterface::class);
+        $priorityStrategy = m::mock(NodePrioritizerInterface::class);
         $m = new Manager();
-        $m->setConnectionClass(get_class($connection));
-        $this->assertSame(get_class($connection), $m->getConnectionClass());
+        $m->setPriorityStrategy($priorityStrategy);
+        $this->assertSame($priorityStrategy, $m->getPriorityStrategy());
     }
 
     public function testConnectInvalidNoConnection()
     {
         $this->setExpectedException(ConnectionException::class, 'No servers available');
-        $available = [
-        ];
-        $m = new MockManager();
-        $m->setAvailableConnection($available);
-        $m->connect([]);
+        $m = new Manager();
+        $m->connect();
     }
 
     public function testConnect()
     {
-        $available = [
-            'connection' => m::mock(ConnectionInterface::class),
-            'hello' => [
-                'id' => 'NODE_ID',
-                'nodes' => [
-                    [
-                        'id' => 'NODE_ID',
-                        'host' => '127.0.0.1',
-                        'port' => 7711
-                    ]
-                ]
+        $m = new Manager();
+
+        $serverAddress = '127.0.0.1';
+        $serverPort = 7712;
+
+        $nodeId = 'id1';
+        $version = 'v1';
+
+        $server = new Credentials($serverAddress, $serverPort);
+        $m->addServer($server);
+
+        $helloResponse = [
+            HelloResponse::POS_VERSION => $version,
+            HelloResponse::POS_ID => $nodeId,
+            HelloResponse::POS_NODES_START => [
+                HelloResponse::POS_NODE_ID => $nodeId,
+                HelloResponse::POS_NODE_HOST => $serverAddress,
+                HelloResponse::POS_NODE_PORT => $serverPort,
+                HelloResponse::POS_NODE_VERSION => $version
             ]
         ];
-        $m = new MockManager();
-        $m->setAvailableConnection($available);
-        $m->connect([]);
-        $this->assertSame('NODE_ID', $m->getNodeId());
-        $this->assertEquals([
-            'NODE_ID' => $available['hello']['nodes'][0] + [
-                'connection' => $available['connection'],
-                'jobs' => 0
-            ]
-        ], $m->getNodes());
-    }
-
-    public function testConnectWithOptions()
-    {
-        $m = new MockManager();
-        $m->addServer('127.0.0.1', 7711, null, ['test' => 'stuff']);
-        $m->setAvailableConnection(false); // Passthru
 
         $connection = m::mock(ConnectionInterface::class)
+            ->shouldReceive('isConnected')
+            ->times(2)
+            ->andReturn(false, true)
             ->shouldReceive('connect')
-            ->with(['test' => 'stuff'])
             ->once()
             ->shouldReceive('execute')
-            ->with(m::type(Hello::class))
-            ->andReturn([
-                'v1',
-                'id1',
-                ['id1', '127.0.0.1', 7711, 'v1'],
-                ['id2', '127.0.0.1', 7712, 'v1']
-            ])
-            ->mock();
+            ->andReturn($helloResponse)
 
-        $m->setBuildConnection($connection);
-        $m->connect([]);
+            ->getMock();
+
+        $connectionFactory = m::mock(ConnectionFactoryInterface::class)
+            ->shouldReceive('create')
+            ->with($serverAddress, $serverPort)
+            ->andReturn($connection)
+            ->once()
+
+            ->getMock();
+
+        $m->setConnectionFactory($connectionFactory);
+        $node = $m->connect();
+
+        $this->assertSame($connection, $node->getConnection());
+        $this->assertSame($nodeId, $node->getId());
+        $this->assertSame($version, $node->getVersion());
+        $this->assertSame($server, $node->getCredentials());
     }
 
     public function testConnectWithPasswordMissingPassword()
     {
-        $m = new MockManager();
-        $m->addServer('127.0.0.1', 7711);
-        $m->setAvailableConnection(false); // Passthru
+        $m = new Manager();
+        $m->addServer(new Credentials('127.0.0.1', 7711));
 
         $connection = m::mock(ConnectionInterface::class)
             ->shouldReceive('connect')
-            ->with([])
+            ->with(null, null)
             ->once()
             ->shouldReceive('execute')
             ->with(m::type(Hello::class))
-            ->andThrow(new ResponseException('NOAUTH Authentication Required'))
+            ->andThrow(new AuthenticationException('NOAUTH Authentication Required'))
             ->once()
+            ->shouldReceive('isConnected')
+            ->once()
+            ->andReturn(false)
             ->mock();
 
-        $m->setBuildConnection($connection);
+        $connectionFactory = m::mock(ConnectionFactoryInterface::class)
+            ->shouldReceive('create')
+            ->once()
+            ->andReturn($connection)
+            ->getMock();
 
-        $this->setExpectedException(AuthenticationException::class, 'NOAUTH Authentication Required');
-        $m->connect([]);
+        $m->setConnectionFactory($connectionFactory);
+
+        $this->setExpectedException(ConnectionException::class, 'No servers available');
+        $m->connect();
     }
 
     public function testConnectWithPasswordWrongPassword()
     {
-        $m = new MockManager();
-        $m->addServer('127.0.0.1', 7711, 'wrong_password');
-        $m->setAvailableConnection(false); // Passthru
+        $m = new Manager();
+        $m->addServer(new Credentials('127.0.0.1', 7711, 'wrong_password'));
 
         $connection = m::mock(ConnectionInterface::class)
+            ->shouldReceive('isConnected')
+            ->once()
+            ->andReturn(false)
             ->shouldReceive('connect')
-            ->with([])
+            ->with(null, null)
             ->once()
             ->shouldReceive('execute')
             ->with(m::type(Auth::class))
@@ -281,21 +182,29 @@ class ManagerTest extends PHPUnit_Framework_TestCase
             ->once()
             ->mock();
 
-        $m->setBuildConnection($connection);
+        $connectionFactory = m::mock(ConnectionFactoryInterface::class)
+            ->shouldReceive('create')
+            ->once()
+            ->andReturn($connection)
+            ->getMock();
+
+        $m->setConnectionFactory($connectionFactory);
 
         $this->setExpectedException(ConnectionException::class, 'No servers available');
-        $m->connect([]);
+        $m->connect();
     }
 
     public function testConnectWithPasswordWrongResponse()
     {
-        $m = new MockManager();
-        $m->addServer('127.0.0.1', 7711, 'right_password');
-        $m->setAvailableConnection(false); // Passthru
+        $m = new Manager();
+        $m->addServer(new Credentials('127.0.0.1', 7711, 'right_password'));
 
         $connection = m::mock(ConnectionInterface::class)
+            ->shouldReceive('isConnected')
+            ->once()
+            ->andReturn(false)
             ->shouldReceive('connect')
-            ->with([])
+            ->with(null, null)
             ->once()
             ->shouldReceive('execute')
             ->with(m::type(Auth::class))
@@ -303,21 +212,44 @@ class ManagerTest extends PHPUnit_Framework_TestCase
             ->once()
             ->mock();
 
-        $m->setBuildConnection($connection);
+        $connectionFactory = m::mock(ConnectionFactoryInterface::class)
+            ->shouldReceive('create')
+            ->once()
+            ->andReturn($connection)
+            ->getMock();
+
+        $m->setConnectionFactory($connectionFactory);
 
         $this->setExpectedException(ConnectionException::class, 'No servers available');
-        $m->connect([]);
+        $m->connect();
     }
 
     public function testConnectWithPasswordRightPassword()
     {
-        $m = new MockManager();
-        $m->addServer('127.0.0.1', 7711, 'right_password');
-        $m->setAvailableConnection(false); // Passthru
+        $address = '127.0.0.1';
+        $port = 7711;
+        $port2 = 7712;
+
+        $nodeId1 = 'id1';
+        $nodeId2 = 'id2';
+        $version = 'v1';
+
+        $m = new Manager();
+        $m->addServer(new Credentials($address, $port, 'right_password'));
+
+        $helloResponse = [
+            $version,
+            $nodeId1,
+            [$nodeId1, $address, $port, $version],
+            [$nodeId2, $address, $port2, $version]
+        ];
 
         $connection = m::mock(ConnectionInterface::class)
+            ->shouldReceive('isConnected')
+            ->times(2)
+            ->andReturn(false, true)
             ->shouldReceive('connect')
-            ->with([])
+            ->with(null, null)
             ->once()
             ->shouldReceive('execute')
             ->with(m::type(Auth::class))
@@ -325,495 +257,576 @@ class ManagerTest extends PHPUnit_Framework_TestCase
             ->once()
             ->shouldReceive('execute')
             ->with(m::type(Hello::class))
-            ->andReturn([
-                'v1',
-                'id1',
-                ['id1', '127.0.0.1', 7711, 'v1'],
-                ['id2', '127.0.0.1', 7712, 'v1']
-            ])
+            ->andReturn($helloResponse)
             ->mock();
+        $connection2 = m::mock(ConnectionInterface::class);
 
-        $m->setBuildConnection($connection);
-        $m->connect([]);
+        $connectionFactory = m::mock(ConnectionFactoryInterface::class)
+            ->shouldReceive('create')
+            ->times(2)
+            ->andReturn($connection, $connection2)
+            ->getMock();
+        $m->setConnectionFactory($connectionFactory);
+
+        $m->connect();
     }
 
     public function testFindAvailableConnectionNoneSpecifiedConnectThrowsException()
     {
-        $m = new MockManager();
-        $m->setAvailableConnection(false); // Passthru
+        $m = new Manager();
         $this->setExpectedException(ConnectionException::class, 'No servers available');
-        $m->connect([]);
+        $m->connect();
     }
 
     public function testFindAvailableConnectionNoneAvailableConnectThrowsException()
     {
-        $m = new MockManager();
-        $m->addServer('127.0.0.1', 7711);
-        $m->setAvailableConnection(false); // Passthru
+        $m = new Manager();
+        $m->addServer(new Credentials('127.0.0.1', 7711));
 
         $connection = m::mock(ConnectionInterface::class)
+            ->shouldReceive('isConnected')
+            ->once()
+            ->andReturn(false)
             ->shouldReceive('connect')
-            ->with([])
             ->andThrow(new ConnectionException('Mocking ConnectionException'))
             ->once()
             ->mock();
-
-        $m->setBuildConnection($connection);
-
+        $connectionFactory = m::mock(ConnectionFactoryInterface::class)
+            ->shouldReceive('create')
+            ->once()
+            ->andReturn($connection)
+            ->getMock();
+        $m->setConnectionFactory($connectionFactory);
         $this->setExpectedException(ConnectionException::class, 'No servers available');
 
-        $m->connect([]);
+        $m->connect();
     }
 
     public function testFindAvailableConnectionSucceedsFirst()
     {
-        $m = new MockManager();
-        $m->addServer('127.0.0.1', 7711);
-        $m->setAvailableConnection(false); // Passthru
+        $serverAddress = '127.0.0.1';
+        $serverPort = 7712;
+
+        $server = new Credentials($serverAddress, $serverPort);
+        $m = new Manager();
+        $m->addServer($server);
+
+        $nodeId = 'id1';
+        $version = 'v1';
+
+        $helloResponse = [
+            HelloResponse::POS_VERSION => $version,
+            HelloResponse::POS_ID => $nodeId,
+            HelloResponse::POS_NODES_START => [
+                HelloResponse::POS_NODE_ID => $nodeId,
+                HelloResponse::POS_NODE_HOST => $serverAddress,
+                HelloResponse::POS_NODE_PORT => $serverPort,
+                HelloResponse::POS_NODE_VERSION => $version
+            ]
+        ];
 
         $connection = m::mock(ConnectionInterface::class)
+            ->shouldReceive('isConnected')
+            ->times(2)
+            ->andReturn(false, true)
             ->shouldReceive('connect')
-            ->with([])
+            ->with(null, null)
             ->once()
             ->shouldReceive('execute')
             ->with(m::type(Hello::class))
-            ->andReturn(['version', 'id', ['id', 'host', 'port', 'version']])
+            ->andReturn($helloResponse)
             ->once()
             ->mock();
 
-        $m->setBuildConnection($connection);
+        $connectionFactory = m::mock(ConnectionFactoryInterface::class)
+            ->shouldReceive('create')
+            ->once()
+            ->andReturn($connection)
+            ->getMock();
+        $m->setConnectionFactory($connectionFactory);
 
-        $result = $m->connect([]);
-        $this->assertSame([
-            'version' => 'version',
-            'id' => 'id',
-            'nodes' => [
-                [
-                    'id' => 'id',
-                    'host' => 'host',
-                    'port' => 'port',
-                    'version' => 'version'
-                ]
-            ]
-        ], $result);
+        $node = $m->connect();
+
+        $this->assertSame($connection, $node->getConnection());
+        $this->assertSame($nodeId, $node->getId());
+        $this->assertSame($version, $node->getVersion());
+        $this->assertSame($server, $node->getCredentials());
+
     }
 
     public function testFindAvailableConnectionSucceedsSecond()
     {
-        $m = new MockManager();
-        $m->addServer('127.0.0.1', 7711);
-        $m->addServer('127.0.0.1', 7712);
-        $m->setAvailableConnection(false); // Passthru
+        $serverAddress = '127.0.0.1';
+        $serverPort1 = 7711;
+        $serverPort2 = 7712;
+
+        $server1 = new Credentials($serverAddress, $serverPort1);
+        $server2 = new Credentials($serverAddress, $serverPort2);
+        $m = new Manager();
+        $m->addServer($server1);
+        $m->addServer($server2);
+
+        $nodeId = 'id1';
+        $version = 'v1';
 
         $connection = m::mock(ConnectionInterface::class)
+            ->shouldReceive('isConnected')
+            ->times(3)
+            ->andReturn(false, false, true)
             ->shouldReceive('connect')
-            ->with([])
             ->andThrow(new ConnectionException('Mocking ConnectionException'))
             ->once()
             ->shouldReceive('connect')
-            ->with([])
             ->once()
             ->shouldReceive('execute')
             ->with(m::type(Hello::class))
-            ->andReturn(['version', 'id', ['id', 'host', 'port', 'version']])
+            ->andReturn([$version, $nodeId, [$nodeId, $serverAddress, $serverPort2, $version]])
             ->once()
             ->mock();
 
-        $m->setBuildConnection($connection);
+        $connectionFactory = m::mock(ConnectionFactoryInterface::class)
+            ->shouldReceive('create')
+            ->times(2)
+            ->andReturn($connection)
+            ->getMock();
+        $m->setConnectionFactory($connectionFactory);
 
-        $result = $m->connect([]);
-        $this->assertSame([
-            'version' => 'version',
-            'id' => 'id',
-            'nodes' => [
-                [
-                    'id' => 'id',
-                    'host' => 'host',
-                    'port' => 'port',
-                    'version' => 'version'
-                ]
-            ]
-        ], $result);
+        $node = $m->connect();
+
+        $this->assertSame($connection, $node->getConnection());
+        $this->assertSame($nodeId, $node->getId());
+        $this->assertSame($version, $node->getVersion());
+        $this->assertContains($node->getCredentials(), [$server1, $server2]);
     }
 
     public function testCustomConnection()
     {
-        $m = new Manager();
-        $m->addServer('host', 7799);
-        $m->setConnectionClass(MockConnection::class);
+        $connection = m::mock(ConnectionInterface::class)
+            ->shouldReceive('isConnected')
+            ->andThrow(ConnectionException::class)
+            ->getMock();
 
-        try {
-            $m->connect([]);
-            $this->fail('An expected ' . ConnectionException::class . ' was not raised');
-        } catch (ConnectionException $e) {
-            $this->assertSame('No servers available', $e->getMessage());
-        }
-        $this->assertSame('host', MockConnection::$mockHost);
-        $this->assertSame(7799, MockConnection::$mockPort);
+        $connectionFactory = m::mock(ConnectionFactoryInterface::class)
+            ->shouldReceive('create')
+            ->andReturn($connection)
+            ->getMock();
+
+        $m = new Manager();
+        $m->addServer(new Credentials('host', 7799));
+        $m->setConnectionFactory($connectionFactory);
+
+        $this->setExpectedException(ConnectionException::class, 'No servers available');
+        $m->connect();
     }
 
     public function testExecuteNotConnected()
     {
-        $m = new MockManager();
-        $m->setAvailableConnection(false); // Passthru
+        $m = new Manager();
         $this->setExpectedException(ConnectionException::class, 'Not connected');
-        $m->execute(new Hello());
-    }
-
-    public function testExecuteCallsConnectionDisconnected()
-    {
-        $connection = m::mock(ConnectionInterface::class)
-            ->shouldReceive('isConnected')
-            ->andReturn(false)
-            ->once()
-            ->mock();
-
-        $available = [
-            'connection' => $connection,
-            'hello' => [
-                'id' => 'NODE_ID',
-                'nodes' => [
-                    [
-                        'id' => 'NODE_ID',
-                        'host' => '127.0.0.1',
-                        'port' => 7711
-                    ]
-                ]
-            ]
-        ];
-        $m = new MockManager();
-        $m->setAvailableConnection($available);
-        $m->connect([]);
-
-        $this->setExpectedException(ConnectionException::class, 'Not connected');
-
         $m->execute(new Hello());
     }
 
     public function testExecuteCallsConnectionExecute()
     {
-        $connection = m::mock(ConnectionInterface::class)
-            ->shouldReceive('isConnected')
-            ->andReturn(true)
-            ->once()
-            ->shouldReceive('execute')
-            ->with(m::type(Hello::class))
-            ->andReturn(['test' => 'stuff'])
-            ->once()
-            ->mock();
+        $m = new Manager();
 
-        $available = [
-            'connection' => $connection,
-            'hello' => [
-                'id' => 'NODE_ID',
-                'nodes' => [
-                    [
-                        'id' => 'NODE_ID',
-                        'host' => '127.0.0.1',
-                        'port' => 7711
-                    ]
-                ]
+        $serverAddress = '127.0.0.1';
+        $serverPort = 7712;
+        $nodeId = 'id1';
+        $version = 'v1';
+        $server = new Credentials($serverAddress, $serverPort);
+        $m->addServer($server);
+
+        $helloResponse = [
+            HelloResponse::POS_VERSION => $version,
+            HelloResponse::POS_ID => $nodeId,
+            HelloResponse::POS_NODES_START => [
+                HelloResponse::POS_NODE_ID => $nodeId,
+                HelloResponse::POS_NODE_HOST => $serverAddress,
+                HelloResponse::POS_NODE_PORT => $serverPort,
+                HelloResponse::POS_NODE_VERSION => $version
             ]
         ];
-        $m = new MockManager();
-        $m->setAvailableConnection($available);
-        $m->connect([]);
+        $expectedResponse = ['test' => 'stuff'];
+
+        $connection = m::mock(ConnectionInterface::class)
+            ->shouldReceive('isConnected')
+            ->times(3)
+            ->andReturn(false, true, true)
+            ->shouldReceive('connect')
+            ->once()
+            ->shouldReceive('execute')
+            ->andReturn($helloResponse)
+            ->once()
+            ->shouldReceive('execute')
+            ->andReturn($expectedResponse)
+            ->getMock();
+
+        $connectionFactory = m::mock(ConnectionFactoryInterface::class)
+            ->shouldReceive('create')
+            ->with($serverAddress, $serverPort)
+            ->andReturn($connection)
+            ->once()
+
+            ->getMock();
+
+        $m->setConnectionFactory($connectionFactory);
+        $m->connect();
         $result = $m->execute(new Hello());
-        $this->assertSame(['test' => 'stuff'], $result);
+        $this->assertSame($expectedResponse, $result);
     }
 
-    public function testGetJobNodeNotInList()
+    public function testGetJobSwitchesNode()
     {
-        $node1 = 'DI0f0c644fd3ccb51c2cedbd47fcb6f312646c993c05a0SQ';
-        $node2 = 'DI0f0c645fd3ccb51c2cedbd47fcb6f312646c993c05a0SQ';
+        $node1 = '0f0c644fd3ccb51c2cedbd47fcb6f312646c993c05a0SQ';
+        $node2 = '0f0c645fd3ccb51c2cedbd47fcb6f312646c993c05a0SQ';
+        $jobId1 = 'DI' . $node1;
+        $jobId2 = 'DI' . $node2;
+        $jobId3 = 'DI' . $node2;
+
         $this->assertNotSame($node1, $node2);
 
         $connection1 = m::mock(ConnectionInterface::class)
             ->shouldReceive('isConnected')
-            ->andReturn(true)
-            ->times(3)
-            ->shouldReceive('execute')
-            ->with(m::type(GetJob::class))
-            ->andReturn([
-                ['q', $node1, 'body1'],
-                ['q', $node1, 'body2'],
-            ])
             ->once()
-            ->shouldReceive('execute')
-            ->with(m::type(GetJob::class))
-            ->andReturn([
-                ['q2', $node2, 'body3'],
-            ])
-            ->once()
-            ->shouldReceive('execute')
-            ->with(m::type(GetJob::class))
-            ->andReturn([
-                ['q', $node1, 'body4']
-            ])
-            ->mock();
-
-        $command = new GetJob();
-        $command->setArguments(['q', 'q2']);
-
-        $m = new MockManager();
-        $m->setMinimumJobsToChangeNode(3);
-        $m->setAvailableConnection([
-            'connection' => $connection1,
-            'hello' => [
-                'id' => $node1,
-                'nodes' => [
-                    [
-                        'id' => $node1,
-                        'host' => '127.0.0.1',
-                        'port' => 7711
-                    ]
-                ]
-            ]
-        ]);
-        $m->connect([]);
-        $this->assertSame($node1, $m->getNodeId());
-
-        $m->execute($command);
-        $this->assertSame($node1, $m->getNodeId());
-
-        $m->execute($command);
-        $this->assertSame($node1, $m->getNodeId());
-
-        $m->execute($command);
-        $this->assertSame($node1, $m->getNodeId());
-    }
-
-    public function testGetJobSameNode()
-    {
-        $node1 = 'DI0f0c644fd3ccb51c2cedbd47fcb6f312646c993c05a0SQ';
-        $node2 = 'DI0f0c645fd3ccb51c2cedbd47fcb6f312646c993c05a0SQ';
-        $this->assertNotSame($node1, $node2);
-
-        $connection1 = m::mock(ConnectionInterface::class)
-            ->shouldReceive('isConnected')
-            ->andReturn(true)
-            ->times(3)
-            ->shouldReceive('execute')
-            ->with(m::type(GetJob::class))
-            ->andReturn([
-                ['q', $node1, 'body1'],
-                ['q', $node1, 'body2'],
-            ])
-            ->once()
-            ->shouldReceive('execute')
-            ->with(m::type(GetJob::class))
-            ->andReturn([
-                ['q2', $node2, 'body3'],
-            ])
-            ->once()
-            ->shouldReceive('execute')
-            ->with(m::type(GetJob::class))
-            ->andReturn([
-                ['q', $node1, 'body4']
-            ])
-            ->mock();
-
-        $command = new GetJob();
-        $command->setArguments(['q', 'q2']);
-
-        $m = new MockManager();
-        $m->setMinimumJobsToChangeNode(3);
-        $m->setAvailableConnection([
-            'connection' => $connection1,
-            'hello' => [
-                'id' => $node1,
-                'nodes' => [
-                    [
-                        'id' => $node1,
-                        'host' => '127.0.0.1',
-                        'port' => 7711
-                    ],
-                    [
-                        'id' => $node2,
-                        'host' => '127.0.0.1',
-                        'port' => 7711
-                    ],
-
-                ]
-            ]
-        ]);
-        $m->connect([]);
-        $this->assertSame($node1, $m->getNodeId());
-
-        $m->execute($command);
-        $this->assertSame($node1, $m->getNodeId());
-
-        $m->execute($command);
-        $this->assertSame($node1, $m->getNodeId());
-
-        $m->execute($command);
-        $this->assertSame($node1, $m->getNodeId());
-    }
-
-    public function testGetJobChangeNodeCantConnect()
-    {
-        $node1 = 'DI0f0c644fd3ccb51c2cedbd47fcb6f312646c993c05a0SQ';
-        $node2 = 'DI0f0c645fd3ccb51c2cedbd47fcb6f312646c993c05a0SQ';
-        $this->assertNotSame($node1, $node2);
-
-        $connection1 = m::mock(ConnectionInterface::class)
-            ->shouldReceive('isConnected')
-            ->andReturn(true)
-            ->times(3)
-            ->shouldReceive('execute')
-            ->with(m::type(GetJob::class))
-            ->andReturn([
-                ['q', $node2, 'body1'],
-                ['q', $node2, 'body2'],
-            ])
-            ->once()
-            ->shouldReceive('execute')
-            ->with(m::type(GetJob::class))
-            ->andReturn([
-                ['q2', $node1, 'body3'],
-            ])
-            ->once()
-            ->shouldReceive('execute')
-            ->with(m::type(GetJob::class))
-            ->andReturn([
-                ['q', $node2, 'body4']
-            ])
-            ->mock();
-
-        $connection2 = m::mock(ConnectionInterface::class)
+            ->andReturn(false)
             ->shouldReceive('connect')
-            ->with([])
-            ->andThrow(new ConnectionException('Mocking ConnectionException'))
             ->once()
-            ->mock();
-
-        $command = new GetJob();
-        $command->setArguments(['q', 'q2']);
-
-        $m = new MockManager();
-        $m->setMinimumJobsToChangeNode(3);
-        $m->setAvailableConnection([
-            'connection' => $connection1,
-            'hello' => [
-                'id' => $node1,
-                'nodes' => [
-                    [
-                        'id' => $node1,
-                        'host' => '127.0.0.1',
-                        'port' => 7711
-                    ],
-                    [
-                        'id' => $node2,
-                        'host' => '127.0.0.1',
-                        'port' => 7712
-                    ],
-
-                ]
-            ]
-        ]);
-        $m->setBuildConnection(function ($host, $port) use($connection1, $connection2) {
-            if ($port === 7711) {
-                return $connection1;
-            }
-            return $connection2;
-        });
-        $m->connect([]);
-        $this->assertSame($node1, $m->getNodeId());
-
-        $m->execute($command);
-        $this->assertSame($node1, $m->getNodeId());
-
-        $m->execute($command);
-        $this->assertSame($node1, $m->getNodeId());
-
-        $m->execute($command);
-        $this->assertSame($node1, $m->getNodeId());
-    }
-
-    public function testGetJobChangesNode()
-    {
-        $node1 = 'DI0f0c644fd3ccb51c2cedbd47fcb6f312646c993c05a0SQ';
-        $node2 = 'DI0f0c645fd3ccb51c2cedbd47fcb6f312646c993c05a0SQ';
-        $this->assertNotSame($node1, $node2);
-
-        $connection1 = m::mock(ConnectionInterface::class)
             ->shouldReceive('isConnected')
             ->andReturn(true)
-            ->times(3)
-            ->shouldReceive('execute')
-            ->with(m::type(GetJob::class))
-            ->andReturn([
-                ['q', $node2, 'body1'],
-                ['q', $node2, 'body2'],
-            ])
-            ->once()
-            ->shouldReceive('execute')
-            ->with(m::type(GetJob::class))
-            ->andReturn([
-                ['q2', $node1, 'body3'],
-            ])
-            ->once()
-            ->shouldReceive('execute')
-            ->with(m::type(GetJob::class))
-            ->andReturn([
-                ['q', $node2, 'body4']
-            ])
-            ->mock();
-
-        $connection2 = m::mock(ConnectionInterface::class)
-            ->shouldReceive('connect')
-            ->with([])
-            ->once()
             ->shouldReceive('execute')
             ->with(m::type(Hello::class))
             ->andReturn([
                 'v1',
-                'id1',
-                ['id1', '127.0.0.1', 7711, 'v1'],
-                ['id2', '127.0.0.1', 7712, 'v1']
+                $node1,
+                [$node1, '127.0.0.1', 7711, 'v1'],
+                [$node2, '127.0.0.1', 7712, 'v1']
+            ])
+            ->once()
+            ->shouldReceive('execute')
+            ->with(m::type(GetJob::class))
+            ->andReturn([
+                ['q', $jobId1, 'body1']
+            ])
+            ->once()
+            ->shouldReceive('execute')
+            ->with(m::type(GetJob::class))
+            ->andReturn([
+                ['q2', $jobId2, 'body2'],
+            ])
+            ->once()
+            ->shouldReceive('execute')
+            ->with(m::type(GetJob::class))
+            ->andReturn([
+                ['q', $jobId3, 'body3']
             ])
             ->mock();
+
+        $connection2 = m::mock(ConnectionInterface::class)
+            ->shouldReceive('isConnected')
+            ->once()
+            ->andReturn(false)
+            ->shouldReceive('connect')
+            ->once()
+            ->shouldReceive('isConnected')
+            ->andReturn(true)
+            ->shouldReceive('execute')
+            ->with(m::type(Hello::class))
+            ->andReturn([
+                'v1',
+                $node2,
+                [$node2, '127.0.0.1', 7712, 'v1'],
+                [$node1, '127.0.0.1', 7711, 'v1']
+            ])
+            ->mock();
+
+        $connectionFactory = m::mock(ConnectionFactoryInterface::class)
+            ->shouldReceive('create')
+            ->once()
+            ->andReturn($connection1)
+            ->shouldReceive('create')
+            ->andReturn($connection2)
+            ->once()
+            ->mock();
+
+        $priorityStrategy = new ConservativeJobCountPrioritizer();
+        $priorityStrategy->setMarginToSwitch(0.001);
 
         $command = new GetJob();
         $command->setArguments(['q', 'q2']);
 
-        $m = new MockManager();
-        $m->setMinimumJobsToChangeNode(3);
-        $m->setAvailableConnection([
-            'connection' => $connection1,
-            'hello' => [
-                'id' => $node1,
-                'nodes' => [
-                    [
-                        'id' => $node1,
-                        'host' => '127.0.0.1',
-                        'port' => 7711
-                    ],
-                    [
-                        'id' => $node2,
-                        'host' => '127.0.0.1',
-                        'port' => 7712
-                    ],
+        $m = new Manager();
+        $m->setConnectionFactory($connectionFactory);
+        $m->setPriorityStrategy($priorityStrategy);
+        $m->addServer(new Credentials('127.0.0.1', 7711));
 
-                ]
-            ]
-        ]);
-        $m->setBuildConnection(function ($host, $port) use($connection1, $connection2) {
-            if ($port === 7711) {
-                return $connection1;
-            }
-            return $connection2;
-        });
-        $m->connect([]);
-        $this->assertSame($node1, $m->getNodeId());
+
+        $m->connect();
+
+        $this->assertSame($node1, $m->getCurrentNode()->getId());
 
         $m->execute($command);
-        $this->assertSame($node1, $m->getNodeId());
+        $this->assertSame($node1, $m->getCurrentNode()->getId());
 
         $m->execute($command);
-        $this->assertSame($node1, $m->getNodeId());
+        $this->assertSame($node1, $m->getCurrentNode()->getId());
 
         $m->execute($command);
-        $this->assertSame($node2, $m->getNodeId());
+        $this->assertSame($node2, $m->getCurrentNode()->getId());
     }
+
+    public function testGetJobNodeNotInList()
+    {
+        $node1 = '0f0c644fd3ccb51c2cedbd47fcb6f312646c993c05a0SQ';
+        $node2 = '0f0c645fd3ccb51c2cedbd47fcb6f312646c993c05a0SQ';
+        $jobId1 = 'DI' . $node1;
+        $jobId2 = 'DI' . $node2;
+        $jobId3 = 'DI' . $node2;
+
+        $this->assertNotSame($node1, $node2);
+
+        $connection = m::mock(ConnectionInterface::class)
+            ->shouldReceive('isConnected')
+            ->once()
+            ->andReturn(false)
+            ->shouldReceive('connect')
+            ->once()
+            ->shouldReceive('isConnected')
+            ->andReturn(true)
+            ->shouldReceive('execute')
+            ->with(m::type(Hello::class))
+            ->andReturn([
+                'v1',
+                $node1,
+                [$node1, '127.0.0.1', 7711, 'v1']
+            ])
+            ->once()
+            ->shouldReceive('execute')
+
+            ->with(m::type(GetJob::class))
+            ->andReturn([
+                ['q', $jobId1, 'body1']
+            ])
+            ->once()
+            ->shouldReceive('execute')
+            ->with(m::type(GetJob::class))
+            ->andReturn([
+                ['q2', $jobId2, 'body2'],
+            ])
+            ->once()
+            ->shouldReceive('execute')
+            ->with(m::type(GetJob::class))
+            ->andReturn([
+                ['q', $jobId3, 'body3']
+            ])
+            ->mock();
+
+        $connectionFactory = m::mock(ConnectionFactoryInterface::class)
+            ->shouldReceive('create')
+            ->once()
+            ->andReturn($connection)
+            ->mock();
+
+        $priorityStrategy = new ConservativeJobCountPrioritizer();
+        $priorityStrategy->setMarginToSwitch(0.001);
+
+        $command = new GetJob();
+        $command->setArguments(['q', 'q2']);
+
+        $m = new Manager();
+        $m->setConnectionFactory($connectionFactory);
+        $m->setPriorityStrategy($priorityStrategy);
+        $m->addServer(new Credentials('127.0.0.1', 7711));
+
+
+        $m->connect();
+
+        $this->assertSame($node1, $m->getCurrentNode()->getId());
+
+        $m->execute($command);
+        $this->assertSame($node1, $m->getCurrentNode()->getId());
+
+        $m->execute($command);
+        $this->assertSame($node1, $m->getCurrentNode()->getId());
+
+        $m->execute($command);
+        $this->assertSame($node1, $m->getCurrentNode()->getId());
+    }
+
+    public function testGetJobSameNode()
+    {
+        $node1 = '0f0c644fd3ccb51c2cedbd47fcb6f312646c993c05a0SQ';
+        $node2 = '0f0c645fd3ccb51c2cedbd47fcb6f312646c993c05a0SQ';
+        $jobId1 = 'DI' . $node1;
+        $jobId2 = 'DI' . $node2;
+        $jobId3 = 'DI' . $node1;
+
+        $this->assertNotSame($node1, $node2);
+
+        $connection1 = m::mock(ConnectionInterface::class)
+            ->shouldReceive('isConnected')
+            ->once()
+            ->andReturn(false)
+            ->shouldReceive('connect')
+            ->once()
+            ->shouldReceive('isConnected')
+            ->andReturn(true)
+            ->shouldReceive('execute')
+            ->with(m::type(Hello::class))
+            ->andReturn([
+                'v1',
+                $node1,
+                [$node1, '127.0.0.1', 7711, 'v1'],
+                [$node2, '127.0.0.1', 7712, 'v1']
+            ])
+            ->once()
+            ->shouldReceive('execute')
+
+            ->with(m::type(GetJob::class))
+            ->andReturn([
+                ['q', $jobId1, 'body1']
+            ])
+            ->once()
+            ->shouldReceive('execute')
+            ->with(m::type(GetJob::class))
+            ->andReturn([
+                ['q2', $jobId2, 'body2'],
+            ])
+            ->once()
+            ->shouldReceive('execute')
+            ->with(m::type(GetJob::class))
+            ->andReturn([
+                ['q', $jobId3, 'body3']
+            ])
+            ->mock();
+
+        $connection2 = m::mock(ConnectionInterface::class);
+        $connectionFactory = m::mock(ConnectionFactoryInterface::class)
+            ->shouldReceive('create')
+            ->once()
+            ->andReturn($connection1)
+            ->shouldReceive('create')
+            ->andReturn($connection2)
+            ->once()
+            ->mock();
+
+        $priorityStrategy = new ConservativeJobCountPrioritizer();
+        $priorityStrategy->setMarginToSwitch(0.001);
+
+        $command = new GetJob();
+        $command->setArguments(['q', 'q2']);
+
+        $m = new Manager();
+        $m->setConnectionFactory($connectionFactory);
+        $m->setPriorityStrategy($priorityStrategy);
+        $m->addServer(new Credentials('127.0.0.1', 7711));
+
+
+        $m->connect();
+
+        $this->assertSame($node1, $m->getCurrentNode()->getId());
+
+        $m->execute($command);
+        $this->assertSame($node1, $m->getCurrentNode()->getId());
+
+        $m->execute($command);
+        $this->assertSame($node1, $m->getCurrentNode()->getId());
+
+        $m->execute($command);
+        $this->assertSame($node1, $m->getCurrentNode()->getId());
+
+        return;
+    }
+
+    public function testGetJobChangeNodeCantConnect()
+    {
+        $node1 = '0f0c644fd3ccb51c2cedbd47fcb6f312646c993c05a0SQ';
+        $node2 = '0f0c645fd3ccb51c2cedbd47fcb6f312646c993c05a0SQ';
+        $jobId1 = 'DI' . $node1;
+        $jobId2 = 'DI' . $node2;
+        $jobId3 = 'DI' . $node2;
+
+        $this->assertNotSame($node1, $node2);
+
+        $connection1 = m::mock(ConnectionInterface::class)
+            ->shouldReceive('isConnected')
+            ->once()
+            ->andReturn(false)
+            ->shouldReceive('connect')
+            ->once()
+            ->shouldReceive('isConnected')
+            ->andReturn(true)
+            ->shouldReceive('execute')
+            ->with(m::type(Hello::class))
+            ->andReturn([
+                'v1',
+                $node1,
+                [$node1, '127.0.0.1', 7711, 'v1'],
+                [$node2, '127.0.0.1', 7712, 'v1']
+            ])
+            ->once()
+            ->shouldReceive('execute')
+
+            ->with(m::type(GetJob::class))
+            ->andReturn([
+                ['q', $jobId1, 'body1']
+            ])
+            ->once()
+            ->shouldReceive('execute')
+            ->with(m::type(GetJob::class))
+            ->andReturn([
+                ['q2', $jobId2, 'body2'],
+            ])
+            ->once()
+            ->shouldReceive('execute')
+            ->with(m::type(GetJob::class))
+            ->andReturn([
+                ['q', $jobId3, 'body3']
+            ])
+            ->mock();
+
+        $connection2 = m::mock(ConnectionInterface::class)
+            ->shouldReceive('isConnected')
+            ->andReturn(false)
+            ->shouldReceive('connect')
+            ->once()
+            ->andThrow(new ConnectionException('Mocking ConnectionException'))
+            ->mock();
+
+        $connectionFactory = m::mock(ConnectionFactoryInterface::class)
+            ->shouldReceive('create')
+            ->once()
+            ->andReturn($connection1)
+            ->shouldReceive('create')
+            ->andReturn($connection2)
+            ->once()
+            ->mock();
+
+        $priorityStrategy = new ConservativeJobCountPrioritizer();
+        $priorityStrategy->setMarginToSwitch(0.001);
+
+        $command = new GetJob();
+        $command->setArguments(['q', 'q2']);
+
+        $m = new Manager();
+        $m->setConnectionFactory($connectionFactory);
+        $m->setPriorityStrategy($priorityStrategy);
+        $m->addServer(new Credentials('127.0.0.1', 7711));
+
+
+        $m->connect();
+
+        $this->assertSame($node1, $m->getCurrentNode()->getId());
+
+        $m->execute($command);
+        $this->assertSame($node1, $m->getCurrentNode()->getId());
+
+        $m->execute($command);
+        $this->assertSame($node1, $m->getCurrentNode()->getId());
+
+        $m->execute($command);
+        $this->assertSame($node1, $m->getCurrentNode()->getId());
+    }
+
+
 }

@@ -1,116 +1,141 @@
 <?php
 namespace Disque\Connection;
 
-use Disque\Command\Auth;
+use Disque\Connection\Node\Node;
+use Disque\Connection\Node\NodePrioritizerInterface;
+use Disque\Connection\Node\ConservativeJobCountPrioritizer;
 use Disque\Command\CommandInterface;
 use Disque\Command\GetJob;
-use Disque\Command\Hello;
-use Disque\Connection\ConnectionException;
-use InvalidArgumentException;
+use Disque\Command\Response\HelloResponse;
+use Disque\Command\Response\JobsResponse;
+use Disque\Connection\Factory\ConnectionFactoryInterface;
+use Disque\Connection\Factory\SocketFactory;
 
+/**
+ * The connection manager connects to Disque nodes and chooses the best of them
+ *
+ * If there are multiple nodes to connect, the first connection is always
+ * random. The manager then switches to the best nodes according to its
+ * NodePriority strategy.
+ *
+ * If the manager knows the credentials of only one node, it will automatically
+ * discover other nodes in the cluster and connect to them if needed (unless
+ * they are password-protected).
+ */
 class Manager implements ManagerInterface
 {
     /**
-     * List of servers (or initial nodes) that we can connect to
+     * Servers we can connect to initially, without knowing the cluster
      *
      * After connecting to one, the server returns a list of other nodes
-     * in the cluster.
+     * in the cluster so we can connect to them automatically, unless
+     * the discovered nodes are secured with a password.
      *
-     * @var array
+     * 'serverAddress' => Credentials
+     *
+     * @var Credentials[]
      */
-    protected $servers = [];
+    protected $credentials = [];
 
     /**
-     * If a node has produced at least these number of jobs, switch there
+     * A strategy to prioritize nodes and find the best one to switch to
      *
-     * @var int
+     * The default strategy is the ConservativeJobCountPrioritizer. It
+     * prioritizes nodes by their job count, but prefers the current node
+     * in order to avoid switching until there is a clearly better node.
+     *
+     * @var NodePrioritizerInterface
      */
-    protected $minimumJobsToChangeNode = 0;
+    protected $priorityStrategy;
 
     /**
      * List of nodes, ie Disque instances available in the cluster
      *
-     * Indexed by node ID, and as value an array with:
-     * - ConnectionInterface|null `connection`
-     * - string `host`
-     * - int `port`
-     * - string `version`
+     * 'nodeId' => Node
      *
-     * @var array
+     * @var Node[]
      */
     protected $nodes = [];
 
     /**
-     * Node prefixes, and their corresponding node ID
+     * Node prefixes and their corresponding node ID
      *
      * Node prefix consists of the first 8 bytes from the node ID. Because job
      * IDs contain the node prefix, it can be used to identify on which node
      * a job lives.
+     *
+     * 'nodePrefix' => 'nodeId'
      *
      * @var array
      */
     protected $nodePrefixes = [];
 
     /**
-     * Current node ID we are connected to
+     * The ID of the node we are currently connected to
      *
      * @var string
      */
     protected $nodeId;
 
     /**
-     * Connection implementation
-     *
-     * @var string
+     * @var ConnectionFactoryInterface
      */
-    protected $connectionClass = Socket::class;
+    private $connectionFactory;
 
-    /**
-     * @inheritdoc
-     */
-    public function getConnectionClass()
+    public function __construct()
     {
-        return $this->connectionClass;
+        $this->connectionFactory = new SocketFactory();
+        $this->priorityStrategy = new ConservativeJobCountPrioritizer();
     }
 
     /**
      * @inheritdoc
      */
-    public function setConnectionClass($class)
+    public function getConnectionFactory()
     {
-        if (!in_array(ConnectionInterface::class, class_implements($class))) {
-            throw new InvalidArgumentException("Class {$class} does not implement ConnectionInterface");
-        }
-        $this->connectionClass = $class;
+        return $this->connectionFactory;
     }
 
     /**
      * @inheritdoc
      */
-    public function getServers()
-    {
-        return $this->servers;
+    public function setConnectionFactory(
+        ConnectionFactoryInterface $connectionFactory
+    ) {
+        $this->connectionFactory = $connectionFactory;
     }
 
     /**
      * @inheritdoc
      */
-    public function addServer($host, $port = 7711, $password = null, array $options = [])
+    public function getCredentials()
     {
-        if (!is_string($host) || !is_int($port)) {
-            throw new InvalidArgumentException('Invalid server specified');
-        }
-
-        $port = (int) $port;
-        $this->servers[] = compact('host', 'options', 'port', 'password');
+        return $this->credentials;
     }
 
     /**
      * @inheritdoc
      */
-    public function setMinimumJobsToChangeNode($minimumJobsToChangeNode)
+    public function addServer(Credentials $credentials)
     {
-        $this->minimumJobsToChangeNode = $minimumJobsToChangeNode;
+        $address = $credentials->getAddress();
+        $this->credentials[$address] = $credentials;
+    }
+
+    /**
+     * @inheritdoc
+     */
+    public function getPriorityStrategy()
+    {
+        return $this->priorityStrategy;
+    }
+
+    /**
+     * @inheritdoc
+     */
+    public function setPriorityStrategy($priorityStrategy)
+    {
+        $this->priorityStrategy = $priorityStrategy;
     }
 
     /**
@@ -120,8 +145,7 @@ class Manager implements ManagerInterface
     {
         return (
             isset($this->nodeId) &&
-            isset($this->nodes[$this->nodeId]['connection']) &&
-            $this->nodes[$this->nodeId]['connection']->isConnected()
+            $this->nodes[$this->nodeId]->getConnection()->isConnected()
         );
     }
 
@@ -130,24 +154,9 @@ class Manager implements ManagerInterface
      */
     public function connect()
     {
-        $result = $this->findAvailableConnection();
-        if (!isset($result['connection'])) {
-            throw new ConnectionException('No servers available');
-        }
-
-        $hello = $result['hello'];
-        $this->nodes = [];
-        $this->nodeId = $hello['id'];
-        foreach ($hello['nodes'] as $node) {
-            $this->nodePrefixes[substr($node['id'], 2, 8)] = $node['id'];
-            $this->nodes[$node['id']] = [
-                'connection' => ($node['id'] === $this->nodeId ? $result['connection'] : null),
-                'port' => (int) $node['port'],
-                'jobs' => 0
-            ] + array_intersect_key($node, ['id'=>null, 'host'=>null, 'version'=>null]);
-        }
-
-        return $hello;
+        $currentNode = $this->findAvailableConnection();
+        $this->switchToNode($currentNode);
+        return $currentNode;
     }
 
     /**
@@ -156,179 +165,204 @@ class Manager implements ManagerInterface
     public function execute(CommandInterface $command)
     {
         $this->shouldBeConnected();
-        $response = $this->nodes[$this->nodeId]['connection']->execute($command);
-        if ($command instanceof GetJob && $this->minimumJobsToChangeNode > 0) {
-            try {
-                $this->changeNodeIfNeeded($command->parse($response));
-            } catch (ConnectionException $e) {
-                // If we couldn't, let's stay with the current node
-            }
-        }
+        $command = $this->preprocessExecution($command);
+        $response = $this->nodes[$this->nodeId]->getConnection()->execute($command);
+        $response = $this->postprocessExecution($command, $response);
         return $response;
     }
 
     /**
-     * Get connection
+     * Get the node we're currently connected to
      *
-     * @return array Indexed array with `connection` and `hello`. `connection`
-     * could end up being null
-     * @throws AuthenticationException
+     * @return Node The current node
+     */
+    public function getCurrentNode()
+    {
+        return $this->nodes[$this->nodeId];
+    }
+
+    /**
+     * Get a functional connection to any known node
+     *
+     * Disque suggests the first connection should be chosen randomly
+     * We go through the user-supplied credentials randomly and try to connect.
+     *
+     * @return Node A connected node
+     *
      * @throws ConnectionException
      */
     protected function findAvailableConnection()
     {
-        $servers = $this->servers;
+        $servers = $this->credentials;
         while (!empty($servers)) {
-            $key = array_rand($servers, 1);
+            $key = array_rand($servers);
             $server = $servers[$key];
-            $node = $this->getNodeConnection($server);
-            if (isset($node['connection'])) {
-                return array_intersect_key($node, ['connection'=>null, 'hello'=>null]);
-            }
             unset($servers[$key]);
+
+            try {
+                $node = $this->getNodeConnection($server);
+            } catch (ConnectionException $e) {
+                continue;
+            }
+
+            if ($node->getConnection()->isConnected()) {
+                return $node;
+            }
         }
+
         throw new ConnectionException('No servers available');
     }
 
     /**
-     * Get a node connection and its HELLO result
+     * Connect to the node given in the credentials
      *
-     * @param array $server Server (with `host`, `options`, `port`, and `password`)
-     * @return array Indexed array with `connection` and `hello`. `connection`
-     * could end up being null
+     * @param Credentials $server
+     *
+     * @return Node A connected node
+     *
+     * @throws ConnectionException
      * @throws AuthenticationException
      */
-    protected function getNodeConnection(array $server)
+    protected function getNodeConnection(Credentials $server)
     {
-        $helloCommand = new Hello();
-        $connection = $this->buildConnection($server['host'], $server['port']);
-        $hello = [];
-        try {
-            $this->doConnect($connection, $server);
-            $hello = $helloCommand->parse($connection->execute($helloCommand));
-        } catch (ConnectionException $e) {
-            $message = $e->getMessage();
-            if (stripos($message, 'NOAUTH') === 0) {
-                throw new AuthenticationException($message);
-            }
-            $connection = null;
-            $hello = [];
-        }
-        return compact('connection', 'hello');
+        $node = $this->createNode($server);
+        $node->connect();
+        return $node;
     }
 
     /**
-     * Actually perform the connection
-     *
-     * @param ConnectionInterface $connection Connection
-     * @param array $server Server (with `host`, `options', `port`, and `password`)
-     *
-     * @throws AuthenticationException
+     * Reset node counters that should be reset upon node switch
      */
-    private function doConnect(ConnectionInterface $connection, array $server)
+    protected function resetNodeCounters()
     {
-        $server += ['options' => []];
-        $connection->connect($server['options']);
-        if (!empty($server['password'])) {
-            $authCommand = new Auth();
-            $authCommand->setArguments([$server['password']]);
-            $response = $authCommand->parse($connection->execute($authCommand));
-            if ($response !== 'OK') {
-                throw new AuthenticationException();
-            }
+        foreach($this->nodes as $node) {
+            $node->resetJobCount();
         }
     }
 
     /**
-     * Build a new connection
+     * Hook into the command execution and do anything before it's executed
      *
-     * @param string $host Host
-     * @param int $port Port
-     * @return ConnectionInterface
+     * Eg. start measuring node latency etc.
+     *
+     * @param CommandInterface $command
+     *
+     * @return CommandInterface $command
      */
-    protected function buildConnection($host, $port)
+    protected function preprocessExecution(CommandInterface $command)
     {
-        $connectionClass = $this->connectionClass;
-        $connection = new $connectionClass();
-        $connection->setHost($host);
-        $connection->setPort($port);
-        return $connection;
+        return $command;
     }
 
     /**
-     * Decide if we should change the current node based on the jobs returned.
-     * If so, attempt to switch to that node
+     * Postprocess the command execution, eg. update node stats
+     *
+     * @param CommandInterface $command
+     * @param mixed            $response
+     *
+     * @return mixed
+     * @throws ConnectionException
+     */
+    protected function postprocessExecution(
+        CommandInterface $command,
+        $response
+    ) {
+        if ($command instanceof GetJob) {
+            $this->updateNodeStats($command->parse($response));
+            $this->switchNodeIfNeeded();
+        }
+
+        return $response;
+    }
+
+    /**
+     * Update node counters indicating how many jobs the node has produced
      *
      * @param array $jobs Jobs
-     * @throws ConnectionException
      */
-    private function changeNodeIfNeeded(array $jobs)
+    protected function updateNodeStats(array $jobs)
     {
         foreach ($jobs as $job) {
-            $nodeId = $this->getNodeIdFromJobId($job['id']);
-            if (!isset($nodeId)) {
+            $nodeId = $this->getNodeIdFromJobId($job[JobsResponse::KEY_ID]);
+            if (!isset($nodeId) or !isset($this->nodes[$nodeId])) {
                 continue;
             }
-            $this->nodes[$nodeId]['jobs']++;
-            if ($this->nodes[$nodeId]['jobs'] >= $this->minimumJobsToChangeNode) {
-                $this->setNode($nodeId);
-                return;
-            }
+
+            $node = $this->nodes[$nodeId];
+            $node->addJobCount(1);
         }
     }
 
     /**
-     * Choose this node for future connections
+     * Decide if we should switch to a better node
      *
-     * @param string $id Node ID
      * @throws ConnectionException
      */
-    private function setNode($id)
+    private function switchNodeIfNeeded()
     {
-        if ($id === $this->nodeId) {
+        $sortedNodes = $this->priorityStrategy->sort(
+            $this->nodes,
+            $this->nodeId
+        );
+
+        // Try to connect by priority, continue on error, return on success
+        foreach($sortedNodes as $nodeCandidate) {
+            if ($nodeCandidate->getId() === $this->nodeId) {
+                return;
+            }
+
+            try {
+                if ($nodeCandidate->getConnection()->isConnected()) {
+                    // Say a new HELLO to the node, the cluster might have changed
+                    $nodeCandidate->sayHello();
+                } else {
+                    $nodeCandidate->connect();
+                }
+            } catch (ConnectionException $e) {
+                continue;
+            }
+
+            $this->switchToNode($nodeCandidate);
             return;
         }
 
-        $this->loadNodeConnection($id);
-        $this->nodeId = $id;
-        foreach ($this->nodes as $id => $node) {
-            $this->nodes[$id]['jobs'] = 0;
-        }
+        throw new ConnectionException('Could not switch to any node');
     }
 
     /**
-     * Ensure a connection is made to the given node ID
+     * Get a node ID based off a Job ID
      *
-     * @param string $id Node ID
-     * @return void
-     * @throws ConnectionException
-     */
-    private function loadNodeConnection($id)
-    {
-        $node = $this->getNodeConnection($this->nodes[$id]);
-        if (!isset($node['connection'])) {
-            throw new ConnectionException("Could not connect to node {$id}");
-        }
-        $this->nodes[$id]['connection'] = $node['connection'];
-    }
-
-    /**
-     * Get node ID based off a Job ID
-     *
-     * @param string $jobId Job ID
-     * @return string|null Node ID
+     * @param string       $jobId Job ID
+     * @return string|null        Node ID
      */
     private function getNodeIdFromJobId($jobId)
     {
-        $nodePrefix = substr($jobId, 2, 8);
+        $nodePrefix = $this->getNodePrefixFromJobId($jobId);
         if (
-            !isset($this->nodePrefixes[$nodePrefix]) ||
-            !array_key_exists($this->nodePrefixes[$nodePrefix], $this->nodes)
+            isset($this->nodePrefixes[$nodePrefix]) and
+            array_key_exists($this->nodePrefixes[$nodePrefix], $this->nodes)
         ) {
-            return null;
+            return $this->nodePrefixes[$nodePrefix];
         }
 
-        return $this->nodePrefixes[$nodePrefix];
+        return null;
+    }
+
+    /**
+     * Get the node prefix from the job ID
+     *
+     * @param string  $jobId
+     * @return string        Node prefix
+     */
+    private function getNodePrefixFromJobId($jobId)
+    {
+        $nodePrefix = substr(
+            $jobId,
+            JobsResponse::ID_NODE_PREFIX_START,
+            Node::PREFIX_LENGTH
+        );
+
+        return $nodePrefix;
     }
 
     /**
@@ -342,5 +376,103 @@ class Manager implements ManagerInterface
         if (!$this->isConnected()) {
             throw new ConnectionException('Not connected');
         }
+    }
+
+    /**
+     * Create a new Node object
+     *
+     * @param Credentials $credentials
+     *
+     * @return Node An unconnected Node
+     */
+    private function createNode(Credentials $credentials)
+    {
+        $host = $credentials->getHost();
+        $port = $credentials->getPort();
+        $connection = $this->connectionFactory->create($host, $port);
+
+        return new Node($credentials, $connection);
+    }
+
+    /**
+     * Switch to the given node and map the cluster from its HELLO
+     *
+     * @param Node $node
+     */
+    private function switchToNode(Node $node)
+    {
+        $nodeId = $node->getId();
+        if ($this->nodeId === $nodeId) {
+            return;
+        }
+
+        $this->resetNodeCounters();
+
+        $this->nodeId = $nodeId;
+        $this->nodes[$nodeId] = $node;
+        $this->revealClusterFromHello($node);
+    }
+
+    /**
+     * Reveal the whole Disque cluster from a node HELLO response
+     *
+     * The HELLO response from a Disque node contains addresses of all other
+     * nodes in the cluster. We want to learn about them and save them, so that
+     * we can switch to them later, if needed.
+     *
+     * @param Node $node The current node
+     */
+    private function revealClusterFromHello(Node $node)
+    {
+        $hello = $node->getHello();
+        $revealedNodes = [];
+
+        foreach ($hello[HelloResponse::NODES] as $node) {
+            $id = $node[HelloResponse::NODE_ID];
+            $revealedNodes[$id] = $this->revealNodeFromHello($id, $node);
+        }
+
+        $this->nodes = $revealedNodes;
+    }
+
+    /**
+     * Reveal a single node from a HELLO response, or use an existing node
+     *
+     * @param string $nodeId The node ID
+     * @param array  $node   Node information as returned by the HELLO command
+     *
+     * @return Node $node A node in the current cluster
+     */
+    private function revealNodeFromHello($nodeId, array $node)
+    {
+        /**
+         * Add the node prefix to the pool. We create the prefix manually
+         * from the node ID rather than asking the Node object. Newly created
+         * Nodes aren't connected and thus don't know their ID nor prefix.
+         *
+         * @see Node::sayHello()
+         */
+        $prefix = substr($nodeId, Node::PREFIX_START, Node::PREFIX_LENGTH);
+        $this->nodePrefixes[$prefix] = $nodeId;
+
+        // If the node already exists in our pool, use it, don't overwrite it
+        // with a new one. We would lose its stats and connection.
+        if (isset($this->nodes[$nodeId])) {
+            return $this->nodes[$nodeId];
+        }
+
+        $host = $node[HelloResponse::NODE_HOST];
+        $port = $node[HelloResponse::NODE_PORT];
+        $credentials = new Credentials($host, $port);
+
+        $address = $credentials->getAddress();
+        // If there are user-supplied credentials for this node, use them.
+        // They may contain a password
+        if (isset($this->credentials[$address])) {
+            $credentials = $this->credentials[$address];
+        }
+
+        // Instantiate a new Node object for the newly revealed node
+        return $this->createNode($credentials);
     }
 }

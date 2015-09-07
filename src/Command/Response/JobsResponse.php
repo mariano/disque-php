@@ -11,6 +11,11 @@ class JobsResponse extends BaseResponse implements ResponseInterface
     const KEY_BODY = 'body';
 
     /**
+     * The position where a node prefix starts in the job ID
+     */
+    const ID_NODE_PREFIX_START = 2;
+
+    /**
      * Job details for each job
      *
      * The values in this array must follow these rules:
