@@ -6,6 +6,7 @@ use Disque\Command;
 use Disque\Command\CommandInterface;
 use Disque\Command\InvalidCommandException;
 use Disque\Connection\Manager;
+use Disque\Connection\ManagerInterface;
 use Disque\Queue\Queue;
 use InvalidArgumentException;
 
@@ -50,6 +51,13 @@ class Client
     private $queues;
 
     /**
+     * A list of credentials to Disque servers
+     *
+     * @var Credentials[]
+     */
+    private $servers;
+
+    /**
      * Create a new Client
      *
      * @param Credentials[] $servers
@@ -76,17 +84,29 @@ class Client
             $this->registerCommand($command);
         }
 
-        $this->connectionManager = new Manager();
+        $this->servers = $servers;
 
-        foreach ($servers as $server) {
+        $connectionManager = new Manager();
+        $this->setConnectionManager($connectionManager);
+    }
+
+    /**
+     * Set a connection manager
+     *
+     * @param ManagerInterface $manager
+     */
+    public function setConnectionManager(ManagerInterface $manager)
+    {
+        $this->connectionManager = $manager;
+        foreach ($this->servers as $server) {
             $this->connectionManager->addServer($server);
         }
     }
 
     /**
-     * Get connection manager
+     * Get the connection manager
      *
-     * @return Manager Connection manager
+     * @return ManagerInterface Connection manager
      */
     public function getConnectionManager()
     {
