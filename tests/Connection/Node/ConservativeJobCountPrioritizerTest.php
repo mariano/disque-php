@@ -52,18 +52,24 @@ class ConservativeJobCountPrioritizerTest extends \PHPUnit_Framework_TestCase
             ->andReturn(100)
             ->shouldReceive('getId')
             ->andReturn($nodeId1)
+            ->shouldReceive('getPriority')
+            ->andReturn(1)
             ->getMock();
         $node2 = m::mock(Node::class)
             ->shouldReceive('getJobCount')
             ->andReturn(104)
             ->shouldReceive('getId')
             ->andReturn($nodeId2)
+            ->shouldReceive('getPriority')
+            ->andReturn(1)
             ->getMock();
         $node3 = m::mock(Node::class)
             ->shouldReceive('getJobCount')
             ->andReturn(106)
             ->shouldReceive('getId')
             ->andReturn($nodeId3)
+            ->shouldReceive('getPriority')
+            ->andReturn(1)
             ->getMock();
 
         $nodes = [
@@ -108,18 +114,24 @@ class ConservativeJobCountPrioritizerTest extends \PHPUnit_Framework_TestCase
             ->andReturn(100)
             ->shouldReceive('getId')
             ->andReturn($nodeId1)
+            ->shouldReceive('getPriority')
+            ->andReturn(1)
             ->getMock();
         $node2 = m::mock(Node::class)
             ->shouldReceive('getJobCount')
             ->andReturn(149)
             ->shouldReceive('getId')
             ->andReturn($nodeId2)
+            ->shouldReceive('getPriority')
+            ->andReturn(1)
             ->getMock();
         $node3 = m::mock(Node::class)
             ->shouldReceive('getJobCount')
             ->andReturn(151)
             ->shouldReceive('getId')
             ->andReturn($nodeId3)
+            ->shouldReceive('getPriority')
+            ->andReturn(1)
             ->getMock();
 
         $nodes = [
@@ -144,6 +156,92 @@ class ConservativeJobCountPrioritizerTest extends \PHPUnit_Framework_TestCase
         $this->assertSame($expectedNodes2, $resultNodes2);
     }
 
+    public function testSortWithDifferentDisquePriority()
+    {
+        $nodeId1 = 'id1';
+        $nodeId2 = 'id2';
+        $nodeId3 = 'id3';
+        $node1 = m::mock(Node::class)
+            ->shouldReceive('getJobCount')
+            ->andReturn(100)
+            ->shouldReceive('getId')
+            ->andReturn($nodeId1)
+            ->shouldReceive('getPriority')
+            ->andReturn(1)
+            ->getMock();
 
+        $node2 = m::mock(Node::class)
+            ->shouldReceive('getJobCount')
+            ->andReturn(190)
+            ->shouldReceive('getId')
+            ->andReturn($nodeId2)
+            ->shouldReceive('getPriority')
+            ->andReturn(9)
+            ->getMock();
+
+        $node3 = m::mock(Node::class)
+            ->shouldReceive('getJobCount')
+            ->andReturn(250)
+            ->shouldReceive('getId')
+            ->andReturn($nodeId3)
+            ->shouldReceive('getPriority')
+            ->andReturn(9)
+            ->getMock();
+
+        $nodes = [
+            $nodeId1 => $node1,
+            $nodeId2 => $node2
+        ];
+        $expectedNodes = $nodes;
+        $p = new ConservativeJobCountPrioritizer();
+        $resultNodes = $p->sort($nodes, $nodeId1);
+        $this->assertSame($expectedNodes, $resultNodes);
+
+        $nodes2 = [
+            $nodeId1 => $node1,
+            $nodeId3 => $node3
+        ];
+        $expectedNodes2 = [
+            $nodeId3 => $node3,
+            $nodeId1 => $node1
+        ];
+        $resultNodes2 = $p->sort($nodes2, $node1);
+        $this->assertSame($expectedNodes2, $resultNodes2);
+    }
+
+    public function testDeprioritizeFailingNodes()
+    {
+        $nodeId1 = 'id1';
+        $nodeId2 = 'id2';
+        $nodeId3 = 'id3';
+        $node1 = m::mock(Node::class)
+            ->shouldReceive('getJobCount')
+            ->andReturn(100)
+            ->shouldReceive('getId')
+            ->andReturn($nodeId1)
+            ->shouldReceive('getPriority')
+            ->andReturn(1)
+            ->getMock();
+
+        // Priority 100 marks this as a failing node. Regardless of its job
+        // count, it should have the lowest priority when switching.
+        $node2 = m::mock(Node::class)
+            ->shouldReceive('getJobCount')
+            ->andReturn(9999)
+            ->shouldReceive('getId')
+            ->andReturn($nodeId2)
+            ->shouldReceive('getPriority')
+            ->andReturn(100)
+            ->getMock();
+
+        $nodes = [
+            $nodeId1 => $node1,
+            $nodeId2 => $node2
+        ];
+        $expectedNodes = $nodes;
+        $p = new ConservativeJobCountPrioritizer();
+        $resultNodes = $p->sort($nodes, $nodeId1);
+        $this->assertSame($expectedNodes, $resultNodes);
+    }
 
 }

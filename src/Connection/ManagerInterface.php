@@ -75,4 +75,11 @@ interface ManagerInterface
      * @return mixed Command response
      */
     public function execute(CommandInterface $command);
+
+    /**
+     * Get the node we're currently connected to
+     *
+     * @return Node The current node
+     */
+    public function getCurrentNode();
 }

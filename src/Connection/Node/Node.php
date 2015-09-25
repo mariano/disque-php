@@ -32,6 +32,14 @@ class Node
     const PREFIX_LENGTH = 8;
 
     /**
+     * Disque-assigned node priorities
+     * @see $priority
+     */
+    const PRIORITY_OK = 1;
+    const PRIORITY_POSSIBLE_FAILURE = 10;
+    const PRIORITY_FAILURE = 100;
+
+    /**
      * @var Credentials Credentials of this node - host, port, password
      */
     private $credentials;
@@ -52,11 +60,25 @@ class Node
     private $prefix;
 
     /**
-     * @var int Node HELLO reply version (this is not a Disque version)
-     * This is an integer, see the Disque source code, functions
-     * helloCommand() and addReplyLongLong().
+     * @var int Node priority set by Disque, 1-100, lower is better
+     *
+     * This priority is set by Disque, lower number is better. As of 09/2015
+     * there are three possible values:
+     *
+     * 1 - Node is working correctly
+     * 10 - Possible failure (PFAIL) - Node may be failing
+     * 100 - Failure (FAIL) - The majority of nodes agree that the node is failing
+     *
+     * For priority values,
+     * @see https://github.com/antirez/disque/blob/master/src/cluster.c, helloCommand()
+     *
+     * For the difference between PFAIL and FAIL states,
+     * @see http://redis.io/topics/cluster-spec#failure-detection
+     * @see also https://github.com/antirez/disque/blob/master/src/cluster.c
+     * Look for CLUSTER_NODE_PFAIL and CLUSTER_NODE_FAIL
+     *
      */
-    private $version;
+    private $priority = 1;
 
     /**
      * @var array The result of the HELLO command
@@ -123,13 +145,21 @@ class Node
     }
 
     /**
-     * Get the node hello version
+     * Get the node priority as set by the cluster. 1-100, lower is better.
      *
      * @return int
      */
-    public function getVersion()
+    public function getPriority()
     {
-        return $this->version;
+        return $this->priority;
+    }
+
+    /**
+     * @param int $priority Disque priority as revealed by a HELLO
+     */
+    public function setPriority($priority)
+    {
+        $this->priority = (int) $priority;
     }
 
     /**
@@ -238,7 +268,7 @@ class Node
         $this->id = $this->hello[HelloResponse::NODE_ID];
         $this->createPrefix($this->id);
 
-        $this->version = $this->hello[HelloResponse::NODE_VERSION];
+        $this->priority = $this->readPriorityFromHello($this->hello, $this->id);
 
         return $this->hello;
     }
@@ -282,5 +312,26 @@ class Node
     private function createPrefix($id)
     {
         $this->prefix = substr($id, self::PREFIX_START, self::PREFIX_LENGTH);
+    }
+
+    /**
+     * Read out the node's own priority from a HELLO response
+     *
+     * @param array  $hello The HELLO response
+     * @param string $id    Node ID
+     *
+     * @return int Node priority
+     */
+    private function readPriorityFromHello($hello, $id)
+    {
+        foreach ($hello[HelloResponse::NODES] as $node) {
+            if ($node[HelloResponse::NODE_ID] === $id) {
+                return $node[HelloResponse::NODE_PRIORITY];
+            }
+        }
+
+        // Node not found in the HELLO? Strange, should not happen.
+        // Let's return a default value of 2.
+        return 2;
     }
 }

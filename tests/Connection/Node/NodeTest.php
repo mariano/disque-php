@@ -55,7 +55,7 @@ class NodeTest extends \PHPUnit_Framework_TestCase
         $this->assertSame(0, $n->getTotalJobCount());
         $this->assertNull($n->getId());
         $this->assertNull($n->getPrefix());
-        $this->assertNull($n->getVersion());
+        $this->assertSame(1, $n->getPriority());
         $this->assertNull($n->getHello());
     }
 
@@ -98,6 +98,7 @@ class NodeTest extends \PHPUnit_Framework_TestCase
         $nodeId = 'someLongNodeId';
         $prefix = 'someLong';
         $version = 'v1';
+        $priority = 1;
         $helloResponse = [
             HelloResponse::POS_VERSION => $version,
             HelloResponse::POS_ID => $nodeId,
@@ -105,7 +106,7 @@ class NodeTest extends \PHPUnit_Framework_TestCase
                 HelloResponse::POS_NODE_ID => $nodeId,
                 HelloResponse::POS_NODE_HOST => $address,
                 HelloResponse::POS_NODE_PORT => $port,
-                HelloResponse::POS_NODE_VERSION => $version
+                HelloResponse::POS_NODE_PRIORITY => $priority
             ]
         ];
         $expectedHello = [
@@ -116,7 +117,7 @@ class NodeTest extends \PHPUnit_Framework_TestCase
                     HelloResponse::NODE_ID => $nodeId,
                     HelloResponse::NODE_HOST => $address,
                     HelloResponse::NODE_PORT => $port,
-                    HelloResponse::NODE_VERSION => $version
+                    HelloResponse::NODE_PRIORITY => $priority
                 ]
             ]
         ];
@@ -132,7 +133,7 @@ class NodeTest extends \PHPUnit_Framework_TestCase
         $this->assertSame($expectedHello, $hello);
         $this->assertNotNull($n->getHello());
         $this->assertSame($nodeId, $n->getId());
-        $this->assertSame($version, $n->getVersion());
+        $this->assertSame($priority, $n->getPriority());
         $this->assertSame($prefix, $n->getPrefix());
 
     }
@@ -165,7 +166,7 @@ class NodeTest extends \PHPUnit_Framework_TestCase
                 HelloResponse::POS_NODE_ID => $nodeId,
                 HelloResponse::POS_NODE_HOST => $address,
                 HelloResponse::POS_NODE_PORT => $port,
-                HelloResponse::POS_NODE_VERSION => $version
+                HelloResponse::POS_NODE_PRIORITY => $version
             ]
         ];
         $expectedHello = [
@@ -176,7 +177,7 @@ class NodeTest extends \PHPUnit_Framework_TestCase
                     HelloResponse::NODE_ID => $nodeId,
                     HelloResponse::NODE_HOST => $address,
                     HelloResponse::NODE_PORT => $port,
-                    HelloResponse::NODE_VERSION => $version
+                    HelloResponse::NODE_PRIORITY => $version
                 ]
             ]
         ];
@@ -239,7 +240,7 @@ class NodeTest extends \PHPUnit_Framework_TestCase
                 HelloResponse::POS_NODE_ID => $nodeId,
                 HelloResponse::POS_NODE_HOST => $address,
                 HelloResponse::POS_NODE_PORT => $port,
-                HelloResponse::POS_NODE_VERSION => $version
+                HelloResponse::POS_NODE_PRIORITY => $version
             ]
         ];
         $expectedHello = [
@@ -250,7 +251,7 @@ class NodeTest extends \PHPUnit_Framework_TestCase
                     HelloResponse::NODE_ID => $nodeId,
                     HelloResponse::NODE_HOST => $address,
                     HelloResponse::NODE_PORT => $port,
-                    HelloResponse::NODE_VERSION => $version
+                    HelloResponse::NODE_PRIORITY => $version
                 ]
             ]
         ];

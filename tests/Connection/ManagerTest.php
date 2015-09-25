@@ -91,6 +91,7 @@ class ManagerTest extends PHPUnit_Framework_TestCase
 
         $nodeId = 'id1';
         $version = 'v1';
+        $priority = 10;
 
         $server = new Credentials($serverAddress, $serverPort);
         $m->addServer($server);
@@ -102,7 +103,7 @@ class ManagerTest extends PHPUnit_Framework_TestCase
                 HelloResponse::POS_NODE_ID => $nodeId,
                 HelloResponse::POS_NODE_HOST => $serverAddress,
                 HelloResponse::POS_NODE_PORT => $serverPort,
-                HelloResponse::POS_NODE_VERSION => $version
+                HelloResponse::POS_NODE_PRIORITY => $priority
             ]
         ];
 
@@ -122,7 +123,6 @@ class ManagerTest extends PHPUnit_Framework_TestCase
             ->with($serverAddress, $serverPort)
             ->andReturn($connection)
             ->once()
-
             ->getMock();
 
         $m->setConnectionFactory($connectionFactory);
@@ -130,7 +130,7 @@ class ManagerTest extends PHPUnit_Framework_TestCase
 
         $this->assertSame($connection, $node->getConnection());
         $this->assertSame($nodeId, $node->getId());
-        $this->assertSame($version, $node->getVersion());
+        $this->assertSame($priority, $node->getPriority());
         $this->assertSame($server, $node->getCredentials());
     }
 
@@ -313,6 +313,7 @@ class ManagerTest extends PHPUnit_Framework_TestCase
 
         $nodeId = 'id1';
         $version = 'v1';
+        $priority = 2;
 
         $helloResponse = [
             HelloResponse::POS_VERSION => $version,
@@ -321,7 +322,7 @@ class ManagerTest extends PHPUnit_Framework_TestCase
                 HelloResponse::POS_NODE_ID => $nodeId,
                 HelloResponse::POS_NODE_HOST => $serverAddress,
                 HelloResponse::POS_NODE_PORT => $serverPort,
-                HelloResponse::POS_NODE_VERSION => $version
+                HelloResponse::POS_NODE_PRIORITY => $priority
             ]
         ];
 
@@ -349,7 +350,7 @@ class ManagerTest extends PHPUnit_Framework_TestCase
 
         $this->assertSame($connection, $node->getConnection());
         $this->assertSame($nodeId, $node->getId());
-        $this->assertSame($version, $node->getVersion());
+        $this->assertSame($priority, $node->getPriority());
         $this->assertSame($server, $node->getCredentials());
 
     }
@@ -368,6 +369,7 @@ class ManagerTest extends PHPUnit_Framework_TestCase
 
         $nodeId = 'id1';
         $version = 'v1';
+        $priority = 5;
 
         $connection = m::mock(ConnectionInterface::class)
             ->shouldReceive('isConnected')
@@ -380,7 +382,7 @@ class ManagerTest extends PHPUnit_Framework_TestCase
             ->once()
             ->shouldReceive('execute')
             ->with(m::type(Hello::class))
-            ->andReturn([$version, $nodeId, [$nodeId, $serverAddress, $serverPort2, $version]])
+            ->andReturn([$version, $nodeId, [$nodeId, $serverAddress, $serverPort2, $priority]])
             ->once()
             ->mock();
 
@@ -395,7 +397,7 @@ class ManagerTest extends PHPUnit_Framework_TestCase
 
         $this->assertSame($connection, $node->getConnection());
         $this->assertSame($nodeId, $node->getId());
-        $this->assertSame($version, $node->getVersion());
+        $this->assertSame($priority, $node->getPriority());
         $this->assertContains($node->getCredentials(), [$server1, $server2]);
     }
 
@@ -444,7 +446,7 @@ class ManagerTest extends PHPUnit_Framework_TestCase
                 HelloResponse::POS_NODE_ID => $nodeId,
                 HelloResponse::POS_NODE_HOST => $serverAddress,
                 HelloResponse::POS_NODE_PORT => $serverPort,
-                HelloResponse::POS_NODE_VERSION => $version
+                HelloResponse::POS_NODE_PRIORITY => $version
             ]
         ];
         $expectedResponse = ['test' => 'stuff'];

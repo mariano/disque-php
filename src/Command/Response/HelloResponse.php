@@ -12,6 +12,7 @@ class HelloResponse extends BaseResponse implements ResponseInterface
     const NODE_HOST = 'host';
     const NODE_PORT = 'port';
     const NODE_VERSION = 'version';
+    const NODE_PRIORITY = 'priority';
     const NODES = 'nodes';
 
     /**
@@ -24,7 +25,7 @@ class HelloResponse extends BaseResponse implements ResponseInterface
     const POS_NODE_ID = 0;
     const POS_NODE_HOST = 1;
     const POS_NODE_PORT = 2;
-    const POS_NODE_VERSION = 3;
+    const POS_NODE_PRIORITY = 3;
 
     use ArrayChecker;
 
@@ -61,7 +62,7 @@ class HelloResponse extends BaseResponse implements ResponseInterface
                 self::NODE_ID => $node[self::POS_NODE_ID],
                 self::NODE_HOST => $node[self::POS_NODE_HOST],
                 self::NODE_PORT => $node[self::POS_NODE_PORT],
-                self::NODE_VERSION => $node[self::POS_NODE_VERSION]
+                self::NODE_PRIORITY => $node[self::POS_NODE_PRIORITY]
             ];
         }
 

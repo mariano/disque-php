@@ -172,9 +172,7 @@ class Manager implements ManagerInterface
     }
 
     /**
-     * Get the node we're currently connected to
-     *
-     * @return Node The current node
+     * @inheritdoc
      */
     public function getCurrentNode()
     {
@@ -194,11 +192,8 @@ class Manager implements ManagerInterface
     protected function findAvailableConnection()
     {
         $servers = $this->credentials;
-        while (!empty($servers)) {
-            $key = array_rand($servers);
-            $server = $servers[$key];
-            unset($servers[$key]);
-
+        shuffle($servers);
+        foreach ($servers as $server) {
             try {
                 $node = $this->getNodeConnection($server);
             } catch (ConnectionException $e) {
@@ -429,7 +424,13 @@ class Manager implements ManagerInterface
 
         foreach ($hello[HelloResponse::NODES] as $node) {
             $id = $node[HelloResponse::NODE_ID];
-            $revealedNodes[$id] = $this->revealNodeFromHello($id, $node);
+            $revealedNode = $this->revealNodeFromHello($id, $node);
+
+            // Update or set the node's priority as determined by Disque
+            $priority = $node[HelloResponse::NODE_PRIORITY];
+            $revealedNode->setPriority($priority);
+
+            $revealedNodes[$id] = $revealedNode;
         }
 
         $this->nodes = $revealedNodes;
