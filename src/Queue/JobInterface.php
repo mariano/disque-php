@@ -32,6 +32,20 @@ interface JobInterface
     public function setBody($body);
 
     /**
+     * Get the name of the queue the job belongs to
+     *
+     * @return string
+     */
+    public function getQueue();
+
+    /**
+     * Set the name of the queue the job belongs to
+     *
+     * @param string $queue
+     */
+    public function setQueue($queue);
+
+    /**
      * Get the number of NACKs
      *
      * The `nacks` counter is incremented every time a worker uses the `NACK`

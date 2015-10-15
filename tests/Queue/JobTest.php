@@ -40,6 +40,21 @@ class JobTest extends PHPUnit_Framework_TestCase
         $this->assertSame($id, $j->getId());
     }
 
+    public function emptyQueue()
+    {
+        $j = new job();
+        $this->assertEquals('', $j->getQueue());
+    }
+
+    public function queueSet()
+    {
+        $queue = 'queue';
+        $j = new Job();
+        $j->setQueue($queue);
+        $this->assertEquals($queue, $j->getQueue());
+
+    }
+
     public function zeroNacks()
     {
         $j = new Job();

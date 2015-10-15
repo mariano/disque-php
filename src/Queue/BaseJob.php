@@ -21,6 +21,17 @@ abstract class BaseJob implements JobInterface
     protected $body;
 
     /**
+     * The name of the queue the job belongs to
+     *
+     * This is optional and can be null eg. when adding a new job.
+     * It can however be used to identify what queue the job came from,
+     * eg. in case of a consumer reading from multiple queues.
+     *
+     * @var string
+     */
+    protected $queue;
+
+    /**
      * The number of NACKs this job has received
      *
      * NACK is a command which tells Disque that the job wasn't processed
@@ -46,17 +57,20 @@ abstract class BaseJob implements JobInterface
      *
      * @param mixed  $body Body            The job body
      * @param string $id                   The job ID
+     * @param string $queue                Name of the queue the job belongs to
      * @param int    $nacks                The number of NACKs
      * @param int    $additionalDeliveries The number of additional deliveries
      */
     public function __construct(
         $body = null,
         $id = null,
+        $queue = '',
         $nacks = 0,
         $additionalDeliveries = 0
     ) {
         $this->body = $body;
         $this->id = $id;
+        $this->queue = $queue;
         $this->nacks = $nacks;
         $this->additionalDeliveries = $additionalDeliveries;
     }
@@ -91,6 +105,22 @@ abstract class BaseJob implements JobInterface
     public function setId($id)
     {
         $this->id = $id;
+    }
+
+    /**
+     * @inheritdoc
+     */
+    public function getQueue()
+    {
+        return $this->queue;
+    }
+
+    /**
+     * @inheritdoc
+     */
+    public function setQueue($queue)
+    {
+        $this->queue = $queue;
     }
 
     /**
