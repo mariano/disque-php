@@ -442,47 +442,78 @@ class QueueTest extends PHPUnit_Framework_TestCase
         $q->schedule(new Job(), $date);
     }
 
+    /**
+     * This and the following tests test scheduling jobs in the future
+     *
+     * They depend on the global system time and contain a race condition
+     * wherein system time can move forward one second between the two DateTime()
+     * instantiations (the first one in the test, the second one in the
+     * schedule() method). If that is the case, the resulting delay is one
+     * second off (eg. 9 seconds instead of the scheduled 10 seconds).
+     *
+     * For that reason the mocked method expects either the $delay (10 seconds)
+     * or $delay - 1 (9 seconds). Both are valid test results.
+     */
     public function testScheduleDefaultTimeZone()
     {
+        $delay = 10;
+
         $job = new Job();
         $queue = m::mock(Queue::class.'[push]', [m::mock(Client::class), 'queue'])
             ->shouldReceive('push')
-            ->with($job, ['delay' => 10])
+            ->with($job,
+                anyOf(
+                    ['delay' => $delay],
+                    ['delay' => $delay - 1]
+                ))
             ->andReturn($job)
             ->once()
             ->mock();
 
-        $result = $queue->schedule($job, new DateTime('+10 seconds', new DateTimeZone(Queue::DEFAULT_JOB_TIMEZONE)));
+        $result = $queue->schedule($job, new DateTime('+' . $delay . ' seconds', new DateTimeZone(Queue::DEFAULT_JOB_TIMEZONE)));
         $this->assertSame($job, $result);
     }
 
     public function testScheduleDifferentTimeZone()
     {
+        $delay = 10;
+
         $job = new Job();
         $queue = m::mock(Queue::class.'[push]', [m::mock(Client::class), 'queue'])
             ->shouldReceive('push')
-            ->with($job, ['delay' => 10])
+            ->with($job,
+                anyOf(
+                    ['delay' => $delay],
+                    ['delay' => $delay - 1]
+                ))
             ->andReturn($job)
             ->once()
             ->mock();
 
         $timeZone = new DateTimeZone('America/Argentina/Buenos_Aires');
         $this->assertNotSame(Queue::DEFAULT_JOB_TIMEZONE, $timeZone->getName());
-        $result = $queue->schedule($job, new DateTime('+10 seconds', $timeZone));
+        $result = $queue->schedule($job, new DateTime('+' . $delay . ' seconds', $timeZone));
         $this->assertSame($job, $result);
     }
 
     public function testScheduleWayInTheFuture()
     {
+        $delayDays = 25;
+        $delay = ($delayDays * 24 * 60 * 60);
+
         $job = new Job();
         $queue = m::mock(Queue::class.'[push]', [m::mock(Client::class), 'queue'])
             ->shouldReceive('push')
-            ->with($job, ['delay' => (25 * 24 * 60 * 60)])
+            ->with($job,
+                anyOf(
+                    ['delay' => $delay],
+                    ['delay' => $delay - 1]
+                ))
             ->andReturn($job)
             ->once()
             ->mock();
 
-        $result = $queue->schedule($job, new DateTime('+25 days', new DateTimeZone(Queue::DEFAULT_JOB_TIMEZONE)));
+        $result = $queue->schedule($job, new DateTime('+' . $delayDays . ' days', new DateTimeZone(Queue::DEFAULT_JOB_TIMEZONE)));
         $this->assertSame($job, $result);
     }
 
