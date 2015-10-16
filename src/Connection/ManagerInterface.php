@@ -49,7 +49,7 @@ interface ManagerInterface
      *
      * @param NodePrioritizerInterface $priorityStrategy
      */
-    public function setPriorityStrategy($priorityStrategy);
+    public function setPriorityStrategy(NodePrioritizerInterface $priorityStrategy);
 
     /**
      * Tells if connection is established
