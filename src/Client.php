@@ -1,10 +1,12 @@
 <?php
 namespace Disque;
 
+use Disque\Connection\Credentials;
 use Disque\Command;
 use Disque\Command\CommandInterface;
 use Disque\Command\InvalidCommandException;
 use Disque\Connection\Manager;
+use Disque\Connection\ManagerInterface;
 use Disque\Queue\Queue;
 use InvalidArgumentException;
 
@@ -15,7 +17,7 @@ use InvalidArgumentException;
  * @method int dequeue(string... $ids)
  * @method int enqueue(string... $ids)
  * @method int fastAck(string... $ids)
- * @method array getJob(string... $queues, array $options = [)
+ * @method array getJob(string... $queues, array $options = [])
  * @method array hello()
  * @method string info()
  * @method int nack(string... $ids)
@@ -49,9 +51,16 @@ class Client
     private $queues;
 
     /**
+     * A list of credentials to Disque servers
+     *
+     * @var Credentials[]
+     */
+    private $servers;
+
+    /**
      * Create a new Client
      *
-     * @param array $servers Servers (`host`:`port`)
+     * @param Credentials[] $servers
      */
     public function __construct(array $servers = [])
     {
@@ -75,49 +84,33 @@ class Client
             $this->registerCommand($command);
         }
 
-        $this->connectionManager = new Manager();
-        foreach ($servers as $uri) {
-            $port = 7711;
-            if (strpos($uri, ':') !== false) {
-                $server = parse_url($uri);
-                if ($server === false || empty($server['host'])) {
-                    continue;
-                }
-                $host = $server['host'];
-                if (!empty($server['port'])) {
-                    $port = $server['port'];
-                }
-            } else {
-                $host = $uri;
-            }
+        $this->servers = $servers;
 
-            $this->addServer($host, $port);
+        $connectionManager = new Manager();
+        $this->setConnectionManager($connectionManager);
+    }
+
+    /**
+     * Set a connection manager
+     *
+     * @param ManagerInterface $manager
+     */
+    public function setConnectionManager(ManagerInterface $manager)
+    {
+        $this->connectionManager = $manager;
+        foreach ($this->servers as $server) {
+            $this->connectionManager->addServer($server);
         }
     }
 
     /**
-     * Get connection manager
+     * Get the connection manager
      *
-     * @return Manager Connection manager
+     * @return ManagerInterface Connection manager
      */
     public function getConnectionManager()
     {
         return $this->connectionManager;
-    }
-
-    /**
-     * Add a new server
-     *
-     * @param string $host Host
-     * @param int $port Port
-     * @param string $password Password to use when connecting to this server
-     * @param array $options Connection otptions
-     * @return void
-     * @throws InvalidArgumentException
-     */
-    public function addServer($host, $port = 7711, $password = null, array $options = [])
-    {
-        $this->connectionManager->addServer($host, $port, $password, $options);
     }
 
     /**

@@ -145,7 +145,7 @@ class HelloTest extends PHPUnit_Framework_TestCase
     public function testParse()
     {
         $c = new Hello();
-        $result = $c->parse(['version', 'id', ['id', 'host', 'port', 'version']]);
+        $result = $c->parse(['version', 'id', ['id', 'host', 'port', 'pri']]);
         $this->assertSame([
             'version' => 'version',
             'id' => 'id',
@@ -154,7 +154,7 @@ class HelloTest extends PHPUnit_Framework_TestCase
                     'id' => 'id',
                     'host' => 'host',
                     'port' => 'port',
-                    'version' => 'version'
+                    'priority' => 'pri'
                 ]
             ]
         ], $result);

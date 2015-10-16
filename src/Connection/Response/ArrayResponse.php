@@ -1,6 +1,8 @@
 <?php
 namespace Disque\Connection\Response;
 
+use Disque\Connection\ConnectionException;
+
 class ArrayResponse extends BaseResponse
 {
     /**

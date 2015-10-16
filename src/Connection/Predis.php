@@ -14,20 +14,19 @@ class Predis extends BaseConnection implements ConnectionInterface
     protected $client;
 
     /**
-     * Connect
-     *
-     * @param array $options Connection options
+     * @inheritdoc
      */
-    public function connect(array $options = [])
+    public function connect($connectionTimeout = null, $responseTimeout = null)
+
     {
-        parent::connect($options);
+        parent::connect($connectionTimeout, $responseTimeout);
 
         $this->client = $this->buildClient($this->host, $this->port);
         $this->client->connect();
     }
 
     /**
-     * Disconnect
+     * @inheritdoc
      */
     public function disconnect()
     {
@@ -39,9 +38,7 @@ class Predis extends BaseConnection implements ConnectionInterface
     }
 
     /**
-     * Tells if connection is established
-     *
-     * @return bool Success
+     * @inheritdoc
      */
     public function isConnected()
     {
@@ -49,11 +46,7 @@ class Predis extends BaseConnection implements ConnectionInterface
     }
 
     /**
-     * Execute command, and get response
-     *
-     * @param CommandInterface $command
-     * @return mixed Response
-     * @throws ConnectionException
+     * @inheritdoc
      */
     public function execute(CommandInterface $command)
     {

@@ -59,7 +59,8 @@ class HelloResponseTest extends PHPUnit_Framework_TestCase
     {
         $r = new HelloResponse();
         $r->setCommand(new Hello());
-        $r->setBody(['version', 'id', ['id', 'host', 'port', 'version']]);
+
+        $r->setBody(['version', 'id', ['id', 'host', 'port', 'priority']]);
         $result = $r->parse();
         $this->assertSame([
             'version' => 'version',
@@ -69,7 +70,7 @@ class HelloResponseTest extends PHPUnit_Framework_TestCase
                     'id' => 'id',
                     'host' => 'host',
                     'port' => 'port',
-                    'version' => 'version'
+                    'priority' => 'priority'
                 ]
             ]
         ], $result);
@@ -82,8 +83,8 @@ class HelloResponseTest extends PHPUnit_Framework_TestCase
         $r->setBody([
             'version',
             'id',
-            ['id', 'host', 'port', 'version'],
-            ['id2', 'host2', 'port2', 'version2'],
+            ['id', 'host', 'port', '1'],
+            ['id2', 'host2', 'port2', '2'],
         ]);
         $result = $r->parse();
         $this->assertSame([
@@ -94,13 +95,13 @@ class HelloResponseTest extends PHPUnit_Framework_TestCase
                     'id' => 'id',
                     'host' => 'host',
                     'port' => 'port',
-                    'version' => 'version'
+                    'priority' => '1'
                 ],
                 [
                     'id' => 'id2',
                     'host' => 'host2',
                     'port' => 'port2',
-                    'version' => 'version2'
+                    'priority' => '2'
                 ]
             ]
         ], $result);

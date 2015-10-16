@@ -37,10 +37,15 @@ pushing/pulling, and direct access to all Disque commands via its
 Create the client:
 
 ```php
-$disque = new \Disque\Client([
-    '127.0.0.1:7111',
-    '127.0.0.2:7112'
-]);
+use Disque\Connection\Credentials;
+use Disque\Client;
+
+$nodes = [
+    new Credentials('127.0.0.1', 7711),
+    new Credentials('127.0.0.1', 7712, 'password'),
+];
+
+$disque = new Client($nodes);
 ```
 
 Queue a job:
