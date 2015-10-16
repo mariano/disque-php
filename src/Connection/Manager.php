@@ -133,7 +133,7 @@ class Manager implements ManagerInterface
     /**
      * @inheritdoc
      */
-    public function setPriorityStrategy($priorityStrategy)
+    public function setPriorityStrategy(NodePrioritizerInterface $priorityStrategy)
     {
         $this->priorityStrategy = $priorityStrategy;
     }
@@ -166,7 +166,10 @@ class Manager implements ManagerInterface
     {
         $this->shouldBeConnected();
         $command = $this->preprocessExecution($command);
-        $response = $this->nodes[$this->nodeId]->getConnection()->execute($command);
+
+        $currentNodeConnection = $this->nodes[$this->nodeId]->getConnection();
+        $response = $currentNodeConnection->execute($command);
+
         $response = $this->postprocessExecution($command, $response);
         return $response;
     }
@@ -278,7 +281,8 @@ class Manager implements ManagerInterface
     protected function updateNodeStats(array $jobs)
     {
         foreach ($jobs as $job) {
-            $nodeId = $this->getNodeIdFromJobId($job[JobsResponse::KEY_ID]);
+            $jobId = $job[JobsResponse::KEY_ID];
+            $nodeId = $this->getNodeIdFromJobId($jobId);
             if (!isset($nodeId) or !isset($this->nodes[$nodeId])) {
                 continue;
             }
@@ -449,7 +453,7 @@ class Manager implements ManagerInterface
         /**
          * Add the node prefix to the pool. We create the prefix manually
          * from the node ID rather than asking the Node object. Newly created
-         * Nodes aren't connected and thus don't know their ID nor prefix.
+         * Nodes aren't connected and thus don't know their ID or prefix.
          *
          * @see Node::sayHello()
          */

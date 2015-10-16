@@ -40,6 +40,12 @@ class Node
     const PRIORITY_FAILURE = 100;
 
     /**
+     * A fallback node priority if the HELLO response doesn't contain a priority
+     * This should not happen, but let's be sure.
+     */
+    const PRIORITY_FALLBACK = 2;
+
+    /**
      * @var Credentials Credentials of this node - host, port, password
      */
     private $credentials;
@@ -330,8 +336,8 @@ class Node
             }
         }
 
-        // Node not found in the HELLO? Strange, should not happen.
-        // Let's return a default value of 2.
-        return 2;
+        // Node not found in the HELLO? This should not happen.
+        // Return a fallback value
+        return self::PRIORITY_FALLBACK;
     }
 }
