@@ -3,12 +3,41 @@
 All Notable changes will be documented in this file. This project adheres to 
 [Semantic Versioning](http://semver.org/).
 
-## [1.3.1]
+## [2.0-alpha] - 2015-11-03
 
 ### Changed
 - Exception `Disque\Connection\ResponseException` has been moved to 
 `Disque\Connection\Response\ResponseException`
-- Added `$options` option to addServer()` in `Disque\Client`
+- The `Disque` constructor has changed, so instead of receiving an array of
+IP addresses, it now receives an array of `Credentials`, where each `Credentials`
+instance refers to a specific Disque node, and allows the use of passworded
+nodes.
+- `JobInterface` has changed to add the following methods: `getBody()`, 
+`setBody()`, `getQueue()`, `setQueue()`, `getNacks()`, `setNacks()`,
+`getAdditionalDeliveries()`, `setAdditionalDeliveries()`
+- The `pull()` method in `Queue` no longer throws a `JobNotAvailableException`
+if no job is available, but instead returns `null`.
+- The `JobNotAvailableException` has been removed, as no jobs being available
+is not actually an exception, but a possible acceptable outcome.
+- `ManagerInterface` no longer has the `getConnectionClass()` and 
+`setConnectionClass()` methods. Instead it uses the new `setConnectionFactory()`
+method to allow one to specify a connection factory.
+
+### Added
+- Added `Node`, which handles the connection to a specific node.
+- Added the `failed()` method to `Queue` which can be used to mark a job as
+failed, therefore increasing its `NACK` counter.
+- Added `ConnectionFactoryInterface`, used by `ManagerInterface`, to create
+a new connection to redis.
+- Added `ConnectionFactoryInterface` implementation classes `PredisFactory`
+and `SocketFactory`
+- Added `NodePrioritizerInterface` to allow customizing the way the client
+switches through nodes based on a specific strategy.
+- Added `NodePrioritizerInterface` implementation classes 
+`ConservativeJobCountPrioritizer`, `RandomPrioritizer` and `NullPrioritizer`
+- Added option `withcounters` to the `$options` argument in `getJob()` which
+allows the returned job to include its `NACK` and additional deliveries 
+counters.
 
 ## [1.3.0] - 2015-05-18
 
@@ -107,7 +136,7 @@ parameters were specified, an `InvalidCommandArgumentException` was thrown.
 - Added support for Predis connections, and allowing adding new connection
 methods via `ConnectionInterface`.
 
-[1.3.1]: https://github.com/mariano/disque-php/compare/1.3.1...HEAD
+[2.0-alpha]: https://github.com/mariano/disque-php/compare/1.3.0...HEAD
 [1.3.0]: https://github.com/mariano/disque-php/compare/tag/1.3.0
 [1.2.1]: https://github.com/mariano/disque-php/releases/tag/1.2.1
 [1.2.0]: https://github.com/mariano/disque-php/releases/tag/1.2.0

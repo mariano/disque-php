@@ -96,22 +96,6 @@ on twitter: [@mgiglesias](https://twitter.com/mgiglesias)
 If you discover any security related issues, please contact [@mgiglesias](https://twitter.com/mgiglesias)
 instead of using the issue tracker.
 
-## TODO
-
-- [x] `HELLO`, `INFO`, `SHOW`, `ADDJOB`, `DELJOB`, `GETJOB`, `ACKJOB`, `FASTACK`
-- [x] `ENQUEUE`, `DEQUEUE`, `QLEN`, `QPEEK`
-- [x] Add support for several connections
-- [x] Implement direct protocol to Disque to avoid depending on Predis
-- [x] Turn Predis integration into a ConnectionInterface
-- [x] Allow user to specify their own ConnectionInterface implementation
-- [x] Allow `GETJOB` to influence what node the Client should be connected to
-- [x] Higher level API for queueing and retrieving jobs
-- [x] Method in `Queue` to schedule future jobs based on DateTime
-- [x] `QSCAN`, `WORKING`
-- [x] Add support for AUTH based connections
-- [x] Add support to `WORKING` command on Queue API
-- [ ] `QSTAT` when they are implemented upstream
-
 ## Acknowledgments
 
 First and foremost, [Salvatore Sanfilippo](https://twitter.com/antirez) for writing what looks to be the
@@ -122,6 +106,8 @@ libraries for the inspiration.
 
 [The PHP League](https://thephpleague.com) for an awesome `README.md` skeleton,
 and tips about packaging PHP components.
+
+[Revisor](https://github.com/Revisor) for his incredible work on this library.
 
 ## License
 
