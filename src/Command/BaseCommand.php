@@ -147,7 +147,6 @@ abstract class BaseCommand implements CommandInterface
             // This could be prevented by using an Enum as the argument type
             default:
                 throw new InvalidCommandArgumentException($this, $arguments);
-                break;
         }
         $this->arguments = $arguments;
     }
