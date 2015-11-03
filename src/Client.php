@@ -1,14 +1,12 @@
 <?php
 namespace Disque;
 
-use Disque\Connection\Credentials;
 use Disque\Command;
 use Disque\Command\CommandInterface;
 use Disque\Command\InvalidCommandException;
 use Disque\Connection\Manager;
 use Disque\Connection\ManagerInterface;
 use Disque\Queue\Queue;
-use InvalidArgumentException;
 
 /**
  * @method int ackJob(string... $ids)
@@ -32,7 +30,7 @@ class Client
     /**
      * Connection manager
      *
-     * @var Manager
+     * @var ManagerInterface
      */
     protected $connectionManager;
 
@@ -53,14 +51,14 @@ class Client
     /**
      * A list of credentials to Disque servers
      *
-     * @var Credentials[]
+     * @var Disque\Connection\Credentials[]
      */
     private $servers;
 
     /**
      * Create a new Client
      *
-     * @param Credentials[] $servers
+     * @param Disque\Connection\Credentials[] $servers
      */
     public function __construct(array $servers = [])
     {
@@ -126,7 +124,7 @@ class Client
     /**
      * Connect to Disque
      *
-     * @return array Connected node information
+     * @return Disque\Connection\Node\Node Connected node information
      * @throws Disque\Connection\ConnectionException
      */
     public function connect()

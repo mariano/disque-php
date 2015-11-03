@@ -5,11 +5,11 @@ use InvalidArgumentException;
 
 /**
  * A prioritizer switching nodes if they have more jobs by a given margin
- * 
+ *
  * This class prioritizes nodes by job count and its Disque priority. Because
  * there is a cost to switch, it doesn't switch from the current node unless
  * the new candidate has a safe margin over the current node.
- * 
+ *
  * This margin can be set manually and defaults to 5%, ie. the new candidate
  * must have 5% more jobs than the current node.
  *
@@ -29,17 +29,17 @@ class ConservativeJobCountPrioritizer implements NodePrioritizerInterface
      * in order to recommend switching over.
      */
     private $marginToSwitch = 0.05;
-    
+
     /**
      * Get the margin to switch
-     * 
+     *
      * @return float
      */
     public function getMarginToSwitch()
     {
         return $this->marginToSwitch;
     }
-    
+
     /**
      * Set the margin to switch
      *
@@ -108,25 +108,19 @@ class ConservativeJobCountPrioritizer implements NodePrioritizerInterface
         // Disque node priority should never be lower than 1, but let's be sure
         if ($disquePriority < Node::PRIORITY_OK) {
             $disquePriorityWeight = 1;
-
-        } else if (Node::PRIORITY_OK <= $disquePriority
-            and $disquePriority < Node::PRIORITY_POSSIBLE_FAILURE) {
+        } elseif (Node::PRIORITY_OK <= $disquePriority && $disquePriority < Node::PRIORITY_POSSIBLE_FAILURE) {
             // Node is OK, but Disque may have assigned a lower priority to it
             // We use the base-10 logarithm in the formula, so priorities
             // 1 to 10 transform into a weight of 1 to 0.5. When Disque starts
             // using more priority steps, priority 9 will discount about a half
             // of the job count.
             $disquePriorityWeight = 1 / (1 + log10($disquePriority));
-
         } else {
             // Node is failing, or it has failed
             $disquePriorityWeight = 0;
         }
 
         $priority = $priority * $disquePriorityWeight;
-
         return (float) $priority;
     }
-    
-    
 }

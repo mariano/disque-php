@@ -283,7 +283,7 @@ class Manager implements ManagerInterface
         foreach ($jobs as $job) {
             $jobId = $job[JobsResponse::KEY_ID];
             $nodeId = $this->getNodeIdFromJobId($jobId);
-            if (!isset($nodeId) or !isset($this->nodes[$nodeId])) {
+            if (!isset($nodeId) || !isset($this->nodes[$nodeId])) {
                 continue;
             }
 
@@ -338,7 +338,7 @@ class Manager implements ManagerInterface
     {
         $nodePrefix = $this->getNodePrefixFromJobId($jobId);
         if (
-            isset($this->nodePrefixes[$nodePrefix]) and
+            isset($this->nodePrefixes[$nodePrefix]) &&
             array_key_exists($this->nodePrefixes[$nodePrefix], $this->nodes)
         ) {
             return $this->nodePrefixes[$nodePrefix];

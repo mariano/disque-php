@@ -1,12 +1,12 @@
 <?php
 namespace Disque\Connection\Node;
 
-use Disque\Connection\Credentials;
-use Disque\Connection\ConnectionInterface;
 use Disque\Command\Auth;
 use Disque\Command\Hello;
 use Disque\Command\Response\HelloResponse;
 use Disque\Connection\ConnectionException;
+use Disque\Connection\ConnectionInterface;
+use Disque\Connection\Credentials;
 use Disque\Connection\AuthenticationException;
 use Disque\Connection\Response\ResponseException;
 
@@ -224,13 +224,12 @@ class Node
      * This method is idempotent and can be called multiple times
      *
      * @return array The HELLO response
-     *
      * @throws ConnectionException
      * @throws AuthenticationException
      */
     public function connect()
     {
-        if ($this->connection->isConnected() and !empty($this->hello)) {
+        if ($this->connection->isConnected() && !empty($this->hello)) {
             return $this->hello;
         }
 
@@ -269,7 +268,7 @@ class Node
     {
         $helloCommand = new Hello();
         $helloResponse = $this->connection->execute($helloCommand);
-        $this->hello = $helloCommand->parse($helloResponse);
+        $this->hello = (array) $helloCommand->parse($helloResponse);
 
         $this->id = $this->hello[HelloResponse::NODE_ID];
         $this->createPrefix($this->id);

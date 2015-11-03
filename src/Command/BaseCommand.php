@@ -1,11 +1,9 @@
 <?php
 namespace Disque\Command;
 
-use InvalidArgumentException;
 use Disque\Command\Argument\InvalidCommandArgumentException;
 use Disque\Command\Argument\InvalidOptionException;
 use Disque\Command\Argument\StringChecker;
-use Disque\Exception;
 use Disque\Command\Response\StringResponse;
 
 abstract class BaseCommand implements CommandInterface
