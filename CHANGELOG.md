@@ -38,6 +38,7 @@ switches through nodes based on a specific strategy.
 - Added option `withcounters` to the `$options` argument in `getJob()` which
 allows the returned job to include its `NACK` and additional deliveries 
 counters.
+- Added support for `NACK`
 
 ## [1.3.0] - 2015-05-18
 
