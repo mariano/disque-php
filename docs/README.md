@@ -362,8 +362,8 @@ is established. Defaults to no timeout.
 Defaults to no timeout.
 
 Since you possibly have more than one node you want to connect to, the `nodes`
-section is defined as an [YAML array](). For example your section may look like
-this:
+section is defined as an [YAML array](http://symfony.com/doc/current/components/yaml/yaml_format.html#collections). 
+For example your section may look like this:
 
 ```yaml
 nodes:
@@ -422,7 +422,8 @@ class EmailJobHandler implements HandlerInterface
 
 If no `handler` is defined, then the job class will be tested to see if it can
 be executed. For this to work, your job class should implement the 
-[__invoke]() magic method.
+[__invoke](http://php.net/manual/en/language.oop5.magic.php#object.invoke) 
+magic method.
 
 ## Running the CLI
 
