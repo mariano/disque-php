@@ -6,7 +6,7 @@ use Symfony\Component\Console\Application;
 use Symfony\Component\Yaml\Parser;
 
 $error = function ($message) {
-    echo $message;
+    error_log($message);
     exit(1);
 };
 
