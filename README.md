@@ -14,9 +14,9 @@ distributed job queue. Features:
 * No dependencies: Fast connection to Disque out-of-the-box
 * High level API to easily push jobs to a queue, and retrieve jobs from queues
 * Easily schedule jobs for execution at a certain `DateTime`
+* Built in CLI tool to run jobs polled from a queue
 * Use the built in `Job` class, or implement your own
 * Smart node connection support based on number of jobs produced by nodes
-* Connect to Disque with the built-in connection, or reutilize your existing Redis client (such as [predis](https://github.com/nrk/predis))
 * Supporting all current Disque commands, and allows you to easily implement custom commands
 * Fully unit tested
 
@@ -75,6 +75,10 @@ while ($job = $queue->pull()) {
 
 For more information on the APIs provided, 
 [read the full documentation](docs/README.md).
+
+If you want to avoid having to build your own command line tool to run jobs that 
+are pulled from your Disque queues, checkout the 
+[built in CLI tool](docs/README.md#command-line-interface-cli-tool).
 
 ## Testing
 

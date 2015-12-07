@@ -39,6 +39,7 @@ switches through nodes based on a specific strategy.
 allows the returned job to include its `NACK` and additional deliveries 
 counters.
 - Added support for `NACK`
+- Added built in CLI tool to run jobs
 
 ## [1.3.0] - 2015-05-18
 

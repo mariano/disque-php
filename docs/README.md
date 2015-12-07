@@ -327,6 +327,117 @@ This is just an example. For more complicated tasks consider following
 the single responsibility principle, using the Job object only to transport
 the job data and doing the actual work in a dedicated worker class.
 
+# Command Line Interface (CLI) tool
+
+There's a built in CLI that simplifies the process of using the command line
+to pull jobs from a queue, and run the code that handles those jobs. The
+built-in tool requires two extra composer packages: 
+[symfony/console](https://packagist.org/packages/symfony/console) 
+and [symfony/yaml](https://packagist.org/packages/symfony/yaml). Make sure you 
+install them via:
+
+```bash
+$ composer require symfony/console
+$ composer require symfony/yaml
+```
+
+The CLI tool can work with any Job class that implements `JobInterface`, and
+allows you to use your own custom job marshalers (see section 
+[Changing the Job class](#changing-the-job-class) for more information about
+this feature.)
+
+## Configuration file
+
+Details such as what nodes to connect to, what queue to pull jobs from,
+and how to handle jobs are all specified in a YAML configuration file. There's
+a fixed section called `nodes` which defines what nodes you want to connect to.
+Each node allows for the following settings to be defined:
+
+* `host`: Host to connect to. Defaults to `127.0.0.1`
+* `port`: Port to connect to. Defaults to `7711`
+* `password`: Password to use for a specific node. Defaults to no password.
+* `timeoutConnect`: How many seconds until we should give up if no connection
+is established. Defaults to no timeout.
+* `timeoutResponse`: How many seconds until a missing response is aborted.
+Defaults to no timeout.
+
+Since you possibly have more than one node you want to connect to, the `nodes`
+section is defined as an [YAML array](). For example your section may look like
+this:
+
+```yaml
+nodes:
+    - host: 127.0.0.1
+      port: 7711
+    - host: 127.0.0.1
+      port: 7712
+```
+
+Any other section in the configuration file defines a source. A source is
+basically the location from where to get jobs. Each source section has the
+following options available:
+
+* `queue`: The Disque queue to pull from. Mandatory.
+* `period`: How many milliseconds to wait for a job to come to the queue, until
+we restart the pulling loop. Defaults to `500`.
+* `handler`: A fully qualified class that will handle jobs that come from this
+source. This class should implement `Disque\Console\HandlerInterface`. Defaults
+to no handler.
+* `marshaler`: Fully qualified class that is used to unmarshal jobs coming from
+the queue. Defaults to `Disque\Queue\Marshal\JobMarshaler`. See section
+[Changing the Job class](#changing-the-job-class) to learn more about 
+marshalers.
+
+An example source section may look like this:
+
+```yaml
+emails:
+    queue: emails
+    handler: \App\Handlers\EmailJobHandler
+```
+
+## Job handlers
+
+Job handlers are responsible for actually handling the job that got pulled from
+a source. Any class can be a handler as long as it implements the 
+`Disque\Console\HandlerInterface`, which defines a single method:
+
+* `handle(Disque\Queue\JobInterface $job) : void`
+
+An example handler class could look like this:
+
+```php
+use Disque\Console\HandlerInterface;
+use Disque\Queue\JobInterface;
+
+class EmailJobHandler implements HandlerInterface
+{
+    public function handle(JobInterface $job)
+    {
+        $message = $job->getBody();
+        echo "Send email with subject {$message['subject']} to {$message['email']}";
+    }
+}
+```
+
+If no `handler` is defined, then the job class will be tested to see if it can
+be executed. For this to work, your job class should implement the 
+[__invoke]() magic method.
+
+## Running the CLI
+
+You can run the CLI tool via the `bin/run` binary. The tool requires two
+mandatory arguments to work:
+
+* `configuration`: Path to the YAML configuration file.
+* `source`: Source to pull from, as defined within the configuration file.
+
+For example:
+
+```bash
+$ bin/run worker:work conf/jobs.yaml emails
+```
+
 # Client API
 
 ## Connecting
