@@ -362,7 +362,7 @@ is established. Defaults to no timeout.
 Defaults to no timeout.
 
 Since you possibly have more than one node you want to connect to, the `nodes`
-section is defined as an [YAML array](http://symfony.com/doc/current/components/yaml/yaml_format.html#collections). 
+section is defined as a [YAML collection](http://symfony.com/doc/current/components/yaml/yaml_format.html#collections). 
 For example your section may look like this:
 
 ```yaml
