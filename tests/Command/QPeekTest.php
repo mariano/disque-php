@@ -96,11 +96,11 @@ class QPeekTest extends PHPUnit_Framework_TestCase
     public function testParse()
     {
         $c = new QPeek();
-        $result = $c->parse([['queue', 'DI0f0c644fd3ccb51c2cedbd47fcb6f312646c993c05a0SQ', 'stuff']]);
+        $result = $c->parse([['queue', 'D-0f0c644fd3ccb51c2cedbd47fcb6f312646c993c05a0SQ', 'stuff']]);
         $this->assertSame([
             [
                 'queue' => 'queue',
-                'id' => 'DI0f0c644fd3ccb51c2cedbd47fcb6f312646c993c05a0SQ',
+                'id' => 'D-0f0c644fd3ccb51c2cedbd47fcb6f312646c993c05a0SQ',
                 'body' => 'stuff'
             ]
         ], $result);

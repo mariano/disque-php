@@ -89,10 +89,10 @@ class JobsWithQueueResponseTest extends PHPUnit_Framework_TestCase
 
     public function testInvalidBodyInvalidJobIDLength()
     {
-        $this->setExpectedException(InvalidResponseException::class, 'Invalid command response. Command Disque\\Command\\Hello got: [["queue","DI012345","body"]]');
+        $this->setExpectedException(InvalidResponseException::class, 'Invalid command response. Command Disque\\Command\\Hello got: [["queue","D-012345","body"]]');
         $r = new JobsWithQueueResponse();
         $r->setCommand(new Hello());
-        $r->setBody([['queue', 'DI012345', 'body']]);
+        $r->setBody([['queue', 'D-012345', 'body']]);
     }
 
     public function testParseNoJob()
@@ -108,12 +108,12 @@ class JobsWithQueueResponseTest extends PHPUnit_Framework_TestCase
     {
         $r = new JobsWithQueueResponse();
         $r->setCommand(new Hello());
-        $r->setBody([['queue', 'DI0f0c644fd3ccb51c2cedbd47fcb6f312646c993c05a0SQ', 'body']]);
+        $r->setBody([['queue', 'D-0f0c644fd3ccb51c2cedbd47fcb6f312646c993c05a0SQ', 'body']]);
         $result = $r->parse();
         $this->assertSame([
             [
                 'queue' => 'queue',
-                'id' => 'DI0f0c644fd3ccb51c2cedbd47fcb6f312646c993c05a0SQ',
+                'id' => 'D-0f0c644fd3ccb51c2cedbd47fcb6f312646c993c05a0SQ',
                 'body' => 'body'
             ]
         ], $result);
@@ -124,19 +124,19 @@ class JobsWithQueueResponseTest extends PHPUnit_Framework_TestCase
         $r = new JobsWithQueueResponse();
         $r->setCommand(new Hello());
         $r->setBody([
-            ['queue', 'DI0f0c644fd3ccb51c2cedbd47fcb6f312646c993c05a0SQ', 'body'],
-            ['queue2', 'DI0f0c644fd3ccb51c2cedbd47fcb6f312646c993c05a1SQ', 'body2']
+            ['queue', 'D-0f0c644fd3ccb51c2cedbd47fcb6f312646c993c05a0SQ', 'body'],
+            ['queue2', 'D-0f0c644fd3ccb51c2cedbd47fcb6f312646c993c05a1SQ', 'body2']
         ]);
         $result = $r->parse();
         $this->assertSame([
             [
                 'queue' => 'queue',
-                'id' => 'DI0f0c644fd3ccb51c2cedbd47fcb6f312646c993c05a0SQ',
+                'id' => 'D-0f0c644fd3ccb51c2cedbd47fcb6f312646c993c05a0SQ',
                 'body' => 'body'
             ],
             [
                 'queue' => 'queue2',
-                'id' => 'DI0f0c644fd3ccb51c2cedbd47fcb6f312646c993c05a1SQ',
+                'id' => 'D-0f0c644fd3ccb51c2cedbd47fcb6f312646c993c05a1SQ',
                 'body' => 'body2'
             ],
         ], $result);

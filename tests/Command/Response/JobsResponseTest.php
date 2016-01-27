@@ -65,10 +65,10 @@ class JobsResponseTest extends PHPUnit_Framework_TestCase
 
     public function testInvalidBodyInvalidJobIDLength()
     {
-        $this->setExpectedException(InvalidResponseException::class, 'Invalid command response. Command Disque\\Command\\Hello got: [["DI012345","body"]]');
+        $this->setExpectedException(InvalidResponseException::class, 'Invalid command response. Command Disque\\Command\\Hello got: [["D-012345","body"]]');
         $r = new JobsResponse();
         $r->setCommand(new Hello());
-        $r->setBody([['DI012345', 'body']]);
+        $r->setBody([['D-012345', 'body']]);
     }
 
     public function testParseNoJob()
@@ -84,11 +84,11 @@ class JobsResponseTest extends PHPUnit_Framework_TestCase
     {
         $r = new JobsResponse();
         $r->setCommand(new Hello());
-        $r->setBody([['DI0f0c644fd3ccb51c2cedbd47fcb6f312646c993c05a0SQ', 'body']]);
+        $r->setBody([['D-0f0c644fd3ccb51c2cedbd47fcb6f312646c993c05a0SQ', 'body']]);
         $result = $r->parse();
         $this->assertSame([
             [
-                'id' => 'DI0f0c644fd3ccb51c2cedbd47fcb6f312646c993c05a0SQ',
+                'id' => 'D-0f0c644fd3ccb51c2cedbd47fcb6f312646c993c05a0SQ',
                 'body' => 'body'
             ]
         ], $result);
@@ -99,17 +99,17 @@ class JobsResponseTest extends PHPUnit_Framework_TestCase
         $r = new JobsResponse();
         $r->setCommand(new Hello());
         $r->setBody([
-            ['DI0f0c644fd3ccb51c2cedbd47fcb6f312646c993c05a0SQ', 'body'],
-            ['DI0f0c644fd3ccb51c2cedbd47fcb6f312646c993c05a1SQ', 'body2']
+            ['D-0f0c644fd3ccb51c2cedbd47fcb6f312646c993c05a0SQ', 'body'],
+            ['D-0f0c644fd3ccb51c2cedbd47fcb6f312646c993c05a1SQ', 'body2']
         ]);
         $result = $r->parse();
         $this->assertSame([
             [
-                'id' => 'DI0f0c644fd3ccb51c2cedbd47fcb6f312646c993c05a0SQ',
+                'id' => 'D-0f0c644fd3ccb51c2cedbd47fcb6f312646c993c05a0SQ',
                 'body' => 'body'
             ],
             [
-                'id' => 'DI0f0c644fd3ccb51c2cedbd47fcb6f312646c993c05a1SQ',
+                'id' => 'D-0f0c644fd3ccb51c2cedbd47fcb6f312646c993c05a1SQ',
                 'body' => 'body2'
             ],
         ], $result);

@@ -482,9 +482,9 @@ class ManagerTest extends PHPUnit_Framework_TestCase
     {
         $node1 = '0f0c644fd3ccb51c2cedbd47fcb6f312646c993c05a0SQ';
         $node2 = '0f0c645fd3ccb51c2cedbd47fcb6f312646c993c05a0SQ';
-        $jobId1 = 'DI' . $node1;
-        $jobId2 = 'DI' . $node2;
-        $jobId3 = 'DI' . $node2;
+        $jobId1 = 'D-' . $node1;
+        $jobId2 = 'D-' . $node2;
+        $jobId3 = 'D-' . $node2;
 
         $this->assertNotSame($node1, $node2);
 
@@ -581,9 +581,9 @@ class ManagerTest extends PHPUnit_Framework_TestCase
     {
         $node1 = '0f0c644fd3ccb51c2cedbd47fcb6f312646c993c05a0SQ';
         $node2 = '0f0c645fd3ccb51c2cedbd47fcb6f312646c993c05a0SQ';
-        $jobId1 = 'DI' . $node1;
-        $jobId2 = 'DI' . $node2;
-        $jobId3 = 'DI' . $node2;
+        $jobId1 = 'D-' . $node1;
+        $jobId2 = 'D-' . $node2;
+        $jobId3 = 'D-' . $node2;
 
         $this->assertNotSame($node1, $node2);
 
@@ -659,9 +659,9 @@ class ManagerTest extends PHPUnit_Framework_TestCase
     {
         $node1 = '0f0c644fd3ccb51c2cedbd47fcb6f312646c993c05a0SQ';
         $node2 = '0f0c645fd3ccb51c2cedbd47fcb6f312646c993c05a0SQ';
-        $jobId1 = 'DI' . $node1;
-        $jobId2 = 'DI' . $node2;
-        $jobId3 = 'DI' . $node1;
+        $jobId1 = 'D-' . $node1;
+        $jobId2 = 'D-' . $node2;
+        $jobId3 = 'D-' . $node1;
 
         $this->assertNotSame($node1, $node2);
 
@@ -744,9 +744,9 @@ class ManagerTest extends PHPUnit_Framework_TestCase
     {
         $node1 = '0f0c644fd3ccb51c2cedbd47fcb6f312646c993c05a0SQ';
         $node2 = '0f0c645fd3ccb51c2cedbd47fcb6f312646c993c05a0SQ';
-        $jobId1 = 'DI' . $node1;
-        $jobId2 = 'DI' . $node2;
-        $jobId3 = 'DI' . $node2;
+        $jobId1 = 'D-' . $node1;
+        $jobId2 = 'D-' . $node2;
+        $jobId3 = 'D-' . $node2;
 
         $this->assertNotSame($node1, $node2);
 

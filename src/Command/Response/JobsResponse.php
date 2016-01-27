@@ -57,7 +57,7 @@ class JobsResponse extends BaseResponse implements ResponseInterface
 
             $idPosition = array_search(self::KEY_ID, $this->jobDetails);
             $id = $job[$idPosition];
-            if (strpos($id, 'DI') !== 0 || strlen($id) < 10) {
+            if (strpos($id, 'D-') !== 0 || strlen($id) < 10) {
                 throw new InvalidResponseException($this->command, $body);
             }
         }
