@@ -182,7 +182,7 @@ class GetJobTest extends PHPUnit_Framework_TestCase
     {
         $c = new GetJob();
         $queue = 'q';
-        $id = 'DI0f0c644fd3ccb51c2cedbd47fcb6f312646c993c05a0SQ';
+        $id = 'D-0f0c644fd3ccb51c2cedbd47fcb6f312646c993c05a0SQ';
         $body = 'lorem ipsum';
         $response = [$queue, $id, $body];
         $parsedResponse = $c->parse([$response]);
@@ -201,7 +201,7 @@ class GetJobTest extends PHPUnit_Framework_TestCase
         $c = new GetJob();
 
         $queue = 'q';
-        $id = 'DI0f0c644fd3ccb51c2cedbd47fcb6f312646c993c05a0SQ';
+        $id = 'D-0f0c644fd3ccb51c2cedbd47fcb6f312646c993c05a0SQ';
         $body = '大';
         $response = [$queue, $id, $body];
         $parsedResponse = $c->parse([$response]);
@@ -222,7 +222,7 @@ class GetJobTest extends PHPUnit_Framework_TestCase
         $c->setArguments(['q1', ['withcounters' => true]]);
 
         $queue = 'q';
-        $id = 'DI0f0c644fd3ccb51c2cedbd47fcb6f312646c993c05a0SQ';
+        $id = 'D-0f0c644fd3ccb51c2cedbd47fcb6f312646c993c05a0SQ';
         $body = 'lorem ipsum';
         $nacks = 1;
         $ad = 2;

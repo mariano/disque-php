@@ -18,7 +18,7 @@ class JobsWithCountersResponseTest extends PHPUnit_Framework_TestCase
         $r = new JobsWithCountersResponse();
         $this->assertInstanceOf(ResponseInterface::class, $r);
     }
-    
+
     public function testInvalidBodyNotArrayString()
     {
         $this->setExpectedException(InvalidResponseException::class, 'Invalid command response. Command Disque\\Command\\Hello got: "test"');
@@ -26,7 +26,7 @@ class JobsWithCountersResponseTest extends PHPUnit_Framework_TestCase
         $r->setCommand(new Hello());
         $r->setBody('test');
     }
-    
+
     public function testInvalidBodyNotArrayNumeric()
     {
         $this->setExpectedException(InvalidResponseException::class, 'Invalid command response. Command Disque\\Command\\Hello got: 128');
@@ -34,7 +34,7 @@ class JobsWithCountersResponseTest extends PHPUnit_Framework_TestCase
         $r->setCommand(new Hello());
         $r->setBody(128);
     }
-    
+
     public function testInvalidBodyNotEnoughElementsInJob()
     {
         $this->setExpectedException(InvalidResponseException::class, 'Invalid command response. Command Disque\\Command\\Hello got: [["id","body"]]');
@@ -42,7 +42,7 @@ class JobsWithCountersResponseTest extends PHPUnit_Framework_TestCase
         $r->setCommand(new Hello());
         $r->setBody([['id','body']]);
     }
-    
+
     public function testInvalidBodyTooManyElementsInJob()
     {
         $this->setExpectedException(InvalidResponseException::class, 'Invalid command response. Command Disque\\Command\\Hello got: [["queue","id","body","test"]]');
@@ -50,7 +50,7 @@ class JobsWithCountersResponseTest extends PHPUnit_Framework_TestCase
         $r->setCommand(new Hello());
         $r->setBody([['queue', 'id', 'body', 'test']]);
     }
-    
+
     public function testParseInvalidArrayElementsNon0()
     {
         $this->setExpectedException(InvalidResponseException::class, 'Invalid command response. Command Disque\\Command\\Hello got: [{"1":"test","2":"stuff","3":"more"}]');
@@ -58,7 +58,7 @@ class JobsWithCountersResponseTest extends PHPUnit_Framework_TestCase
         $r->setCommand(new Hello());
         $r->setBody([[1=>'test', 2=>'stuff', 3=>'more']]);
     }
-    
+
     public function testParseInvalidArrayElementsNon1()
     {
         $this->setExpectedException(InvalidResponseException::class, 'Invalid command response. Command Disque\\Command\\Hello got: [{"0":"test","2":"stuff","3":"more"}]');
@@ -66,7 +66,7 @@ class JobsWithCountersResponseTest extends PHPUnit_Framework_TestCase
         $r->setCommand(new Hello());
         $r->setBody([[0=>'test', 2=>'stuff', 3=>'more']]);
     }
-    
+
     public function testParseInvalidArrayElementsNon2()
     {
         $this->setExpectedException(InvalidResponseException::class, 'Invalid command response. Command Disque\\Command\\Hello got: [{"0":"test","1":"stuff","3":"more"}]');
@@ -74,7 +74,7 @@ class JobsWithCountersResponseTest extends PHPUnit_Framework_TestCase
         $r->setCommand(new Hello());
         $r->setBody([[0=>'test', 1=>'stuff', 3=>'more']]);
     }
-    
+
     public function testInvalidBodyInvalidJobIDPrefix()
     {
         $this->setExpectedException(InvalidResponseException::class, 'Invalid command response. Command Disque\\Command\\Hello got: [["queue","XX01234567890","body"]]');
@@ -82,15 +82,15 @@ class JobsWithCountersResponseTest extends PHPUnit_Framework_TestCase
         $r->setCommand(new Hello());
         $r->setBody([['queue', 'XX01234567890', 'body']]);
     }
-    
+
     public function testInvalidBodyInvalidJobIDLength()
     {
-        $this->setExpectedException(InvalidResponseException::class, 'Invalid command response. Command Disque\\Command\\Hello got: [["queue","DI012345","body"]]');
+        $this->setExpectedException(InvalidResponseException::class, 'Invalid command response. Command Disque\\Command\\Hello got: [["queue","D-012345","body"]]');
         $r = new JobsWithCountersResponse();
         $r->setCommand(new Hello());
-        $r->setBody([['queue', 'DI012345', 'body']]);
+        $r->setBody([['queue', 'D-012345', 'body']]);
     }
-    
+
     public function testParseNoJob()
     {
         $r = new JobsWithCountersResponse();
@@ -99,14 +99,14 @@ class JobsWithCountersResponseTest extends PHPUnit_Framework_TestCase
         $result = $r->parse();
         $this->assertSame([], $result);
     }
-    
+
     public function testParseOneJob()
     {
         $r = new JobsWithCountersResponse();
         $r->setCommand(new Hello());
 
         $queue = 'q';
-        $id = 'DI0f0c644fd3ccb51c2cedbd47fcb6f312646c993c05a0SQ';
+        $id = 'D-0f0c644fd3ccb51c2cedbd47fcb6f312646c993c05a0SQ';
         $body = 'lorem ipsum';
         $nacks = 1;
         $ad = 2;
@@ -124,20 +124,20 @@ class JobsWithCountersResponseTest extends PHPUnit_Framework_TestCase
             ]
         ], $parsedResponse);
     }
-    
+
     public function testParseTwoJobs()
     {
         $r = new JobsWithCountersResponse();
         $r->setCommand(new Hello());
 
         $queue1 = 'q1';
-        $id1 = 'DI0f0c644fd3ccb51c2cedbd47fcb6f312646c993c05a0SQ';
+        $id1 = 'D-0f0c644fd3ccb51c2cedbd47fcb6f312646c993c05a0SQ';
         $body1 = 'lorem ipsum';
         $nacks1 = 1;
         $ad1 = 2;
 
         $queue2 = 'q2';
-        $id2 = 'DI0f0c644fd3ccb51c2cedbd47fcb6f312646c993c05a0SQ';
+        $id2 = 'D-0f0c644fd3ccb51c2cedbd47fcb6f312646c993c05a0SQ';
         $body2 = 'dolor sit amet';
         $nacks2 = 3;
         $ad2 = 4;
