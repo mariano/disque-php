@@ -22,6 +22,7 @@ is not actually an exception, but a possible acceptable outcome.
 - `ManagerInterface` no longer has the `getConnectionClass()` and 
 `setConnectionClass()` methods. Instead it uses the new `setConnectionFactory()`
 method to allow one to specify a connection factory.
+- Changed Job ID format to adapt to changes from Disque RC1
 
 ### Added
 - Added `Node`, which handles the connection to a specific node.
