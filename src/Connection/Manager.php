@@ -401,7 +401,7 @@ class Manager implements ManagerInterface
     private function switchToNode(Node $node)
     {
         $nodeId = $node->getId();
-        if ($this->nodeId === $nodeId) {
+        if (($this->nodeId === $nodeId) && $this->isConnected()) {
             return;
         }
 
