@@ -678,8 +678,8 @@ class ManagerTest extends PHPUnit_Framework_TestCase
             ->andReturn([
                 'v1',
                 $node1,
-                [$node1, '127.0.0.1', 7711, 'v1'],
-                [$node2, '127.0.0.1', 7712, 'v1']
+                [$node1, '127.0.0.1', 7711, '1'],
+                [$node2, '127.0.0.1', 7712, '1']
             ])
             ->once()
             ->shouldReceive('execute')
@@ -702,7 +702,10 @@ class ManagerTest extends PHPUnit_Framework_TestCase
             ])
             ->mock();
 
-        $connection2 = m::mock(ConnectionInterface::class);
+        $connection2 = m::mock(ConnectionInterface::class)
+            ->shouldReceive('isConnected')
+            ->andReturn(false)
+            ->mock();
         $connectionFactory = m::mock(ConnectionFactoryInterface::class)
             ->shouldReceive('create')
             ->once()
@@ -750,7 +753,7 @@ class ManagerTest extends PHPUnit_Framework_TestCase
 
         $this->assertNotSame($node1, $node2);
 
-        $connection1 = m::mock(ConnectionInterface::class)
+        $connection1 = m::namedMock('goodConnection', ConnectionInterface::class)
             ->shouldReceive('isConnected')
             ->once()
             ->andReturn(false)
@@ -763,8 +766,8 @@ class ManagerTest extends PHPUnit_Framework_TestCase
             ->andReturn([
                 'v1',
                 $node1,
-                [$node1, '127.0.0.1', 7711, 'v1'],
-                [$node2, '127.0.0.1', 7712, 'v1']
+                [$node1, '127.0.0.1', 7711, '1'],
+                [$node2, '127.0.0.1', 7712, '1']
             ])
             ->once()
             ->shouldReceive('execute')
@@ -787,7 +790,7 @@ class ManagerTest extends PHPUnit_Framework_TestCase
             ])
             ->mock();
 
-        $connection2 = m::mock(ConnectionInterface::class)
+        $connection2 = m::namedMock('badConnection', ConnectionInterface::class)
             ->shouldReceive('isConnected')
             ->andReturn(false)
             ->shouldReceive('connect')
@@ -797,11 +800,13 @@ class ManagerTest extends PHPUnit_Framework_TestCase
 
         $connectionFactory = m::mock(ConnectionFactoryInterface::class)
             ->shouldReceive('create')
+            ->with(anything(), 7711)
             ->once()
             ->andReturn($connection1)
             ->shouldReceive('create')
-            ->andReturn($connection2)
+            ->with(anything(), 7712)
             ->once()
+            ->andReturn($connection2)
             ->mock();
 
         $priorityStrategy = new ConservativeJobCountPrioritizer();
@@ -814,7 +819,6 @@ class ManagerTest extends PHPUnit_Framework_TestCase
         $m->setConnectionFactory($connectionFactory);
         $m->setPriorityStrategy($priorityStrategy);
         $m->addServer(new Credentials('127.0.0.1', 7711));
-
 
         $m->connect();
 
@@ -830,5 +834,197 @@ class ManagerTest extends PHPUnit_Framework_TestCase
         $this->assertSame($node1, $m->getCurrentNode()->getId());
     }
 
+    /**
+     * Test that reconnection (eg. calling connect() twice) uses the information
+     * from the HELLO response, not the initial credentials.
+     */
+    public function testReconnectUsesHello()
+    {
+        $node1 = 'node1';
+        $node2 = 'node2';
 
+        $credentialsPort = 7711;
+        $helloPort = 7712;
+
+        $connection = m::namedMock('initialConnection', ConnectionInterface::class)
+            ->shouldReceive('isConnected')
+                ->once()
+                ->andReturn(false)
+            ->shouldReceive('connect')
+                ->once()
+            ->shouldReceive('isConnected')
+                ->andReturn(true)
+                ->once()
+            ->shouldReceive('execute')
+                ->with(m::type(Hello::class))
+                ->andReturn([
+                                'v1',
+                                $node1,
+                                [$node1, '127.0.0.1', $credentialsPort, 1],
+                                [$node2, '127.0.0.1', $helloPort, 1]
+                            ])
+                ->once()
+            ->shouldReceive('isConnected')
+                ->andReturn(false)
+            ->mock();
+
+        $reconnection = m::namedMock('reconnection', ConnectionInterface::class)
+            ->shouldReceive('isConnected')
+                ->once()
+                ->andReturn(false)
+            ->shouldReceive('connect')
+                ->once()
+            ->shouldReceive('isConnected')
+                ->andReturn(true)
+                ->atLeast(1)
+            ->shouldReceive('execute')
+                ->with(m::type(Hello::class))
+                ->andReturn([
+                                'v1',
+                                $node2,
+                                [$node1, '127.0.0.1', $credentialsPort, 1],
+                                [$node2, '127.0.0.1', $helloPort, 1]
+                            ])
+                ->once()
+            ->mock();
+
+        $connectionFactory = m::mock(ConnectionFactoryInterface::class)
+            ->shouldReceive('create')
+                ->with(anything(), $credentialsPort)
+                ->andReturn($connection)
+                ->once()
+            ->shouldReceive('create')
+                ->with(anything(), $helloPort)
+                ->andReturn($reconnection)
+                ->once()
+            ->mock();
+
+        $prioritizer = m::mock(NodePrioritizerInterface::class)
+            ->shouldReceive('sort')
+                ->andReturnUsing(function ($nodes) use ($node2) {
+                    return [$nodes[$node2]];
+                })
+                ->once()
+            ->mock();
+
+        $manager = new Manager();
+        $manager->setPriorityStrategy($prioritizer);
+        // We set just one server initially
+        $manager->addServer(new Credentials('127.0.0.1', $credentialsPort));
+        $manager->setConnectionFactory($connectionFactory);
+
+        $manager->connect();
+        $this->assertSame($node1, $manager->getCurrentNode()->getId());
+
+        // The reconnection must use the node from the HELLO response
+        $manager->connect();
+        $this->assertSame($node2, $manager->getCurrentNode()->getId());
+    }
+
+    /**
+     * Test reconnection that doesn't succeed with the cluster information
+     * and falls back to the user-supplied credentials.
+     * Reconnection should keep the node stats intact.
+     */
+    public function testReconnectFallbackToCredentials()
+    {
+        $node1 = 'node1';
+        $node2 = 'node2';
+
+        $credentialsPort = 7711;
+        $helloPort = 7712;
+
+        $hello = [
+            'v1',
+            $node1,
+            [$node1, '127.0.0.1', $credentialsPort, 1],
+            [$node2, '127.0.0.1', $helloPort, 1]
+        ];
+
+        $connection = m::namedMock('initialConnection', ConnectionInterface::class)
+            ->shouldReceive('isConnected')
+            ->once()
+            ->andReturn(false)
+            ->shouldReceive('connect')
+            ->once()
+            ->shouldReceive('isConnected')
+            ->andReturn(true)
+            ->once()
+            ->shouldReceive('execute')
+            ->with(m::type(Hello::class))
+            ->andReturn($hello)
+            ->once()
+            ->shouldReceive('isConnected')
+            ->andReturn(false)
+            ->mock();
+
+        $badConnection = m::namedMock('badConnection', ConnectionInterface::class)
+            ->shouldReceive('isConnected')
+            ->andReturn(false)
+            ->shouldReceive('connect')
+            ->andThrow(new ConnectionException())
+            ->once()
+            ->mock();
+
+        $reconnection = m::namedMock('reconnection', ConnectionInterface::class)
+            ->shouldReceive('isConnected')
+            ->once()
+            ->andReturn(false)
+            ->shouldReceive('connect')
+            ->once()
+            ->shouldReceive('isConnected')
+            ->andReturn(true)
+            ->once()
+            ->shouldReceive('execute')
+            ->with(m::type(Hello::class))
+            ->andReturn($hello)
+            ->once()
+            ->mock();
+
+        $connectionFactory = m::mock(ConnectionFactoryInterface::class)
+            ->shouldReceive('create')
+            ->with(anything(), $credentialsPort)
+            ->andReturn($connection)
+            ->once()
+            ->shouldReceive('create')
+            ->with(anything(), $helloPort)
+            ->andReturn($badConnection)
+            ->once()
+            ->shouldReceive('create')
+            ->with(anything(), $credentialsPort)
+            ->andReturn($reconnection)
+            ->once()
+            ->mock();
+
+        $prioritizer = m::mock(NodePrioritizerInterface::class)
+            ->shouldReceive('sort')
+            ->andReturnUsing(function ($nodes) use ($node2) {
+                return [$nodes[$node2]];
+            })
+            ->once()
+            ->mock();
+
+        $manager = new Manager();
+        $manager->setPriorityStrategy($prioritizer);
+        $manager->setConnectionFactory($connectionFactory);
+        $manager->addServer(new Credentials('127.0.0.1', $credentialsPort));
+
+        // Test that we are connected to node1
+        $manager->connect();
+        $this->assertSame($node1, $manager->getCurrentNode()->getId());
+
+        // Set job count to node1
+        $jobCount = 4;
+        $manager->getCurrentNode()->addJobCount($jobCount);
+
+        // This reconnection will try to connect to node2 (and just to node2,
+        // see the prioritizer mock above). This will fail and the reconnection
+        // will then fall back to the user-supplied credentials, ie. node1.
+        $manager->connect();
+        // Check that we are, in fact, connected again to node1
+        $this->assertSame($node1, $manager->getCurrentNode()->getId());
+        // And that we have kept the node stats
+        $this->assertSame($jobCount, $manager->getCurrentNode()->getTotalJobCount());
+
+    }
 }

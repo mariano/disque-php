@@ -145,7 +145,7 @@ class Manager implements ManagerInterface
     {
         return (
             isset($this->nodeId) &&
-            $this->nodes[$this->nodeId]->getConnection()->isConnected()
+            $this->getCurrentNode()->isConnected()
         );
     }
 
@@ -154,9 +154,27 @@ class Manager implements ManagerInterface
      */
     public function connect()
     {
-        $currentNode = $this->findAvailableConnection();
-        $this->switchToNode($currentNode);
-        return $currentNode;
+        // If the manager was already connected, connect to a node from the last
+        // HELLO response. This information is newer than the credentials
+        // supplied by the user at the beginning.
+        if ($this->wasAlreadyConnected()) {
+            try {
+                $this->switchNodeIfNeeded();
+            } catch (ConnectionException $e) {
+                // Ignore the error, we'll try reconnecting with credentials below
+            }
+        }
+
+        // Use the user-supplied credentials in case this is the initial
+        // connection.
+        // If the reconnection attempt above didn't work, fall back
+        // to the user-supplied credentials, too.
+        if ( ! $this->isConnected()) {
+            $currentNode = $this->findAvailableConnection();
+            $this->switchToNode($currentNode);
+        }
+
+        return $this->getCurrentNode();
     }
 
     /**
@@ -167,8 +185,7 @@ class Manager implements ManagerInterface
         $this->shouldBeConnected();
         $command = $this->preprocessExecution($command);
 
-        $currentNodeConnection = $this->nodes[$this->nodeId]->getConnection();
-        $response = $currentNodeConnection->execute($command);
+        $response = $this->getCurrentNode()->execute($command);
 
         $response = $this->postprocessExecution($command, $response);
         return $response;
@@ -203,7 +220,7 @@ class Manager implements ManagerInterface
                 continue;
             }
 
-            if ($node->getConnection()->isConnected()) {
+            if ($node->isConnected()) {
                 return $node;
             }
         }
@@ -306,12 +323,17 @@ class Manager implements ManagerInterface
 
         // Try to connect by priority, continue on error, return on success
         foreach($sortedNodes as $nodeCandidate) {
-            if ($nodeCandidate->getId() === $this->nodeId) {
+            // If the first recommended node is our current node and it has
+            // a working connection, return early.
+            // If its connection is not working, let's try and reconnect further
+            // below, or find the first best connected node.
+            if ($nodeCandidate->getId() === $this->nodeId &&
+                $nodeCandidate->isConnected()) {
                 return;
             }
 
             try {
-                if ($nodeCandidate->getConnection()->isConnected()) {
+                if ($nodeCandidate->isConnected()) {
                     // Say a new HELLO to the node, the cluster might have changed
                     $nodeCandidate->sayHello();
                 } else {
@@ -372,8 +394,13 @@ class Manager implements ManagerInterface
      */
     private function shouldBeConnected()
     {
+        // If we lost the connection, first let's try and reconnect
         if (!$this->isConnected()) {
-            throw new ConnectionException('Not connected');
+            try {
+                $this->switchNodeIfNeeded();
+            } catch (ConnectionException $e) {
+                throw new ConnectionException('Not connected. ' . $e->getMessage());
+            }
         }
     }
 
@@ -401,8 +428,17 @@ class Manager implements ManagerInterface
     private function switchToNode(Node $node)
     {
         $nodeId = $node->getId();
-        if (($this->nodeId === $nodeId) && $this->isConnected()) {
-            return;
+        // Return early if we're trying to switch to the current node.
+        if (($this->nodeId === $nodeId)) {
+            // But return early only if the current node is connected to Disque.
+            // If it is disconnected, we want to overwrite it with the node
+            // from the method argument, because that one is connected.
+            if ($this->getCurrentNode()->isConnected()) {
+                return;
+            }
+
+            // Copy the stats from the now-disconnected node object
+            $this->copyNodeStats($this->getCurrentNode(), $node);
         }
 
         $this->resetNodeCounters();
@@ -479,5 +515,27 @@ class Manager implements ManagerInterface
 
         // Instantiate a new Node object for the newly revealed node
         return $this->createNode($credentials);
+    }
+
+    /**
+     * Check if the manager held a connection to Disque already
+     *
+     * @return bool
+     */
+    private function wasAlreadyConnected()
+    {
+        return ( ! empty($this->nodes));
+    }
+
+    /**
+     * Copy node stats from the old to the new node
+     *
+     * @param Node $oldNode
+     * @param Node $newNode
+     */
+    private function copyNodeStats(Node $oldNode, Node $newNode)
+    {
+        $oldNodeJobCount = $oldNode->getTotalJobCount();
+        $newNode->addJobCount($oldNodeJobCount);
     }
 }
