@@ -306,7 +306,12 @@ class Manager implements ManagerInterface
 
         // Try to connect by priority, continue on error, return on success
         foreach($sortedNodes as $nodeCandidate) {
-            if ($nodeCandidate->getId() === $this->nodeId) {
+            // If the first recommended node is our current node and it has
+            // a working connection, return early.
+            // If its connection is not working, let's try and reconnect further
+            // below, or find the first best connected node.
+            if ($nodeCandidate->getId() === $this->nodeId &&
+                $nodeCandidate->getConnection()->isConnected()) {
                 return;
             }
 
@@ -372,6 +377,12 @@ class Manager implements ManagerInterface
      */
     private function shouldBeConnected()
     {
+        // If we lost the connection, first let's try and reconnect
+        if (!$this->isConnected()) {
+            $this->switchNodeIfNeeded();
+        }
+
+        // If we could not reconnect, give up
         if (!$this->isConnected()) {
             throw new ConnectionException('Not connected');
         }
@@ -401,7 +412,7 @@ class Manager implements ManagerInterface
     private function switchToNode(Node $node)
     {
         $nodeId = $node->getId();
-        if (($this->nodeId === $nodeId) && $this->isConnected()) {
+        if (($this->nodeId === $nodeId)) {
             return;
         }
 
