@@ -2,6 +2,7 @@
 namespace Disque\Connection\Node;
 
 use Disque\Command\Auth;
+use Disque\Command\CommandInterface;
 use Disque\Command\Hello;
 use Disque\Command\Response\HelloResponse;
 use Disque\Connection\ConnectionException;
@@ -255,6 +256,29 @@ class Node
         }
 
         return $this->hello;
+    }
+
+    /**
+     * Check if this object holds a working connection to Disque node
+     *
+     * @return bool
+     */
+    public function isConnected()
+    {
+        return $this->connection->isConnected();
+    }
+
+    /**
+     * Execute a command on this Disque node
+     *
+     * @param CommandInterface $command
+     * @return mixed Response
+     *
+     * @throws ConnectionException
+     */
+    public function execute(CommandInterface $command)
+    {
+        return $this->connection->execute($command);
     }
 
     /**
