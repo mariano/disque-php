@@ -3,6 +3,11 @@
 All Notable changes will be documented in this file. This project adheres to 
 [Semantic Versioning](http://semver.org/).
 
+## [2.0.2] - 2016-05-10
+
+### Fixed
+- Compatibility issues with PHP 5.5, 5.6 and hhvm
+
 ## [2.0.1] - 2016-05-10
 
 ### Changed
@@ -148,6 +153,7 @@ parameters were specified, an `InvalidCommandArgumentException` was thrown.
 - Added support for Predis connections, and allowing adding new connection
 methods via `ConnectionInterface`.
 
+[2.0.2]: https://github.com/mariano/disque-php/releases/tag/2.0.2
 [2.0.1]: https://github.com/mariano/disque-php/releases/tag/2.0.1
 [2.0-alpha]: https://github.com/mariano/disque-php/releases/tag/2.0-alpha
 [1.3.0]: https://github.com/mariano/disque-php/releases/tag/1.3.0
