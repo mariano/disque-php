@@ -773,6 +773,52 @@ $info = $client->info();
 echo $info;
 ```
 
+### jscan
+
+Iterate all existing jobs in the local node.
+
+```php
+qscan(int $cursor = 0, array $options = [])
+```
+
+Arguments:
+
+* `$cursor`: an `int`, which is the cursor we are navigating. On first call 
+    this should be `0`, when following an already established cursor this 
+    should be the cursor returned by the previous call (see `nextCursor`).
+* `$options`: an array, containing the set of options to influence the scan.
+    Available options:
+  * `count`: an `int`, a hint about how much work to do per iteration.
+  * `busyloop`: a `bool`. If set to `true` the call will block and will return
+    all elements in a single iteration.
+  * `queue`: a `string`. Only look for jobs in the given queue.
+  * `state`: an `array`. Look for jobs in the given state.
+  * `reply`: a `string`. What to return. If it's `id` only JOB IDs are returned.
+  If it's `all` then full job state is returned.
+
+Return value:
+
+* `array`: An indexed array with:
+  * `finished`: a `bool`, which tells if this is the last iteration.
+  * `nextCursor`: an `int`, which tells the cursor to use to get the next
+    iteration. If `0` then this is the last iteration (which also guarantees
+    that `finished` is set to `true`).
+  * `jobs`: an `array`, where each element is has at least the `id` of a job,
+    and if `reply` is set to `all` also all other settings for a job (such as
+    `queue`, `state`, and `ttl`).
+
+Example call:
+
+```php
+// Get all queues, one queue at a time
+$cursor = 0;
+do {
+    $result = $client->jscan($cursor, ['count' => 1]);
+    var_dump($result['jobs']);
+    $cursor = $result['nextCursor'];
+} while (!$result['finished']);
+```
+
 ### nack
 
 Put the job(s) back to the queue immediately and increment the nack counter.

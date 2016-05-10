@@ -5,9 +5,9 @@ use Disque\Command\Argument\ArrayChecker;
 use Disque\Command\Argument\OptionChecker;
 use Disque\Command\Argument\InvalidCommandArgumentException;
 use Disque\Command\Argument\InvalidOptionException;
-use Disque\Command\Response\QscanResponse;
+use Disque\Command\Response\JscanResponse;
 
-class QScan extends BaseCommand implements CommandInterface
+class JScan extends BaseCommand implements CommandInterface
 {
     use ArrayChecker;
     use OptionChecker;
@@ -17,7 +17,7 @@ class QScan extends BaseCommand implements CommandInterface
      *
      * @var int
      */
-    protected $responseHandler = QscanResponse::class;
+    protected $responseHandler = JscanResponse::class;
 
     /**
      * Available command options
@@ -27,9 +27,9 @@ class QScan extends BaseCommand implements CommandInterface
     protected $options = [
         'busyloop' => false,
         'count' => null,
-        'minlen' => null,
-        'maxlen' => null,
-        'importrate' => null
+        'queue' => null,
+        'state' => null,
+        'reply' => null
     ];
 
     /**
@@ -40,9 +40,9 @@ class QScan extends BaseCommand implements CommandInterface
     protected $availableArguments = [
         'busyloop' => 'BUSYLOOP',
         'count' => 'COUNT',
-        'minlen' => 'MINLEN',
-        'maxlen' => 'MAXLEN',
-        'importrate' => 'IMPORTRATE'
+        'queue' => 'QUEUE',
+        'state' => 'STATE',
+        'reply' => 'REPLY'
     ];
 
     /**
@@ -52,7 +52,7 @@ class QScan extends BaseCommand implements CommandInterface
      */
     public function getCommand()
     {
-        return 'QSCAN';
+        return 'JSCAN';
     }
 
     /**
@@ -75,7 +75,9 @@ class QScan extends BaseCommand implements CommandInterface
 
             if (isset($arguments[1])) {
                 $options = $arguments[1];
-                $this->checkOptionsInt($options, ['count', 'minlen', 'maxlen', 'importrate']);
+                $this->checkOptionsInt($options, ['count']);
+                $this->checkOptionsString($options, ['queue', 'reply']);
+                $this->checkOptionsArray($options, ['state']);
             }
         }
 

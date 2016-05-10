@@ -194,11 +194,17 @@ abstract class BaseCommand implements CommandInterface
                 continue;
             }
 
-            $arguments[] = $argument;
-
             $value = $options[$option];
-            if (!is_bool($value)) {
-                $arguments[] = $value;
+            if (is_array($value)) {
+                foreach ($value as $currentValue) {
+                    $arguments[] = $argument;
+                    $arguments[] = $currentValue;
+                }
+            } else {
+                $arguments[] = $argument;
+                if (!is_bool($value)) {
+                    $arguments[] = $value;
+                }
             }
         }
 

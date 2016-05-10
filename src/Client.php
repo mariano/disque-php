@@ -18,6 +18,7 @@ use Disque\Queue\Queue;
  * @method array getJob(string... $queues, array $options = [])
  * @method array hello()
  * @method string info()
+ * @method array jscan(array $options = [])
  * @method int nack(string... $ids)
  * @method int qlen(string $queue)
  * @method array qpeek(string $queue, int $count)
@@ -72,6 +73,7 @@ class Client
             new Command\GetJob(),
             new Command\Hello(),
             new Command\Info(),
+            new Command\JScan(),
             new Command\Nack(),
             new Command\QLen(),
             new Command\QPeek(),

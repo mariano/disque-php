@@ -1,5 +1,5 @@
 <?php
-namespace Disque\Test\Command;
+namespace Disque\Test\Command\Response;
 
 use PHPUnit_Framework_TestCase;
 use Disque\Command\Hello;

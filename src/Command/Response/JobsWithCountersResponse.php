@@ -52,23 +52,20 @@ class JobsWithCountersResponse extends JobsWithQueueResponse implements Response
          * Remove superfluous strings from the response
          * See the comment for the constants defined above
          */
-        $filteredBody = array_map(
-            function(array $job) use ($jobDetailCount, $body) {
-                if (!$this->checkFixedArray($job, $jobDetailCount)) {
-                    throw new InvalidResponseException($this->command, $body);
-                }
+        $filteredBody = array_map(function (array $job) use ($jobDetailCount, $body) {
+            if (!$this->checkFixedArray($job, $jobDetailCount)) {
+                throw new InvalidResponseException($this->command, $body);
+            }
 
-                unset($job[self::DISQUE_RESPONSE_KEY_NACKS]);
-                unset($job[self::DISQUE_RESPONSE_KEY_DELIVERIES]);
+            unset($job[self::DISQUE_RESPONSE_KEY_NACKS]);
+            unset($job[self::DISQUE_RESPONSE_KEY_DELIVERIES]);
 
-                /**
-                 * We must reindex the array so it's dense (without holes)
-                 * @see Disque\Command\Argument\ArrayChecker::checkFixedArray()
-                 */
-                return array_values($job);
-            }, $body);
-
-
+            /**
+             * We must reindex the array so it's dense (without holes)
+             * @see Disque\Command\Argument\ArrayChecker::checkFixedArray()
+             */
+            return array_values($job);
+        }, $body);
 
         parent::setBody($filteredBody);
     }

@@ -3,7 +3,7 @@ namespace Disque\Command\Response;
 
 use Disque\Command\Argument\ArrayChecker;
 
-class CursorResponse extends BaseResponse implements ResponseInterface
+abstract class CursorResponse extends BaseResponse implements ResponseInterface
 {
     use ArrayChecker;
 
@@ -35,10 +35,17 @@ class CursorResponse extends BaseResponse implements ResponseInterface
     public function parse()
     {
         $nextCursor = (int) $this->body[0];
-        return [
+        return array_merge([
             'finished' => (0 === $nextCursor),
             'nextCursor' => $nextCursor,
-            'queues' => (array) $this->body[1]
-        ];
+        ], $this->parseBody((array) $this->body[1]));
     }
+
+    /**
+     * Parse main body
+     *
+     * @param array $body Body
+     * @return array Parsed body
+     */
+    abstract protected function parseBody(array $body);
 }

@@ -78,6 +78,7 @@ class ClientTest extends PHPUnit_Framework_TestCase
             new Command\GetJob(),
             new Command\Hello(),
             new Command\Info(),
+            new Command\Jscan(),
             new Command\Nack(),
             new Command\QLen(),
             new Command\QPeek(),

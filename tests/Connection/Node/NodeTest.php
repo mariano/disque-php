@@ -135,7 +135,103 @@ class NodeTest extends \PHPUnit_Framework_TestCase
         $this->assertSame($nodeId, $n->getId());
         $this->assertSame($priority, $n->getPriority());
         $this->assertSame($prefix, $n->getPrefix());
+    }
 
+    public function testSayHelloAndThenConnect()
+    {
+        $address = '127.0.0.1';
+        $port = 7712;
+        $nodeId = 'someLongNodeId';
+        $prefix = 'someLong';
+        $version = 'v1';
+        $priority = 1;
+        $helloResponse = [
+            HelloResponse::POS_VERSION => $version,
+            HelloResponse::POS_ID => $nodeId,
+            HelloResponse::POS_NODES_START => [
+                HelloResponse::POS_NODE_ID => $nodeId,
+                HelloResponse::POS_NODE_HOST => $address,
+                HelloResponse::POS_NODE_PORT => $port,
+                HelloResponse::POS_NODE_PRIORITY => $priority
+            ]
+        ];
+        $expectedHello = [
+            HelloResponse::NODE_VERSION => $version,
+            HelloResponse::NODE_ID => $nodeId,
+            HelloResponse::NODES => [
+                [
+                    HelloResponse::NODE_ID => $nodeId,
+                    HelloResponse::NODE_HOST => $address,
+                    HelloResponse::NODE_PORT => $port,
+                    HelloResponse::NODE_PRIORITY => $priority
+                ]
+            ]
+        ];
+
+        $credentials = m::mock(Credentials::class);
+        $connection = m::mock(ConnectionInterface::class)
+            ->shouldReceive('execute')
+            ->andReturn($helloResponse)
+            ->shouldReceive('isConnected')
+            ->andReturn(true)
+            ->getMock();
+
+        $n = new Node($credentials, $connection);
+
+        $hello = $n->sayHello();
+        $this->assertSame($expectedHello, $hello);
+
+        $n->connect();
+
+        $hello = $n->sayHello();
+        $this->assertSame($expectedHello, $hello);
+    }
+
+    public function testSayHelloWrongPriority()
+    {
+        $address = '127.0.0.1';
+        $port = 7712;
+        $nodeId = 'someLongNodeId';
+        $nodeId2 = 'someLongNodeId2';
+        $prefix = 'someLong';
+        $version = 'v1';
+        $priority = 1;
+        $helloResponse = [
+            HelloResponse::POS_VERSION => $version,
+            HelloResponse::POS_ID => $nodeId,
+            HelloResponse::POS_NODES_START => [
+                HelloResponse::POS_NODE_ID => $nodeId2,
+                HelloResponse::POS_NODE_HOST => $address,
+                HelloResponse::POS_NODE_PORT => $port,
+                HelloResponse::POS_NODE_PRIORITY => $priority
+            ]
+        ];
+        $expectedHello = [
+            HelloResponse::NODE_VERSION => $version,
+            HelloResponse::NODE_ID => $nodeId,
+            HelloResponse::NODES => [
+                [
+                    HelloResponse::NODE_ID => $nodeId2,
+                    HelloResponse::NODE_HOST => $address,
+                    HelloResponse::NODE_PORT => $port,
+                    HelloResponse::NODE_PRIORITY => $priority
+                ]
+            ]
+        ];
+
+        $credentials = m::mock(Credentials::class);
+        $connection = m::mock(ConnectionInterface::class)
+            ->shouldReceive('execute')
+            ->andReturn($helloResponse)
+            ->getMock();
+        $n = new Node($credentials, $connection);
+        $hello = $n->sayHello();
+
+        $this->assertSame($expectedHello, $hello);
+        $this->assertNotNull($n->getHello());
+        $this->assertSame($nodeId, $n->getId());
+        $this->assertSame(Node::PRIORITY_FALLBACK, $n->getPriority());
+        $this->assertSame($prefix, $n->getPrefix());
     }
 
     public function testSayHelloConnectionException()
@@ -222,7 +318,6 @@ class NodeTest extends \PHPUnit_Framework_TestCase
         $this->setExpectedException(ConnectionException::class);
         $n->connect();
     }
-
 
     public function testConnectWithPasswordRightPassword()
     {

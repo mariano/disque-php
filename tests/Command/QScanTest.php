@@ -200,13 +200,27 @@ class QScanTest extends PHPUnit_Framework_TestCase
         $c->parse(10);
     }
 
-    public function testParseNoCursor()
+    public function testParseWithNextCursor()
     {
         $c = new QScan();
         $result = $c->parse(['1', ['queue1', 'queue2']]);
         $this->assertSame([
             'finished' => false,
             'nextCursor' => 1,
+            'queues' => [
+                'queue1',
+                'queue2'
+            ]
+        ], $result);
+    }
+
+    public function testParseFinished()
+    {
+        $c = new QScan();
+        $result = $c->parse(['0', ['queue1', 'queue2']]);
+        $this->assertSame([
+            'finished' => true,
+            'nextCursor' => 0,
             'queues' => [
                 'queue1',
                 'queue2'

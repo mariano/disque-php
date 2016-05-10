@@ -19,7 +19,24 @@ class RandomPrioritizerTest extends \PHPUnit_Framework_TestCase
         $this->assertInstanceOf(RandomPrioritizer::class, $p);
     }
 
-    public function testSort()
+    public function testSortOneNode()
+    {
+        $nodeId1 = 'id1';
+
+        $node1 = m::mock(Node::class);
+
+        $nodes = [$nodeId1 => $node1];
+
+        $possibleResults = [
+            [$nodeId1 => $node1],
+        ];
+
+        $p = new RandomPrioritizer();
+        $result = $p->sort($nodes, $nodeId1);
+        $this->assertContains($result, $possibleResults);
+    }
+
+    public function testSortTwoNodes()
     {
         $nodeId1 = 'id1';
         $nodeId2 = 'id2';

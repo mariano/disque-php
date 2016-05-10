@@ -3,6 +3,15 @@
 All Notable changes will be documented in this file. This project adheres to 
 [Semantic Versioning](http://semver.org/).
 
+## [2.0.1] - 2016-05-10
+
+### Changed
+- Job IDs should now always follow the Disque RC1 format.
+- Reconnect to node when node lost connection.
+
+### Added
+- Added support for `JSCAN`
+
 ## [2.0-alpha] - 2015-11-03
 
 ### Changed
@@ -138,8 +147,9 @@ parameters were specified, an `InvalidCommandArgumentException` was thrown.
 - Added support for Predis connections, and allowing adding new connection
 methods via `ConnectionInterface`.
 
-[2.0-alpha]: https://github.com/mariano/disque-php/compare/1.3.0...HEAD
-[1.3.0]: https://github.com/mariano/disque-php/compare/tag/1.3.0
+[2.0.1]: https://github.com/mariano/disque-php/compare/2.0-alpha...HEAD
+[2.0-alpha]: https://github.com/mariano/disque-php/releases/2.0-alpha
+[1.3.0]: https://github.com/mariano/disque-php/releases/tag/1.3.0
 [1.2.1]: https://github.com/mariano/disque-php/releases/tag/1.2.1
 [1.2.0]: https://github.com/mariano/disque-php/releases/tag/1.2.0
 [1.1.0]: https://github.com/mariano/disque-php/releases/tag/1.1.0
