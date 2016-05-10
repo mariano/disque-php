@@ -80,6 +80,7 @@ class ClientTest extends PHPUnit_Framework_TestCase
             new Command\Info(),
             new Command\Jscan(),
             new Command\Nack(),
+            new Command\Pause(),
             new Command\QLen(),
             new Command\QPeek(),
             new Command\QScan(),

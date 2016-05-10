@@ -169,6 +169,7 @@ class Queue
      * This increases the NACK counter of the job
      *
      * @param JobInterface $job
+     * @return void
      */
     public function failed(JobInterface $job)
     {
@@ -179,6 +180,7 @@ class Queue
     /**
      * Check that we are connected to a node, and if not connect
      *
+     * @return void
      * @throws Disque\Connection\ConnectionException
      */
     private function checkConnected()

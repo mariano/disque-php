@@ -75,6 +75,7 @@ class Client
             new Command\Info(),
             new Command\JScan(),
             new Command\Nack(),
+            new Command\Pause(),
             new Command\QLen(),
             new Command\QPeek(),
             new Command\QScan(),

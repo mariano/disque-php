@@ -18,12 +18,12 @@ class Nack extends BaseCommand implements CommandInterface
      * @inheritdoc
      */
     protected $argumentsType = self::ARGUMENTS_TYPE_STRINGS;
-    
+
     /**
      * @inheritdoc
      */
     protected $responseHandler = IntResponse::class;
-    
+
     /**
      * @inheritdoc
      */

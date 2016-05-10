@@ -6,6 +6,7 @@ use PHPUnit_Framework_TestCase;
 use Disque\Command;
 use Disque\Connection\ConnectionException;
 use Disque\Connection\ConnectionInterface;
+use Disque\Connection\Response\QueuePausedResponseException;
 use Disque\Connection\Response\ResponseException;
 use Disque\Connection\Response\TextResponse;
 use Disque\Connection\Socket;
@@ -158,6 +159,19 @@ class SocketTest extends PHPUnit_Framework_TestCase
 
         $socket = fopen('php://memory','rw');
         fwrite($socket, "-Error from Disque\r\n");
+        rewind($socket);
+
+        $connection = new MockSocket();
+        $connection->setSocket($socket);
+        $connection->receive();
+    }
+
+    public function testReceiveErrorPauseFromClient()
+    {
+        $this->setExpectedException(QueuePausedResponseException::class, 'PAUSED Queue paused in input, try later');
+
+        $socket = fopen('php://memory','rw');
+        fwrite($socket, "-PAUSED Queue paused in input, try later\r\n");
         rewind($socket);
 
         $connection = new MockSocket();

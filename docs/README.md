@@ -826,7 +826,7 @@ Put the job(s) back to the queue immediately and increment the nack counter.
 The command should be used when the worker was not able to process a job and
 wants the job to be put back into the queue in order to be processed again.
 
-It is very similar to ENQUEUE but it increments the job nacks counter
+It is very similar to `ENQUEUE` but it increments the job nacks counter
 instead of the additional-deliveries counter.
 
 ```php
@@ -847,6 +847,30 @@ Example call:
 $jobCount = $client->nack('jobid1', 'jobid2');
 ```
 
+### pause
+
+Pause a given queue, or obtain its paused state.
+
+```php
+pause(string $queue, string... $options): void
+```
+
+Arguments:
+
+* `string $queue`: Queue to pause, or from where to obtain paused state.
+* `string... $options`: Set of options, which can be:
+  * `in`: pause the queue in input.
+  * `out`: pause the queue in output.
+  * `all`: pause the queue in input and output (same as specifying both the `in` 
+  and `out` options).
+  * `none`: clear the paused state in input and output.
+  * `state`: just report the current queue paused state.
+  * `bcast`: send a `PAUSE` command to all the reachable nodes of the cluster 
+  to set the same queue in the other nodes to the same state.
+
+Return value:
+
+* `string`: state of the queue. One of `in`, `out`, `all`, or `none`.
 
 ### qlen
 
