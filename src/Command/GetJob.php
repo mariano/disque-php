@@ -61,7 +61,7 @@ class GetJob extends BaseCommand implements CommandInterface
     {
         $arguments = $this->getArguments();
         $options = end($arguments);
-        if (is_array($options) && isset($options['nohang']) && $options['nohang']) {
+        if (is_array($options) && !empty($options['nohang'])) {
             return false;
         }
         return true;
