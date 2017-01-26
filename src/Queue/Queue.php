@@ -73,9 +73,10 @@ class Queue
      * @param JobInterface $job Job
      * @param DateTime $when Date & time on when job should be ready for processing
      * @return JobInterface Job pushed
+     * @param array $options ADDJOB options sent to the client
      * @throws InvalidArgumentException
      */
-    public function schedule(JobInterface $job, DateTime $when)
+    public function schedule(JobInterface $job, DateTime $when, array $options = [])
     {
         if (!isset($this->timeZone)) {
             $this->timeZone = new DateTimeZone(self::DEFAULT_JOB_TIMEZONE);
@@ -87,10 +88,10 @@ class Queue
         if ($date < $now) {
             throw new InvalidArgumentException('Specified schedule time has passed');
         }
-
-        return $this->push($job, [
-            'delay' => ($date->getTimestamp() - $now->getTimestamp())
-        ]);
+        
+        $options['delay'] = ($date->getTimestamp() - $now->getTimestamp());
+        
+        return $this->push($job, $options);
     }
 
     /**
