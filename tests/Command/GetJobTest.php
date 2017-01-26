@@ -136,6 +136,14 @@ class GetJobTest extends PHPUnit_Framework_TestCase
         $this->assertSame(['WITHCOUNTERS', 'FROM', 'q1', 'q2'], $result);
     }
 
+    public function testBuildOptionWithNohang()
+    {
+        $c = new GetJob();
+        $c->setArguments(['q1', 'q2', ['nohang' => true]]);
+        $result = $c->getArguments();
+        $this->assertSame(['NOHANG', 'FROM', 'q1', 'q2'], $result);
+    }
+
     public function testParseInvalidString()
     {
         $this->setExpectedException(InvalidResponseException::class, 'Invalid command response. Command Disque\\Command\\GetJob got: "test"');

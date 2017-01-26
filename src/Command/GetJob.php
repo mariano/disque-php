@@ -60,7 +60,7 @@ class GetJob extends BaseCommand implements CommandInterface
     public function isBlocking()
     {
         $arguments = $this->getArguments();
-        $options = last($arguments);
+        $options = end($arguments);
         if (is_array($options) && isset($options['nohang']) && $options['nohang']) {
             return false;
         }
