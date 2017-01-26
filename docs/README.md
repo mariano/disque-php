@@ -675,6 +675,8 @@ Arguments:
      with the `WITHCOUNTERS` argument. The jobs will then contain two
      additional fields, the counters `nacks` and `additional-deliveries`
      for failure handling.
+  * `nohang`: a `bool`, if `true`, will prevent the command from blocking until
+     a job becomes available, returning instantly instead.
 
 Return value:
 

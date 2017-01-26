@@ -23,6 +23,7 @@ class GetJob extends BaseCommand implements CommandInterface
      * @var array
      */
     protected $options = [
+        'nohang' => false,
         'count' => null,
         'timeout' => null,
         'withcounters' => false
@@ -34,6 +35,7 @@ class GetJob extends BaseCommand implements CommandInterface
      * @var array
      */
     protected $availableArguments = [
+        'nohang' => 'NOHANG',
         'timeout' => 'TIMEOUT',
         'count' => 'COUNT',
         'withcounters' => 'WITHCOUNTERS'
@@ -57,6 +59,11 @@ class GetJob extends BaseCommand implements CommandInterface
      */
     public function isBlocking()
     {
+        $arguments = $this->getArguments();
+        $options = last($arguments);
+        if (is_array($options) && isset($options['nohang']) && $options['nohang']) {
+            return false;
+        }
         return true;
     }
 
