@@ -77,7 +77,7 @@ class GetJobTest extends PHPUnit_Framework_TestCase
 
     public function testBuildInvalidOptionCountNonInt()
     {
-        $this->setExpectedException(InvalidOptionException::class, 'Invalid command options. Options for command Disque\\Command\\GetJob: {"count":3.14}');
+        $this->setExpectedExceptionRegExp(InvalidOptionException::class, '/^Invalid command options. Options for command Disque\\\\Command\\\\GetJob: {"count":3.14\d*}$/');
         $c = new GetJob();
         $c->setArguments(['q1', 'q2', ['count' => 3.14]]);
     }
@@ -91,7 +91,7 @@ class GetJobTest extends PHPUnit_Framework_TestCase
 
     public function testBuildInvalidOptionTimeoutNonInt()
     {
-        $this->setExpectedException(InvalidOptionException::class, 'Invalid command options. Options for command Disque\\Command\\GetJob: {"timeout":3.14}');
+        $this->setExpectedExceptionRegExp(InvalidOptionException::class, '/^Invalid command options. Options for command Disque\\\\Command\\\\GetJob: {"timeout":3.14\d*}$/');
         $c = new GetJob();
         $c->setArguments(['q1', 'q2', ['timeout' => 3.14]]);
     }

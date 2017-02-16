@@ -107,11 +107,7 @@ libraries for the inspiration.
 [The PHP League](https://thephpleague.com) for an awesome `README.md` skeleton,
 and tips about packaging PHP components.
 
-A special acknolewdgment and appreciation for our amazing contributors:
-
-* [Revisor](https://github.com/Revisor) for his incredible work on this library.
-
-* [mvrhov](https://github.com/mvrhov) for helping us support Disque RC1 node ID new format.
+A special acknolewdgment and appreciation for our []amazing contributors](https://github.com/mariano/disque-php/graphs/contributors)!
 
 ## License
 

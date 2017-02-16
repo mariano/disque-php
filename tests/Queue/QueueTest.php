@@ -517,6 +517,27 @@ class QueueTest extends PHPUnit_Framework_TestCase
         $this->assertSame($job, $result);
     }
 
+    public function testScheduleWithOptions()
+    {
+        $delay = 10;
+
+        $job = new Job();
+        $queue = m::mock(Queue::class.'[push]', [m::mock(Client::class), 'queue'])
+            ->shouldReceive('push')
+            ->with($job,
+                anyOf(
+                    ['retry' => 1000, 'delay' => $delay],
+                    ['retry' => 1000, 'delay' => $delay - 1]
+                ))
+            ->andReturn($job)
+            ->once()
+            ->mock();
+
+        $when = new DateTime('+' . $delay . ' seconds', new DateTimeZone(Queue::DEFAULT_JOB_TIMEZONE));
+        $result = $queue->schedule($job, $when, ['retry' => 1000]);
+        $this->assertSame($job, $result);
+    }
+
     public function testProcessingConnected()
     {
         $job = m::mock(JobInterface::class)

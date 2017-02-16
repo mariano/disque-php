@@ -116,7 +116,7 @@ class AddJobTest extends PHPUnit_Framework_TestCase
 
     public function testBuildInvalidOptionTimeoutNonInt()
     {
-        $this->setExpectedException(InvalidOptionException::class, 'Invalid command options. Options for command Disque\\Command\\AddJob: {"timeout":3.14}');
+        $this->setExpectedExceptionRegExp(InvalidOptionException::class, '/^Invalid command options. Options for command Disque\\\\Command\\\\AddJob: {"timeout":3.14\d*}$/');
         $c = new AddJob();
         $c->setArguments(['q', 'j', ['timeout' => 3.14]]);
     }
@@ -130,7 +130,7 @@ class AddJobTest extends PHPUnit_Framework_TestCase
 
     public function testBuildInvalidOptionReplicateNonInt()
     {
-        $this->setExpectedException(InvalidOptionException::class, 'Invalid command options. Options for command Disque\\Command\\AddJob: {"replicate":3.14,"timeout":0}');
+        $this->setExpectedExceptionRegExp(InvalidOptionException::class, '/^Invalid command options. Options for command Disque\\\\Command\\\\AddJob: {"replicate":3.14\d*,"timeout":0}$/');
         $c = new AddJob();
         $c->setArguments(['q', 'j', ['replicate' => 3.14]]);
     }
@@ -144,7 +144,7 @@ class AddJobTest extends PHPUnit_Framework_TestCase
 
     public function testBuildInvalidOptionDelayNonInt()
     {
-        $this->setExpectedException(InvalidOptionException::class, 'Invalid command options. Options for command Disque\\Command\\AddJob: {"delay":3.14,"timeout":0}');
+        $this->setExpectedExceptionRegExp(InvalidOptionException::class, '/^Invalid command options. Options for command Disque\\\\Command\\\\AddJob: {"delay":3.14\d*,"timeout":0}$/');
         $c = new AddJob();
         $c->setArguments(['q', 'j', ['delay' => 3.14]]);
     }
@@ -158,7 +158,7 @@ class AddJobTest extends PHPUnit_Framework_TestCase
 
     public function testBuildInvalidOptionRetryNonInt()
     {
-        $this->setExpectedException(InvalidOptionException::class, 'Invalid command options. Options for command Disque\\Command\\AddJob: {"retry":3.14,"timeout":0}');
+        $this->setExpectedExceptionRegExp(InvalidOptionException::class, '/^Invalid command options. Options for command Disque\\\\Command\\\\AddJob: {"retry":3.14\d*,"timeout":0}$/');
         $c = new AddJob();
         $c->setArguments(['q', 'j', ['retry' => 3.14]]);
     }
@@ -172,7 +172,7 @@ class AddJobTest extends PHPUnit_Framework_TestCase
 
     public function testBuildInvalidOptionTtlNonInt()
     {
-        $this->setExpectedException(InvalidOptionException::class, 'Invalid command options. Options for command Disque\\Command\\AddJob: {"ttl":3.14,"timeout":0}');
+        $this->setExpectedExceptionRegExp(InvalidOptionException::class, '/^Invalid command options. Options for command Disque\\\\Command\\\\AddJob: {"ttl":3.14\d*,"timeout":0}$/');
         $c = new AddJob();
         $c->setArguments(['q', 'j', ['ttl' => 3.14]]);
     }
@@ -186,7 +186,7 @@ class AddJobTest extends PHPUnit_Framework_TestCase
 
     public function testBuildInvalidOptionMaxlenNonInt()
     {
-        $this->setExpectedException(InvalidOptionException::class, 'Invalid command options. Options for command Disque\\Command\\AddJob: {"maxlen":3.14,"timeout":0}');
+        $this->setExpectedExceptionRegExp(InvalidOptionException::class, '/^Invalid command options. Options for command Disque\\\\Command\\\\AddJob: {"maxlen":3.14\d*,"timeout":0}$/');
         $c = new AddJob();
         $c->setArguments(['q', 'j', ['maxlen' => 3.14]]);
     }

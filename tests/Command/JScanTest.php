@@ -88,7 +88,7 @@ class JScanTest extends PHPUnit_Framework_TestCase
 
     public function testBuildInvalidOptionCountNonInt()
     {
-        $this->setExpectedException(InvalidOptionException::class, 'Invalid command options. Options for command Disque\\Command\\JScan: {"count":3.14}');
+        $this->setExpectedExceptionRegExp(InvalidOptionException::class, '/^Invalid command options. Options for command Disque\\\\Command\\\\JScan: {"count":3.14\d*}$/');
         $c = new JScan();
         $c->setArguments([0, ['count' => 3.14]]);
     }

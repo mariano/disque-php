@@ -80,7 +80,7 @@ class QPeekTest extends PHPUnit_Framework_TestCase
 
     public function testBuildInvalidArgumentsNonInt()
     {
-        $this->setExpectedException(InvalidCommandArgumentException::class, 'Invalid command arguments. Arguments for command Disque\\Command\\QPeek: ["test",3.14]');
+        $this->setExpectedExceptionRegExp(InvalidCommandArgumentException::class, '/^Invalid command arguments. Arguments for command Disque\\\\Command\\\\QPeek: \["test",3.14\d*\]$/');
         $c = new QPeek();
         $c->setArguments(['test', 3.14]);
     }

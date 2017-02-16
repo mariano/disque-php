@@ -3,6 +3,16 @@
 All Notable changes will be documented in this file. This project adheres to 
 [Semantic Versioning](http://semver.org/).
 
+## [2.0.3] - 2017-02-16
+
+### Added
+- Added `nohang` option to `getJob()`. Thanks @kaecyra
+- Added ability to specify job options when scheduling a job
+via `schedule()`. Thanks @aleksraiden
+
+### Changed
+- Removed `predis/predis` from list of suggested packages to install
+
 ## [2.0.2] - 2016-05-10
 
 ### Fixed
@@ -153,6 +163,7 @@ parameters were specified, an `InvalidCommandArgumentException` was thrown.
 - Added support for Predis connections, and allowing adding new connection
 methods via `ConnectionInterface`.
 
+[2.0.3]: https://github.com/mariano/disque-php/releases/tag/2.0.3
 [2.0.2]: https://github.com/mariano/disque-php/releases/tag/2.0.2
 [2.0.1]: https://github.com/mariano/disque-php/releases/tag/2.0.1
 [2.0-alpha]: https://github.com/mariano/disque-php/releases/tag/2.0-alpha

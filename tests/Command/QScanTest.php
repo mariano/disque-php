@@ -88,7 +88,7 @@ class QScanTest extends PHPUnit_Framework_TestCase
 
     public function testBuildInvalidOptionMinlenNonInt()
     {
-        $this->setExpectedException(InvalidOptionException::class, 'Invalid command options. Options for command Disque\\Command\\QScan: {"minlen":3.14}');
+        $this->setExpectedExceptionRegExp(InvalidOptionException::class, '/^Invalid command options. Options for command Disque\\\\Command\\\\QScan: {"minlen":3.14\d*}$/');
         $c = new QScan();
         $c->setArguments([0, ['minlen' => 3.14]]);
     }
@@ -102,7 +102,7 @@ class QScanTest extends PHPUnit_Framework_TestCase
 
     public function testBuildInvalidOptionMaxlenNonInt()
     {
-        $this->setExpectedException(InvalidOptionException::class, 'Invalid command options. Options for command Disque\\Command\\QScan: {"maxlen":3.14}');
+        $this->setExpectedExceptionRegExp(InvalidOptionException::class, '/^Invalid command options. Options for command Disque\\\\Command\\\\QScan: {"maxlen":3.14\d*}$/');
         $c = new QScan();
         $c->setArguments([0, ['maxlen' => 3.14]]);
     }
@@ -116,7 +116,7 @@ class QScanTest extends PHPUnit_Framework_TestCase
 
     public function testBuildInvalidOptionImportrateNonInt()
     {
-        $this->setExpectedException(InvalidOptionException::class, 'Invalid command options. Options for command Disque\\Command\\QScan: {"importrate":3.14}');
+        $this->setExpectedExceptionRegExp(InvalidOptionException::class, '/^Invalid command options. Options for command Disque\\\\Command\\\\QScan: {"importrate":3.14\d*}$/');
         $c = new QScan();
         $c->setArguments([0, ['importrate' => 3.14]]);
     }
