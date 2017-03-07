@@ -84,6 +84,7 @@ class ClientTest extends PHPUnit_Framework_TestCase
             new Command\QLen(),
             new Command\QPeek(),
             new Command\QScan(),
+            new Command\QStat(),
             new Command\Show(),
             new Command\Working()
         ];
