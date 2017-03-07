@@ -79,6 +79,7 @@ class Client
             new Command\QLen(),
             new Command\QPeek(),
             new Command\QScan(),
+            new Command\QStat(),
             new Command\Show(),
             new Command\Working()
         ] as $command) {
