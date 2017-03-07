@@ -895,7 +895,7 @@ Example call:
 
 ```php
 $count = $client->qlen('queue');
-var_dump($hello);
+var_dump($count);
 ```
 
 ### qpeek
@@ -979,6 +979,31 @@ do {
     var_dump($result['queues']);
     $cursor = $result['nextCursor'];
 } while (!$result['finished']);
+```
+
+### qstat
+
+Gets information about a queue. Signature:
+
+```php
+qstat(string $queue): array
+```
+
+Arguments:
+
+* `$queue`: The queue to get stats for.
+
+Return value:
+
+* `array`: An indexed array with statistics about the queue, including (but not
+    limited to) `name`, `len`, `age`, `idle`, `blocked`, `import-from`, `import-rate`,
+    `jobs-in`, `jobs-out`, `pause`
+
+Example call:
+
+```php
+$stats = $client->qstat('queue');
+var_dump($stats);
 ```
 
 ### show
