@@ -189,4 +189,12 @@ class Queue
             $this->client->connect();
         }
     }
+    
+    /**
+     * @inheritdoc
+     */
+    public function getName()
+    {
+        return $this->name;
+    }
 }
