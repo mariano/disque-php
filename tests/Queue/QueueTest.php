@@ -27,6 +27,13 @@ class QueueTest extends PHPUnit_Framework_TestCase
         m::close();
     }
 
+    public function testGetName()
+    {
+        $name = 'queue';
+        $q = new Queue(new Client(), $name);
+        $this->assertSame($name, $q->getName());
+    }
+
     public function testInstance()
     {
         $q = new Queue(new Client(), 'queue');
