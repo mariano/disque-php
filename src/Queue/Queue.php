@@ -54,6 +54,16 @@ class Queue
         $this->name = $name;
         $this->setMarshaler(new JobMarshaler());
     }
+    
+    /**
+     * Get the queue name
+     *
+     * @return string
+     */
+    public function getName()
+    {
+        return $this->name;
+    }
 
     /**
      * Set Job marshaler
