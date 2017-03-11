@@ -55,6 +55,21 @@ class InfoTest extends PHPUnit_Framework_TestCase
     {
         $c = new Info();
         $result = $c->parse('test');
-        $this->assertSame('test', $result);
+        $this->assertSame([], $result);
+    }
+
+    public function testParseCategories()
+    {
+        $c = new Info();
+        $result = $c->parse("# Category\r\na:b\r\nfoo:bar\r\n\r\n# Baz\r\nwoop:shawoop\r\n");
+        $this->assertSame([
+            'Category' => [
+                'a' => 'b',
+                'foo' => 'bar',
+            ],
+            'Baz' => [
+                'woop' => 'shawoop',
+            ],
+        ], $result);
     }
 }
