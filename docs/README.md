@@ -766,13 +766,36 @@ Arguments:
 
 Return value:
 
-* `string`: A big string with information about the connected node.
+* `array`: An associative array with information about the node, divided into
+    categories, such as: `Server`, `Clients`, `Memory`, `Jobs`, `Queues`, `Persistence`,
+    `Stats` and `CPU`. Each category contains a further associative array, with individual statistics.
 
 Example call:
 
 ```php
 $info = $client->info();
-echo $info;
+var_dump($info);
+/*
+prints: array (size=9)
+  'Server' =>
+    array (size=16)
+      'disque_version' => string '1.0-rc1' (length=7)
+      'disque_git_sha1' => string '00000000' (length=8)
+      'disque_git_dirty' => string '0' (length=1)
+      'disque_build_id' => string '1b9bed5f419fb409' (length=16)
+      'os' => string 'Linux 4.4.0-59-generic x86_64' (length=29)
+      'arch_bits' => string '64' (length=2)
+      [...]
+  'Clients' =>
+    array (size=4)
+      'connected_clients' => string '1' (length=1)
+      [...]
+  'Memory' =>
+    array (size=7)
+      'used_memory' => string '2336352' (length=7)
+      [...]
+      etc.
+*/
 ```
 
 ### jscan
