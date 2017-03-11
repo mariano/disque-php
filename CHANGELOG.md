@@ -3,6 +3,13 @@
 All Notable changes will be documented in this file. This project adheres to 
 [Semantic Versioning](http://semver.org/).
 
+## Unreleased
+
+### Changed
+
+- *BREAKING* `info()` now returns an associative array of information, rather
+than a large string.
+
 ## [2.0.3] - 2017-02-16
 
 ### Added
