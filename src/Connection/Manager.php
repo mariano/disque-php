@@ -321,6 +321,8 @@ class Manager implements ManagerInterface
             $this->nodeId
         );
 
+        $previous = null;
+
         // Try to connect by priority, continue on error, return on success
         foreach($sortedNodes as $nodeCandidate) {
             // If the first recommended node is our current node and it has
@@ -340,6 +342,7 @@ class Manager implements ManagerInterface
                     $nodeCandidate->connect();
                 }
             } catch (ConnectionException $e) {
+                $previous = $e;
                 continue;
             }
 
@@ -347,7 +350,7 @@ class Manager implements ManagerInterface
             return;
         }
 
-        throw new ConnectionException('Could not switch to any node');
+        throw new ConnectionException('Could not switch to any node', 0, $previous);
     }
 
     /**
