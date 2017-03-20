@@ -399,7 +399,7 @@ class Manager implements ManagerInterface
             try {
                 $this->switchNodeIfNeeded();
             } catch (ConnectionException $e) {
-                throw new ConnectionException('Not connected. ' . $e->getMessage());
+                throw new ConnectionException('Not connected. ' . $e->getMessage(), 0, $e);
             }
         }
     }
