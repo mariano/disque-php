@@ -392,7 +392,7 @@ class Manager implements ManagerInterface
      * @return void
      * @throws ConnectionException
      */
-    private function shouldBeConnected()
+    protected function shouldBeConnected()
     {
         // If we lost the connection, first let's try and reconnect
         if (!$this->isConnected()) {
