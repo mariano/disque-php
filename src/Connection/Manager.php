@@ -213,10 +213,13 @@ class Manager implements ManagerInterface
     {
         $servers = $this->credentials;
         shuffle($servers);
+        $previous = null;
+
         foreach ($servers as $server) {
             try {
                 $node = $this->getNodeConnection($server);
             } catch (ConnectionException $e) {
+                $previous = $e;
                 continue;
             }
 
@@ -225,7 +228,7 @@ class Manager implements ManagerInterface
             }
         }
 
-        throw new ConnectionException('No servers available');
+        throw new ConnectionException('No servers available', 0, $previous);
     }
 
     /**
@@ -321,6 +324,8 @@ class Manager implements ManagerInterface
             $this->nodeId
         );
 
+        $previous = null;
+
         // Try to connect by priority, continue on error, return on success
         foreach($sortedNodes as $nodeCandidate) {
             // If the first recommended node is our current node and it has
@@ -340,6 +345,7 @@ class Manager implements ManagerInterface
                     $nodeCandidate->connect();
                 }
             } catch (ConnectionException $e) {
+                $previous = $e;
                 continue;
             }
 
@@ -347,7 +353,7 @@ class Manager implements ManagerInterface
             return;
         }
 
-        throw new ConnectionException('Could not switch to any node');
+        throw new ConnectionException('Could not switch to any node', 0, $previous);
     }
 
     /**
@@ -392,14 +398,14 @@ class Manager implements ManagerInterface
      * @return void
      * @throws ConnectionException
      */
-    private function shouldBeConnected()
+    protected function shouldBeConnected()
     {
         // If we lost the connection, first let's try and reconnect
         if (!$this->isConnected()) {
             try {
                 $this->switchNodeIfNeeded();
             } catch (ConnectionException $e) {
-                throw new ConnectionException('Not connected. ' . $e->getMessage());
+                throw new ConnectionException('Not connected. ' . $e->getMessage(), 0, $e);
             }
         }
     }

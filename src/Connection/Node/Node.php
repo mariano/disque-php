@@ -251,7 +251,7 @@ class Node
              */
             $message = $e->getMessage();
             if (stripos($message, self::AUTH_REQUIRED_MESSAGE) === 0) {
-                throw new AuthenticationException($message);
+                throw new AuthenticationException($message, 0, $e);
             }
         }
 
