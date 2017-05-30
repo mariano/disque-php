@@ -213,10 +213,13 @@ class Manager implements ManagerInterface
     {
         $servers = $this->credentials;
         shuffle($servers);
+        $previous = null;
+
         foreach ($servers as $server) {
             try {
                 $node = $this->getNodeConnection($server);
             } catch (ConnectionException $e) {
+                $previous = $e;
                 continue;
             }
 
@@ -225,7 +228,7 @@ class Manager implements ManagerInterface
             }
         }
 
-        throw new ConnectionException('No servers available');
+        throw new ConnectionException('No servers available', 0, $previous);
     }
 
     /**
