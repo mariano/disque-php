@@ -52,14 +52,14 @@ class Client
     /**
      * A list of credentials to Disque servers
      *
-     * @var Disque\Connection\Credentials[]
+     * @var \Disque\Connection\Credentials[]
      */
     private $servers;
 
     /**
      * Create a new Client
      *
-     * @param Disque\Connection\Credentials[] $servers
+     * @param \Disque\Connection\Credentials[] $servers
      */
     public function __construct(array $servers = [])
     {
