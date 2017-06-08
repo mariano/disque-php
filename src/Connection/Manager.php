@@ -459,7 +459,8 @@ class Manager implements ManagerInterface
      *
      * The HELLO response from a Disque node contains addresses of all other
      * nodes in the cluster. We want to learn about them and save them, so that
-     * we can switch to them later, if needed.
+     * we can switch to them later, if needed. Nodes in the HELLO response without
+     * a hostname are not used.
      *
      * @param Node $node The current node
      */
@@ -469,6 +470,10 @@ class Manager implements ManagerInterface
         $revealedNodes = [];
 
         foreach ($hello[HelloResponse::NODES] as $node) {
+            if (!$node[HelloResponse::NODE_HOST]) {
+                continue;
+            }
+
             $id = $node[HelloResponse::NODE_ID];
             $revealedNode = $this->revealNodeFromHello($id, $node);
 
