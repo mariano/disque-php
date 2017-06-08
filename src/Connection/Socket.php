@@ -189,7 +189,8 @@ class Socket extends BaseConnection implements ConnectionInterface
      */
     private function getType($keepWaiting = false)
     {
-        $type = null;
+        $type = false;
+
         while (!feof($this->socket)) {
             $type = fgetc($this->socket);
             if ($type !== false && $type !== '') {
